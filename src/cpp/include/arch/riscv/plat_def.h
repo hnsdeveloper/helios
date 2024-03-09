@@ -23,7 +23,8 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "types.h"
+#include "include/types.h"
+
 static const size_t PAGE_LEVELS = 3;
 static const size_t PAGE_FRAME_SIZE = 4096;
 static const size_t PAGE_FRAME_ALIGNMENT = PAGE_FRAME_SIZE;

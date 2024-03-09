@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------------
 MIT License
 
-Copyright (c) 2024 Helio Nunes Santos
+Copyright (c) 2022 Helio Nunes Santos
 
-        Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"), to
+deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
         copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
@@ -22,19 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
-export module UART;
 
-#include "types.h"
+#include "misc/new.hpp"
 
-export namespace hls {
-    
-    void uart_putchar(char c);
-    void uprint(char c);
-    
-    // TODO: IMPLEMENTED FOR SPECIFIC DEVICE. MAKE GENERIC IMPLEMENTATION THAT FINDS UART AND SETS IT UP ACCORDING TO MODEL
-    volatile void* get_uart_base_address();
+extern "C" int __cxa_guard_acquire(__guard *g) { return !*(char *)(g); }
 
-    void uart_init(volatile void* uart_base_address);
-    putchar_func_ptr setup_uart_as_print();
+extern "C" void __cxa_guard_release(__guard *g) { *(char *)g = 1; }
 
-}
+extern "C" void __cxa_guard_abort(__guard *) {}
+
+extern "C" int atexit(void (*)()) { return 0; }
+
+// Placement new
+extern "C" void *operator new(size_t, void *w) { return w; }

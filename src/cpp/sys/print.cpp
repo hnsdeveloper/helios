@@ -22,12 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
-module Print;
 
-import UART;
-import Memory;
-
-#include "types.h"
+#include "sys/print.hpp"
+#include "dev/uart/uart.hpp"
+#include "include/types.h"
+#include "sys/mem.hpp"
 
 const bool UART_PRINTING = true;
 
@@ -55,7 +54,7 @@ void strprintln(const char *str) {
   strprint("\r\n");
 }
 
-void ptrprint(void *ptr) {
+void ptrprint(const void *ptr) {
   auto v = to_uintptr_t(ptr);
   constexpr size_t buffer_size = sizeof(v) * 8 / 4;
   char buffer[buffer_size];
@@ -80,11 +79,6 @@ void ptrprint(void *ptr) {
   }
 }
 
-void ptrprintln(void *ptr) {
-  ptrprint(ptr);
-  strprint("\r\n");
-}
-
 void intprint(int64_t v) {
   if (v >= 0)
     uintprint(0 + v);
@@ -100,11 +94,6 @@ void intprint(int64_t v) {
       uintprint(0u + v);
     }
   }
-}
-
-void intprintln(int64_t v) {
-  intprint(v);
-  strprint("\r\n");
 }
 
 void uintprint(uint64_t v) {
@@ -124,11 +113,6 @@ void uintprint(uint64_t v) {
     char &c = buffer[buffer_used - i - 1];
     putchar(c);
   }
-}
-
-void uintprintln(uint64_t v) {
-  uintprint(v);
-  strprint("\r\n");
 }
 
 void floatprint(double) {

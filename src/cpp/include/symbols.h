@@ -26,15 +26,16 @@ SOFTWARE.
 #ifndef __SYMBOLS_HPP_
 #define __SYMBOLS_HPP_
 
-extern char _text_start;
-extern char _text_end;
-extern char _global_pointer;
-extern char _data_start;
-extern char _data_end;
-extern char _bss_start;
-extern char _bss_end;
-extern char _stack_start;
-extern char _stack_end;
-extern char _heap_start;
+#include "include/types.h"
 
+extern "C" byte _text_start;
+extern "C" byte _text_end;
+extern "C" byte _global_pointer;
+extern "C" byte _data_start;
+extern "C" byte _data_end;
+extern "C" byte _bss_start;
+extern "C" byte _bss_end;
+extern "C" byte _stack_start;
+extern "C" byte _stack_end;
+extern "C" byte _heap_start;
 #endif

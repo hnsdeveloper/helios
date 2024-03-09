@@ -22,16 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
-module;
 
-export module Expected;
+#ifndef _EXPECTED_HPP_
+#define _EXPECTED_HPP_
 
-#include "new.h"
-#include "types.h"
-#include "typetraits.h"
-#include "utilities.h"
+#include "include/types.h"
+#include "include/typetraits.h"
+#include "include/utilities.h"
+#include "misc/new.hpp"
 
-export namespace hls {
+namespace hls {
 
 enum class Error : uint64_t {
   UNDEFINED_ERROR,
@@ -111,11 +111,21 @@ public:
 
   Error get_error() { return m_stored.e; }
 
-  static Expected error(Error e) { return Expected(e); }
+  static auto error(Error e) {
+    using type = remove_cvref_t<T>;
+    return Expected<type>(e);
+  }
 
-  static Expected value(T &&v) { return Expected(hls::move(v)); }
+  static auto value(T &&v) {
+    using type = remove_cvref_t<T>;
 
-  static Expected value(const T &v) { return Expected(v); }
+    return Expected<type>(hls::move(v));
+  }
+
+  static Expected value(const T &v) {
+    using type = remove_cvref_t<T>;
+    return Expected<type>(v);
+  }
 };
 
 template <typename T> auto error = &Expected<T>::error;
@@ -126,3 +136,5 @@ auto value(auto v) {
 }
 
 } // namespace hls
+
+#endif

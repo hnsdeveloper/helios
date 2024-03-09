@@ -23,36 +23,23 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "sys/paging.hpp"
-#include "sys/print.hpp"
+#ifndef _UART_HPP_
+#define _UART_HPP_
 
-extern "C" void _die();
+#include "include/types.h"
 
 namespace hls {
 
-void die() { _die(); }
+void uart_putchar(char c);
+void uprint(char c);
 
-void check_system_capabilities() {
-  // TODO: IMPLEMENT
-}
+// TODO: IMPLEMENTED FOR SPECIFIC DEVICE. MAKE GENERIC IMPLEMENTATION THAT FINDS
+// UART AND SETS IT UP ACCORDING TO MODEL
+volatile void *get_uart_base_address();
 
-void main(int argc, const char **argv) {
-
-  // Stops compiler complains for now
-  for (int i = 0; i < argc; ++i) {
-    argv[i] = argv[i];
-  }
-
-  setup_printing();
-  strprintln("Booting HeliOS!");
-
-  strprintln("Checking system capabilities!");
-  check_system_capabilities();
-
-  strprintln("Setting up paging system.");
-  setup_paging();
-}
+void uart_init(volatile void *uart_base_address);
+putchar_func_ptr setup_uart_as_print();
 
 } // namespace hls
 
-extern "C" void bootmain() { hls::main(0, nullptr); }
+#endif

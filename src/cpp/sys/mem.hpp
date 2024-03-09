@@ -23,36 +23,29 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "sys/paging.hpp"
-#include "sys/print.hpp"
+#ifndef _MEM_HPP_
+#define _MEM_HPP_
 
-extern "C" void _die();
+#include "include/types.h"
 
 namespace hls {
 
-void die() { _die(); }
+void memcpy(void *dest, void *src, size_t bytes);
+void memset(void *dest, byte c, size_t n);
 
-void check_system_capabilities() {
-  // TODO: IMPLEMENT
-}
+size_t popcount(size_t data);
 
-void main(int argc, const char **argv) {
+uintptr_t to_uintptr_t(const void *ptr);
+void *to_ptr(uintptr_t v);
 
-  // Stops compiler complains for now
-  for (int i = 0; i < argc; ++i) {
-    argv[i] = argv[i];
-  }
+void *align(const void *ptr, size_t alignment);
 
-  setup_printing();
-  strprintln("Booting HeliOS!");
-
-  strprintln("Checking system capabilities!");
-  check_system_capabilities();
-
-  strprintln("Setting up paging system.");
-  setup_paging();
-}
-
+bool is_paging_enabled();
+void setup_paging();
 } // namespace hls
 
-extern "C" void bootmain() { hls::main(0, nullptr); }
+namespace hls {
+bool is_memory_subsystem_initialized();
+}
+
+#endif

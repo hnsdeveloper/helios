@@ -158,6 +158,10 @@ template <> struct expression_result<false> : false_type {};
 
 template <typename T> struct check_signed : expression_result<T(-1) < T(0)> {};
 
+template <typename T> struct check_signed<T *> {
+  static constexpr bool value = false;
+};
+
 }; // namespace detail
 
 template <typename T> struct signed_integral {

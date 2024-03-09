@@ -1,13 +1,35 @@
-module Paging;
+/*---------------------------------------------------------------------------------
+MIT License
 
-import Memory;
-import Expected;
-import Bit;
-import Print;
+Copyright (c) 2022 Helio Nunes Santos
 
-#include "arch/riscv/plat_def.h"
-#include "new.h"
-#include "symbols.h"
+        Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"), to
+deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---------------------------------------------------------------------------------*/
+
+#include "include/arch/riscv/plat_def.h"
+#include "include/symbols.h"
+#include "misc/new.hpp"
+#include "sys/mem.hpp"
+#include "sys/print.hpp"
+#include "ulib/bit.hpp"
+#include "ulib/expected.hpp"
 
 namespace hls {
 
@@ -37,6 +59,9 @@ class PageFrameManager {
     m_frame_count = mem_size / PAGE_FRAME_SIZE;
 
     size_t bitmap_count = m_frame_count / 64 + m_frame_count % 64;
+
+    debug("m_bitmap: ")(m_bitmap)(" m_frame_count: ")(
+        m_frame_count)("bitmap_count: ")(bitmap_count)("\r\n");
 
     for (size_t i = 0; i < bitmap_count; ++i) {
       new (m_bitmap + i) BMap();
@@ -109,15 +134,27 @@ public:
 
     return error<PageFrame *>(Error::OUT_OF_MEMORY);
   }
+
+  size_t frame_count() const { return m_frame_count; }
 };
 
 void setup_paging() {
   void *START_ADDRESS = &_heap_start;
-  size_t MEM_SIZE = 1024 * 1024 * 1024;
-  PageFrameManager::init(START_ADDRESS, MEM_SIZE);
+  size_t MEM_SIZE = 1024 * 1024 * 1024 - (&_heap_start - &_text_start);
+  debug("HEAP START ADDRESS IS: ")(START_ADDRESS)("\r\n");
+  debug("HEAP END ADDRESS IS: ")((char *)(START_ADDRESS) + MEM_SIZE)("\r\n");
 
+  print("Initializing PageFrameManager with ")(MEM_SIZE /
+                                               1024)("kb of memory.\n");
+
+  PageFrameManager::init(START_ADDRESS, MEM_SIZE);
   PageFrameManager &manager = PageFrameManager::instance();
-  auto result = manager.get_frame();
+
+  debug("Total of ")(manager.frame_count())(" page frames.");
+
+  PageFrame *result = manager.get_frame().get_value();
+
+  print("Frame address:")(result)("\r\n");
 }
 
 } // namespace hls

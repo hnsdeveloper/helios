@@ -23,36 +23,49 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "sys/paging.hpp"
-#include "sys/print.hpp"
+#ifndef _MMIO_HPP_
+#define _MMIO_HPP_
 
-extern "C" void _die();
+#include "include/types.h"
+#include "include/utilities.h"
+#include "sys/mem.hpp"
+#include "ulib/expected.hpp"
+
+// TODO: implement
+bool is_mmio_address(volatile void *address) {
+  if (address)
+    return true;
+  return false;
+}
 
 namespace hls {
 
-void die() { _die(); }
-
-void check_system_capabilities() {
-  // TODO: IMPLEMENT
-}
-
-void main(int argc, const char **argv) {
-
-  // Stops compiler complains for now
-  for (int i = 0; i < argc; ++i) {
-    argv[i] = argv[i];
+// Writes val to a MMIO address + offset (in bytes).
+template <typename IntegerType>
+Expected<IntegerType> mmio_write(volatile void *address, size_t offset,
+                                 IntegerType val) {
+  if (is_mmio_address(address)) {
+    volatile IntegerType *addr = reinterpret_cast<volatile IntegerType *>(
+        reinterpret_cast<volatile char *>(address) + offset);
+    *addr = val;
+    return Expected<IntegerType>::value(val);
   }
 
-  setup_printing();
-  strprintln("Booting HeliOS!");
+  return Expected<IntegerType>::error(Error{});
+}
 
-  strprintln("Checking system capabilities!");
-  check_system_capabilities();
+// Reads a IntegerType value from device_address + offset (in bytes).
+template <typename IntegerType>
+Expected<IntegerType> mmio_read(volatile void *address, size_t offset) {
+  if (is_mmio_address) {
+    volatile IntegerType *addr = reinterpret_cast<volatile IntegerType *>(
+        reinterpret_cast<volatile char *>(address) + offset);
+    return value(*addr);
+  }
 
-  strprintln("Setting up paging system.");
-  setup_paging();
+  return error<IntegerType>(Error{});
 }
 
 } // namespace hls
 
-extern "C" void bootmain() { hls::main(0, nullptr); }
+#endif

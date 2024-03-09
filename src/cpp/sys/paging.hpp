@@ -3,10 +3,10 @@ MIT License
 
 Copyright (c) 2022 Helio Nunes Santos
 
-        Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"), to
+deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
         copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
@@ -23,33 +23,24 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef _NEW_HPP_
-#define _NEW_HPP_
+#ifndef _PAGING_HPP_
+#define _PAGING_HPP_
 
-#include "types.h"
+#include "include/global.h"
+#include "include/symbols.h"
 
-// Taken from stack overflow. GCC requires these functions to initialize local static variables.
-// Note that this offers no race protection, thus it is only safe for single threaded code!
-__extension__ typedef int __guard __attribute__((mode(__DI__)));
+struct PageTable;
+struct PageEntry;
+struct PageFrame;
 
-extern "C" int __cxa_guard_acquire(__guard* g)
-{
-    return !*(char*)(g);
-}
+namespace hls {
 
-extern "C" void __cxa_guard_release(__guard* g)
-{
-    *(char *)g = 1;
-}
+class PageFrameManager;
 
-extern "C" void __cxa_guard_abort (__guard*)
-{
-}
+void setup_paging();
 
-// Placement new
-inline void* operator new(size_t, void* w )
-{
-   return w;
-}
+PageTable *get_kernel_page_table();
+
+} // namespace hls
 
 #endif

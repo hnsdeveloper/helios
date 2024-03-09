@@ -22,11 +22,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
-module Memory;
-
-import Print;
-
-#include "types.h"
+#include "include/types.h"
 
 namespace hls {
 

@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------------------------
 MIT License
 
-Copyright (c) 2024 Helio Nunes Santos
+Copyright (c) 2022 Helio Nunes Santos
 
         Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"), to
@@ -22,26 +22,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
-export module Memory;
 
-#include "types.h"
+#ifndef _NEW_HPP_
+#define _NEW_HPP_
 
-export namespace hls {
+#include "include/types.h"
 
-void memcpy(void *dest, void *src, size_t bytes);
-void memset(void *dest, byte c, size_t n);
+// Taken from stack overflow. GCC requires these functions to initialize local
+// static variables. Note that this offers no race protection, thus it is only
+// safe for single threaded code!
+__extension__ typedef int __guard __attribute__((mode(__DI__)));
 
-size_t popcount(size_t data);
+extern "C" int __cxa_guard_acquire(__guard *g);
 
-uintptr_t to_uintptr_t(const void *ptr);
-void *to_ptr(uintptr_t v);
+extern "C" void __cxa_guard_release(__guard *g);
 
-void *align(const void *ptr, size_t alignment);
+extern "C" void __cxa_guard_abort(__guard *);
 
-bool is_paging_enabled();
-void setup_paging();
-} // namespace hls
+extern "C" int atexit(void (*)());
 
-namespace hls {
-bool is_memory_subsystem_initialized();
-}
+// Placement new
+extern "C" void *operator new(size_t, void *w);
+
+#endif
