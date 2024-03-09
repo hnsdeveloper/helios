@@ -3,26 +3,33 @@
 
 .section .data
 
-.global _argc:
+.global _argc
+_argc:
 .dword 0 
-.global _argv:
+.global _argv
+_argv:
 .dword 0 
+.global _kernel_page_addr
+_kernel_page_addr:
+.dword 0
 
 .section .text.init
 
 .global _start
 _start:
-	# If the thread is not thread 0, go to 3f
-	csrr	t0, mhartid
-	bnez	t0, 3f
-	
-	# No address translation for now
-	csrw	satp, zero
-
 .option push
 .option norelax
 	la		gp, _global_pointer
 .option pop
+	# No address translation for now
+	csrw	satp, zero
+
+	la 		t0, m_mode_trap_vector
+	csrw	mtvec, t0
+	
+	# If the thread is not thread 0, go to 3f
+	csrr	t0, mhartid
+	bnez	t0, 3f
 	
 	# Lets store argc and argv
 	la t0, _argc
@@ -55,22 +62,17 @@ _start:
 
 # We use mret here so that the mstatus register
 # is properly updated.
-li		t0, (0b11 << 11) | (1 << 7) | (1 << 3)
-csrw	mstatus, t0
-la		t1, kmain
-csrw	mepc, t1
-la		t2, asm_trap_vector
-csrw	mtvec, t2
-li		t3, (1 << 3) | (1 << 7) | (1 << 11)
-csrw	mie, t3
-la		ra, 4f
-mret
-4:
-	wfi
-	j	4b
+#li		t0, (0b11 << 11) | (1 << 7) | (1 << 3)
+#csrw	mstatus, t0
+#la		t1, kmain
+#csrw	mepc, t1
+#la		t2, asm_trap_vector
+#csrw	mtvec, t2
+#li		t3, (1 << 3) | (1 << 7) | (1 << 11)
+#csrw	mie, t3
+#la		ra, 4f
+#mret
+#4:
+#	wfi
+#	j	4b
 
-.section .text
-
-.global _die
-	# TODO: IMPLEMENT	
-	j 	4b

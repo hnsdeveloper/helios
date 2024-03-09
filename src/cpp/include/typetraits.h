@@ -3,10 +3,10 @@ MIT License
 
 Copyright (c) 2024 Helio Nunes Santos
 
-        Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"), to
+deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
         copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
@@ -28,209 +28,174 @@ SOFTWARE.
 
 namespace hls {
 
-    struct true_type {
-        static constexpr bool value = true;
-    };
+struct true_type {
+  static constexpr bool value = true;
+};
 
-    struct false_type {
-        static constexpr bool value = false;
-    };
+struct false_type {
+  static constexpr bool value = false;
+};
 
-    // is_same trait
-    template<typename A, typename B>
-    struct is_same : false_type {};
+// is_same trait
+template <typename A, typename B> struct is_same : false_type {};
 
-    template<typename T>
-    struct is_same<T, T> : true_type {};
+template <typename T> struct is_same<T, T> : true_type {};
 
-    template<typename A, typename B>
-    constexpr bool is_same_v = is_same<A,B>::value;
+template <typename A, typename B>
+constexpr bool is_same_v = is_same<A, B>::value;
 
-    // remove_const trait
-    template<typename T>
-    struct remove_const {
-        using type = T;
-    };
-    
-    template<typename T>
-    struct remove_const<const T> {
-        using type = T;
-    };
+// remove_const trait
+template <typename T> struct remove_const {
+  using type = T;
+};
 
-    template<typename T>
-    using remove_const_t = typename remove_const<T>::type;
+template <typename T> struct remove_const<const T> {
+  using type = T;
+};
 
-    // remove_volatile trait
-    template<typename T>
-    struct remove_volatile {
-        using type = T;
-    };
+template <typename T> using remove_const_t = typename remove_const<T>::type;
 
-    template<typename T>
-    struct remove_volatile<volatile T> {
-        using type = T;
-    };
+// remove_volatile trait
+template <typename T> struct remove_volatile {
+  using type = T;
+};
 
-    template<typename T>
-    using remove_volatile_t = typename remove_volatile<T>::type;
+template <typename T> struct remove_volatile<volatile T> {
+  using type = T;
+};
 
-    // remove_reference trait
-    template<typename T>
-    struct remove_reference {
-        using type = T;
-    };
+template <typename T>
+using remove_volatile_t = typename remove_volatile<T>::type;
 
-    template<typename T>
-    struct remove_reference<T&> {
-        using type = T;
-    };
+// remove_reference trait
+template <typename T> struct remove_reference {
+  using type = T;
+};
 
-    template<typename T>
-    struct remove_reference<T&&> {
-        using type = T;
-    };
+template <typename T> struct remove_reference<T &> {
+  using type = T;
+};
 
-    template<typename T>
-    using remove_reference_t = remove_reference<T>::type;
+template <typename T> struct remove_reference<T &&> {
+  using type = T;
+};
 
-    // remove_pointer trait
-    template<typename T>
-    struct remove_pointer {
-        using type = T;
-    };
+template <typename T> using remove_reference_t = remove_reference<T>::type;
 
-    template<typename T>
-    struct remove_pointer<T*> {
-        using type = T;
-    };
+// remove_pointer trait
+template <typename T> struct remove_pointer {
+  using type = T;
+};
 
-    template<typename T>
-    using remove_pointer_t = typename remove_pointer<T>::type;
+template <typename T> struct remove_pointer<T *> {
+  using type = T;
+};
 
-    // remove_cv trait
-    template<typename T>
-    struct remove_cv {
-        using type = remove_const_t<remove_volatile_t<T>>;
-    };
+template <typename T> using remove_pointer_t = typename remove_pointer<T>::type;
 
-    template<typename T>
-    using remove_cv_t = remove_cv<T>::type;
+// remove_cv trait
+template <typename T> struct remove_cv {
+  using type = remove_const_t<remove_volatile_t<T>>;
+};
 
-    // remove_cvref trait
-    template<typename T>
-    struct remove_cvref {
-        using type = remove_cv_t<remove_reference_t<T>>;
-    };
+template <typename T> using remove_cv_t = remove_cv<T>::type;
 
-    template<typename T>
-    using remove_cvref_t = remove_cvref<T>::type;
+// remove_cvref trait
+template <typename T> struct remove_cvref {
+  using type = remove_cv_t<remove_reference_t<T>>;
+};
 
-    // is_reference trait
-    template<typename T>
-    struct is_reference : false_type {};
+template <typename T> using remove_cvref_t = remove_cvref<T>::type;
 
-    template<typename T>
-    struct is_reference<T&> : true_type {};
+// is_reference trait
+template <typename T> struct is_reference : false_type {};
 
-    template<typename T>
-    struct is_reference<T&&> : true_type {};
+template <typename T> struct is_reference<T &> : true_type {};
 
-    template<>
-    struct is_reference<void> : false_type{};
+template <typename T> struct is_reference<T &&> : true_type {};
 
-    template<typename T>
-    constexpr bool is_reference_v = is_reference<T>::value;
+template <> struct is_reference<void> : false_type {};
 
-    // is_lvalue_reference trait
-    template<typename T>
-    struct is_lvalue_reference : false_type {};
+template <typename T> constexpr bool is_reference_v = is_reference<T>::value;
 
-    template<typename T>
-    struct is_lvalue_reference<T&> : true_type {};
+// is_lvalue_reference trait
+template <typename T> struct is_lvalue_reference : false_type {};
 
-    template<typename T>
-    constexpr bool is_lvalue_reference_v = is_lvalue_reference<T&>::value;
+template <typename T> struct is_lvalue_reference<T &> : true_type {};
 
-    template<typename>
-    struct is_integral : false_type {};
+template <typename T>
+constexpr bool is_lvalue_reference_v = is_lvalue_reference<T &>::value;
 
-    template<>
-    struct is_integral<bool> : true_type {};
+template <typename> struct is_integral : false_type {};
 
-    template<>
-    struct is_integral<char> : true_type {};
+template <> struct is_integral<bool> : true_type {};
 
-    template<>
-    struct is_integral<unsigned char> : true_type {};
+template <> struct is_integral<char> : true_type {};
 
-    template<>
-    struct is_integral<short> : true_type {};
+template <> struct is_integral<unsigned char> : true_type {};
 
-    template<>
-    struct is_integral<unsigned short> : true_type {};
+template <> struct is_integral<short> : true_type {};
 
-    template<>
-    struct is_integral<int> : true_type {};
+template <> struct is_integral<unsigned short> : true_type {};
 
-    template<>
-    struct is_integral<unsigned int> : true_type {};
+template <> struct is_integral<int> : true_type {};
 
-    template<>
-    struct is_integral<long int> : true_type {};
+template <> struct is_integral<unsigned int> : true_type {};
 
-    template<>
-    struct is_integral<unsigned long int> : true_type {};
+template <> struct is_integral<long int> : true_type {};
 
-    template<>
-    struct is_integral<long long int> : true_type {};
+template <> struct is_integral<unsigned long int> : true_type {};
 
-    template<>
-    struct is_integral<unsigned long long int> : true_type {};
+template <> struct is_integral<long long int> : true_type {};
 
-    template<typename T>
-    constexpr bool is_integral_v = is_integral<T>::value;
+template <> struct is_integral<unsigned long long int> : true_type {};
 
-    template<typename>
-    struct is_pointer : false_type {};
+template <typename T> constexpr bool is_integral_v = is_integral<T>::value;
 
-    template<typename T>
-    struct is_pointer<T*> : true_type {};
+namespace detail {
+template <bool V> struct expression_result : true_type {};
+template <> struct expression_result<false> : false_type {};
 
-    template<typename T>
-    struct is_pointer<volatile T*> : true_type {};
+template <typename T> struct check_signed : expression_result<T(-1) < T(0)> {};
 
-    template<typename T>
-    struct is_pointer<const T*> : true_type {};
+}; // namespace detail
 
-    template<typename T>
-    struct is_pointer<const volatile T*> : true_type {};
+template <typename T> struct signed_integral {
+  static constexpr bool value =
+      is_integral_v<T> && detail::check_signed<T>::value;
+};
 
-    template<typename T>
-    struct is_pointer<T* const> : true_type {};
+template <typename T>
+constexpr bool signed_integral_v = signed_integral<T>::value;
 
-    template<typename T>
-    struct is_pointer<volatile T* const> : true_type {};
+template <typename> struct is_pointer : false_type {};
 
-    template<typename T>
-    struct is_pointer<const T* const> : true_type {};
-    
-    template<typename T>
-    struct is_pointer<const volatile T* const> : true_type {};
+template <typename T> struct is_pointer<T *> : true_type {};
 
-    template<typename T>
-    constexpr bool is_pointer_v = is_pointer<T>::value;
+template <typename T> struct is_pointer<volatile T *> : true_type {};
 
-    template<typename T>
-    struct is_floating_point : false_type {};
+template <typename T> struct is_pointer<const T *> : true_type {};
 
-    template<>
-    struct is_floating_point<float> : true_type {};
+template <typename T> struct is_pointer<const volatile T *> : true_type {};
 
-    template<>
-    struct is_floating_point<double> : true_type {};
+template <typename T> struct is_pointer<T *const> : true_type {};
 
-    template<typename T>
-    constexpr bool is_floating_point_v = is_floating_point<T>::value;
-}
+template <typename T> struct is_pointer<volatile T *const> : true_type {};
+
+template <typename T> struct is_pointer<const T *const> : true_type {};
+
+template <typename T> struct is_pointer<const volatile T *const> : true_type {};
+
+template <typename T> constexpr bool is_pointer_v = is_pointer<T>::value;
+
+template <typename T> struct is_floating_point : false_type {};
+
+template <> struct is_floating_point<float> : true_type {};
+
+template <> struct is_floating_point<double> : true_type {};
+
+template <typename T>
+constexpr bool is_floating_point_v = is_floating_point<T>::value;
+} // namespace hls
 
 #endif

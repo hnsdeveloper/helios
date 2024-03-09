@@ -3,10 +3,10 @@ MIT License
 
 Copyright (c) 2022 Helio Nunes Santos
 
-        Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"), to
+deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
         copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
@@ -31,21 +31,20 @@ static_assert(sizeof(short int) == 2);
 static_assert(sizeof(int) == 4);
 static_assert(sizeof(unsigned long int) == 8);
 
-using int8_t    = char;
-using uint8_t   = unsigned char;
-using byte      = uint8_t;
-using int16_t   = short int;
-using uint16_t  = unsigned short int;
-using int32_t   = int;
-using uint32_t  = unsigned int;
-using int64_t   = unsigned long int;
-using uint64_t  = unsigned long int;
-using size_t    = uint64_t;
+using int8_t = char;
+using uint8_t = unsigned char;
+using byte = uint8_t;
+using int16_t = short int;
+using uint16_t = unsigned short int;
+using int32_t = int;
+using uint32_t = unsigned int;
+using int64_t = long int;
+using uint64_t = unsigned long int;
+using size_t = uint64_t;
 using uintptr_t = size_t;
 
-static_assert(sizeof(uintptr_t) == sizeof(void*));
+static_assert(sizeof(uintptr_t) == sizeof(void *));
 
-using putchar_func_ptr = void(*)(char);
-
+using putchar_func_ptr = void (*)(char);
 
 #endif

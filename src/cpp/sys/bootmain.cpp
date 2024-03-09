@@ -35,18 +35,28 @@ void die() { _die(); }
 
 void check_system_capabilities() {
   // TODO: IMPLEMENT
-
-  die();
 }
 
 void main(int argc, const char **argv) {
-  setup_printing();
-  bprintln("Booting HeliOS!");
 
+  // Stops compiler complains for now
+  for (int i = 0; i < argc; ++i) {
+    argv[i] = argv[i];
+  }
+
+  setup_printing();
+  strprintln("Booting HeliOS!");
+
+  strprintln("Checking system capabilities!");
   check_system_capabilities();
 
-  setup_paging();
+  char *x = nullptr;
+  print(10u)("\r\n")(200)("\r\n")(-2555123)("\r\n")(-1)("\r\n")(x)("\r\n")(1)(
+      "\r\n")(0u)("\r\n")(x + 0x2ff)("\r\n")(-123123123)("\r\n");
+
+  strprintln("Setting up paging system.");
 }
+
 } // namespace hls
 
-extern "C" void bootmain() { hls::main(); }
+extern "C" void bootmain() { hls::main(0, nullptr); }
