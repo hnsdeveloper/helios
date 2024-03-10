@@ -40,13 +40,38 @@ class PageFrameManager {
   PageFrame *frames = nullptr; // A pointer to the first frame
   BMap *m_bitmap;
   size_t m_frame_count;
+  size_t m_bitmap_count;
 
   bool is_frame_aligned(void *ptr) {
     uintptr_t p = to_uintptr_t(ptr);
     return !(p & 0xFFF);
   }
 
-  size_t get_frame_index(PageFrame *frame) { return frame - frames; }
+  Expected<size_t> find_free_frame() {
+    for (size_t i = 0; i < m_bitmap_count; ++i) {
+      auto &bmap = m_bitmap[i];
+
+      if (bmap.popcount() == bmap.size())
+        continue;
+
+      for (size_t j = 0; j < BMap::size(); ++j) {
+        bool b = bmap.get_bit(j).get_value();
+        size_t idx = i * BMap::size() + j;
+
+        if (b != true && idx < m_frame_count)
+          return value(i * BMap::size() + j);
+      }
+    }
+
+    return error<size_t>(Error::OUT_OF_MEMORY);
+  }
+
+  void set_bit(size_t idx, bool value) {
+    size_t bmap_idx = idx / 64;
+    size_t bit_idx = idx % 64;
+
+    m_bitmap[bmap_idx].set_bit(bit_idx, value);
+  }
 
   static PageFrameManager &__internal_instance(void *base_address,
                                                size_t mem_size) {
@@ -55,20 +80,36 @@ class PageFrameManager {
   }
 
   PageFrameManager(void *base_address, size_t mem_size) {
-    m_bitmap = reinterpret_cast<BMap *>(align(base_address, alignof(BMap)));
-    m_frame_count = mem_size / PAGE_FRAME_SIZE;
+    m_bitmap = reinterpret_cast<BMap *>(base_address);
+    PageFrame *temp_frames =
+        reinterpret_cast<PageFrame *>(align(base_address, alignof(PageFrame)));
+    PageFrame *mem_end =
+        reinterpret_cast<PageFrame *>((char *)base_address + mem_size);
 
-    size_t bitmap_count = m_frame_count / 64 + m_frame_count % 64;
+    if (!is_aligned(mem_end, alignof(PageFrame))) {
+      mem_end =
+          reinterpret_cast<PageFrame *>(align(mem_end, alignof(PageFrame))) - 1;
+    }
 
-    debug("m_bitmap: ")(m_bitmap)(" m_frame_count: ")(
-        m_frame_count)("bitmap_count: ")(bitmap_count)("\r\n");
+    size_t temp_frame_count = mem_end - temp_frames;
+    m_bitmap_count = temp_frame_count / 64 + (temp_frame_count % 64 ? 1 : 0);
 
-    for (size_t i = 0; i < bitmap_count; ++i) {
+    debug("temp_frames: ")(temp_frames)(" mem_end: ")(
+        mem_end)(" temp_frame_count: ")(temp_frame_count)(" m_bitmap_count: ")(
+        m_bitmap_count)("\r\n");
+
+    for (size_t i = 0; i < m_bitmap_count; ++i) {
       new (m_bitmap + i) BMap();
     }
 
     frames = reinterpret_cast<PageFrame *>(
-        align(m_bitmap + bitmap_count, alignof(PageFrame)));
+        align(m_bitmap + m_bitmap_count, alignof(PageFrame)));
+
+    m_frame_count = mem_end - frames;
+
+    debug(" frames: ")(frames)(" m_bitmap + bitmap_count: ")(m_bitmap +
+                                                             m_bitmap_count)(
+        " alignof(PageFrame)")(alignof(PageFrame))("\r\n");
   }
 
 public:
@@ -101,38 +142,24 @@ public:
     return is_initialized;
   }
 
-  void free_frame(PageFrame *frame) {
+  void release_frame(PageFrame *frame) {
     if (frame < frames)
       return;
 
-    if (!is_frame_aligned(frame))
-      return;
-
-    size_t bmap_idx = (frame - frames) / BITSET_SIZE;
-
-    BMap &b = m_bitmap[bmap_idx];
-
-    b.set_bit((frame - frames) % BITSET_SIZE, 0x0);
+    size_t idx = frame - frames;
+    set_bit(idx, false);
   }
 
   Expected<PageFrame *> get_frame() {
-    size_t ceiling = 0;
+    auto result = find_free_frame();
+    if (result.is_error())
+      return error<PageFrame *>(result.get_error());
 
-    for (size_t i = 0; i < ceiling; ++i) {
-      auto &bmap = m_bitmap[i];
-      if (bmap.popcount() == bmap.size())
-        continue;
+    size_t idx = result.get_value();
 
-      for (size_t j = 0; j < bmap.size(); ++j) {
-        bool b = bmap.get_bit(j).get_value();
-        if (b == false) {
-          bmap.set_bit(j, true);
-          return value(frames + i * BITSET_SIZE + j);
-        }
-      }
-    }
+    set_bit(idx, true);
 
-    return error<PageFrame *>(Error::OUT_OF_MEMORY);
+    return value(frames + idx);
   }
 
   size_t frame_count() const { return m_frame_count; }
@@ -140,7 +167,8 @@ public:
 
 void setup_paging() {
   void *START_ADDRESS = &_heap_start;
-  size_t MEM_SIZE = 1024 * 1024 * 1024 - (&_heap_start - &_text_start);
+  size_t MEM_SIZE = 1024 * 1024 * 10 - (&_heap_start - &_text_start);
+
   debug("HEAP START ADDRESS IS: ")(START_ADDRESS)("\r\n");
   debug("HEAP END ADDRESS IS: ")((char *)(START_ADDRESS) + MEM_SIZE)("\r\n");
 
@@ -150,11 +178,43 @@ void setup_paging() {
   PageFrameManager::init(START_ADDRESS, MEM_SIZE);
   PageFrameManager &manager = PageFrameManager::instance();
 
-  debug("Total of ")(manager.frame_count())(" page frames.");
+  debug("Total of ")(manager.frame_count())(" page frames.\r\n");
+  for (size_t i = 0; true; ++i) {
+    auto result = manager.get_frame();
+    if (result.is_error()) {
+      debug("Error code: ")(result.get_error());
+      break;
+    }
 
-  PageFrame *result = manager.get_frame().get_value();
+    PageFrame *frame_1 = result.get_value();
+    print("Frame address:")(frame_1)(" Frame #:")(i)("\r\n");
+  }
 
-  print("Frame address:")(result)("\r\n");
+  /*
+  PageFrame *frame_1 = manager.get_frame().get_value();
+  PageFrame *frame_2 = manager.get_frame().get_value();
+  PageFrame *frame_3 = manager.get_frame().get_value();
+  PageFrame *frame_4 = manager.get_frame().get_value();
+  */
+
+  /*
+  print("Frame address:")(frame_2)("\r\n");
+  print("Frame address:")(frame_3)("\r\n");
+  print("Frame address:")(frame_4)("\r\n");
+
+  manager.release_frame(frame_2);
+  manager.release_frame(frame_3);
+
+  frame_2 = nullptr;
+  frame_3 = nullptr;
+  frame_2 = manager.get_frame().get_value();
+  frame_3 = manager.get_frame().get_value();
+
+  print("Frame address:")(frame_1)("\r\n");
+  print("Frame address:")(frame_2)("\r\n");
+  print("Frame address:")(frame_3)("\r\n");
+  print("Frame address:")(frame_4)("\r\n");
+  */
 }
 
 } // namespace hls

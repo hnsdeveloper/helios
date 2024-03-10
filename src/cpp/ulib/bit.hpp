@@ -79,7 +79,7 @@ public:
 
     size_t i = calculate_buffer_index(n);
     size_t j = n % 8;
-    auto &b = data[i];
+    const byte &b = data[i];
 
     bool result = (b >> j) & 0x1;
 
@@ -92,21 +92,24 @@ public:
 
     size_t i = calculate_buffer_index(n);
     size_t j = n % 8;
-
     byte &b = data[i];
 
-    byte temp = 0x1u & val;
+    byte temp = 0x1u;
+    temp = temp << j;
 
-    b = b | (temp << j);
+    if (val)
+      b = b | temp;
+    else
+      b = (b | temp) ^ temp;
   }
-
-  size_t size() const { return N; }
 
   void flip() {
     for (size_t i = 0; i < s_data_size; ++i) {
       data[i] = ~data[i];
     }
   }
+
+  static size_t size() { return N; }
 };
 
 } // namespace hls

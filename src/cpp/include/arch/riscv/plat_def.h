@@ -37,17 +37,18 @@ static const size_t READ_BIT = 1;
 static const size_t WRITE_BIT = 2;
 static const size_t EXECUTE_BIT = 3;
 
-struct __attribute__((packed)) PageEntry {
-  uint64_t data[PAGE_TABLE_ENTRY_SIZE];
+struct __attribute__((packed)) __attribute__((aligned(PAGE_TABLE_ENTRY_SIZE)))
+PageEntry {
+  byte data[PAGE_TABLE_ENTRY_SIZE];
 };
 
-struct __attribute__((packed)) PageTable {
+struct __attribute__((packed)) __attribute__((aligned(4096))) PageTable {
   PageEntry entries[ENTRIES_PER_TABLE];
 
   PageEntry &get_entry(size_t entry_index) { return entries[entry_index]; }
 };
 
-struct __attribute__((packed)) PageFrame {
+struct __attribute__((packed)) __attribute__((aligned(4096))) PageFrame {
   char data[PAGE_FRAME_SIZE];
 
   PageTable *as_table() { return reinterpret_cast<PageTable *>(this); }

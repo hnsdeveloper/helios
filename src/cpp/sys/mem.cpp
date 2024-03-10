@@ -53,12 +53,20 @@ uintptr_t to_uintptr_t(const void *ptr) {
 
 void *to_ptr(uintptr_t v) { return (byte *)nullptr + v; }
 
+bool is_aligned(const void *ptr, size_t alignment) {
+  uintptr_t p = to_uintptr_t(ptr);
+  return (p / alignment * alignment) == p;
+}
+
 void *align(const void *ptr, size_t alignment) {
   uintptr_t p = to_uintptr_t(ptr);
 
+  if (alignment == 1 || is_aligned(ptr, alignment))
+    return to_ptr(p);
+
   // Checks if aligment is valid. Must be multiple of a power of 2.
-  if (((alignment - 1) & alignment) && alignment >= 2u) {
-    p += p % alignment;
+  if (!((alignment - 1) & alignment)) {
+    p = (p / alignment) * alignment + alignment;
     return to_ptr(p);
   }
 
