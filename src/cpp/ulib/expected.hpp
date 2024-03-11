@@ -54,24 +54,13 @@ class Expected {
 
   Expected() {}
 
-  Expected(const T &v) {
-    using type = remove_cvref_t<T>;
-    if constexpr (!is_integral_v<T> && !is_pointer_v<T> &&
-                  !is_floating_point_v<T>) {
-      new (&m_stored.value) type(v);
-    } else {
-      m_stored.value = v;
-    }
-  }
+  Expected(const T &v) { new (&m_stored.value) T(v); }
+
   Expected(T &&v) {
     using type = remove_cvref_t<T>;
-    if constexpr (!is_integral_v<T> && !is_pointer_v<T> &&
-                  !is_floating_point_v<T>) {
-      new (&m_stored.value) type(hls::move(v));
-    } else {
-      m_stored.value = v;
-    }
+    new (&m_stored.value) type(hls::move(v));
   }
+
   Expected(Error e) {
     m_stored.e = e;
     m_is_error = true;
@@ -79,16 +68,20 @@ class Expected {
 
 public:
   Expected(Expected &&other) {
-    using type = T;
-    if (other.is_value()) {
-      auto &v = other.m_stored.value;
-      if constexpr (!is_integral_v<T> && !is_pointer_v<T> &&
-                    !is_floating_point_v<T>) {
-        new (&m_stored.value) type(hls::move(v));
-        other.m_store.value.~T();
-      } else {
-        m_stored.e = other.m_stored.e;
-      }
+    if (other.is_error()) {
+      m_stored.e = other.m_stored.e;
+    } else {
+      auto *p = &m_stored.value;
+      new (p) T((hls::move(other.m_stored.value)));
+    }
+  }
+
+  Expected(const Expected &other) {
+    if (other.is_error()) {
+      m_stored.e = other.m_stored.e;
+    } else {
+      auto *p = &m_stored.value;
+      new (p) T((other.m_stored.value));
     }
   }
 

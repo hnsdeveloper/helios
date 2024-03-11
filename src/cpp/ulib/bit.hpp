@@ -27,12 +27,37 @@ SOFTWARE.
 #define _BIT_HPP_
 
 #include "include/types.h"
+#include "include/typetraits.h"
 #include "sys/mem.hpp"
 #include "ulib/expected.hpp"
 
 extern "C" size_t _popcount(size_t data);
 
 namespace hls {
+
+template <typename T> inline T set_bit(T data, size_t n, bool val) {
+  static_assert(is_integral_v<T> && !signed_integral_v<T>,
+                "Operation supported only on unsigned integrals.");
+
+  if (!(n >= sizeof(T) * 8)) {
+
+    if (val)
+      data = data | (T)(1) << n;
+    else
+      data = (data | (T)(1) << n) ^ ((T)(1) << n);
+  }
+  return data;
+}
+
+template <typename T> inline Expected<bool> get_bit(T data, size_t n) {
+  static_assert(is_integral_v<T> && !signed_integral_v<T>,
+                "Operation supported only on unsigned integrals.");
+
+  if (n >= sizeof(T) * 8)
+    error<bool>(Error::OUT_OF_BOUNDS);
+
+  return value((bool)((data >> n) & (T)(1)));
+}
 
 namespace __detail {
 template <size_t N> struct CalculateSize {
@@ -81,9 +106,7 @@ public:
     size_t j = n % 8;
     const byte &b = data[i];
 
-    bool result = (b >> j) & 0x1;
-
-    return value(result);
+    return hls::get_bit(b, j);
   }
 
   void set_bit(size_t n, bool val) {
@@ -94,13 +117,7 @@ public:
     size_t j = n % 8;
     byte &b = data[i];
 
-    byte temp = 0x1u;
-    temp = temp << j;
-
-    if (val)
-      b = b | temp;
-    else
-      b = (b | temp) ^ temp;
+    b = hls::set_bit(b, j, val);
   }
 
   void flip() {

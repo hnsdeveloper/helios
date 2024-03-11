@@ -23,9 +23,14 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
+#ifndef _PLAT_DEF_H_
+#define _PLAT_DEF_H_
+
 #include "include/types.h"
 
-static const size_t PAGE_LEVELS = 3;
+namespace hls {
+
+static const size_t PAGE_LEVELS = 4;
 static const size_t PAGE_FRAME_SIZE = 4096;
 static const size_t PAGE_FRAME_ALIGNMENT = PAGE_FRAME_SIZE;
 static const size_t PAGE_TABLE_SIZE = PAGE_FRAME_SIZE;
@@ -37,19 +42,52 @@ static const size_t READ_BIT = 1;
 static const size_t WRITE_BIT = 2;
 static const size_t EXECUTE_BIT = 3;
 
+static const size_t KB_VPN = 0;
+static const size_t MB_VPN = 1;
+static const size_t GB_VPN = 2;
+static const size_t TB_VPN = 3;
+
+enum class VPN : size_t { KB_VPN = 0, MB_VPN = 1, GB_VPN = 2, TB_VPN = 3 };
+
+struct PageEntry;
+struct PageTable;
+struct PageFrame;
+
 struct __attribute__((packed)) __attribute__((aligned(PAGE_TABLE_ENTRY_SIZE)))
 PageEntry {
-  byte data[PAGE_TABLE_ENTRY_SIZE];
+  uint64_t data = 0;
+
+  void make_writable(bool v);
+  void make_readable(bool v);
+  void make_executable(bool v);
+
+  void make_leaf();
+  bool is_valid();
+
+  bool is_leaf();
+
+  bool is_writable();
+  bool is_readable();
+  bool is_executable();
+
+  void point_to_table(PageTable *table);
+  void point_to_frame(PageFrame *frame);
 };
 
 struct __attribute__((packed)) __attribute__((aligned(4096))) PageTable {
-  PageEntry entries[ENTRIES_PER_TABLE];
+  __attribute__((packed)) PageEntry entries[ENTRIES_PER_TABLE];
 
-  PageEntry &get_entry(size_t entry_index) { return entries[entry_index]; }
+  PageEntry &get_entry(size_t entry_index);
 };
 
 struct __attribute__((packed)) __attribute__((aligned(4096))) PageFrame {
   char data[PAGE_FRAME_SIZE];
 
-  PageTable *as_table() { return reinterpret_cast<PageTable *>(this); }
+  PageTable *as_table();
 };
+
+size_t get_vpn_index(void *v_address, VPN vpn);
+
+} // namespace hls
+
+#endif

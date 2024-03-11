@@ -45,8 +45,4 @@ bool is_paging_enabled();
 void setup_paging();
 } // namespace hls
 
-namespace hls {
-bool is_memory_subsystem_initialized();
-}
-
 #endif

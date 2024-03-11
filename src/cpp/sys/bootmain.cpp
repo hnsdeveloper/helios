@@ -23,6 +23,7 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
+#include "sys/memmap.hpp"
 #include "sys/paging.hpp"
 #include "sys/print.hpp"
 
@@ -32,9 +33,7 @@ namespace hls {
 
 void die() { _die(); }
 
-void check_system_capabilities() {
-  // TODO: IMPLEMENT
-}
+void check_system_capabilities() {}
 
 void main(int argc, const char **argv) {
 
@@ -51,6 +50,9 @@ void main(int argc, const char **argv) {
 
   strprintln("Setting up paging system.");
   setup_paging();
+
+  strprintln("Mapping memory.");
+  setup_memory_mapping();
 }
 
 } // namespace hls
