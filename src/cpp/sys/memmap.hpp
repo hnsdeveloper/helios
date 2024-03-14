@@ -27,7 +27,7 @@ SOFTWARE.
 #define _MEMMAP_HPP_
 
 namespace hls {
-void setup_memory_mapping();
+void setup_kernel_memory_mapping();
 }
 
 #endif

@@ -30,46 +30,138 @@ SOFTWARE.
 #include "sys/print.hpp"
 #include "ulib/expected.hpp"
 
+hls::PageTable *kernel_page_table;
+
 namespace hls {
 
-void setup_memory_mapping() {
-  auto &frame_manager = PageFrameManager::instance();
-  PageFrame *frames[2];
+uintptr_t calculate_virtual_ptr_offset(VPN vpn, void *vaddress) {
+  uintptr_t vaddress_uint = to_uintptr_t(vaddress);
+  uintptr_t p = 0;
+  p += vaddress_uint & 0xfff;
 
-  for (size_t i = 0; i < 2; ++i) {
-    auto result = frame_manager.get_frame();
-    if (result.is_error())
-      print("Error while acquiring page frames. Error code: ")(
-          result.get_error())("\r\n");
-
-    frames[i] = result.get_value();
-    memset(&frames[i], 0, sizeof(PageFrame));
+  for (size_t i = 0; i < static_cast<size_t>(vpn); ++i) {
+    p += (vaddress_uint >> (12 + i * 9)) & 0x1FF;
   }
 
-  PageTable *table = reinterpret_cast<PageTable *>(frames[0]);
-  table->get_entry(0).point_to_frame(frames[1]);
+  return p;
+}
 
-  table = reinterpret_cast<PageTable *>(frames[1]);
-  auto &first = table->get_entry(0);
-  auto &second = table->get_entry(1);
+size_t get_page_entry_index(VPN v, void *vaddress) {
+  size_t vpn_idx = static_cast<size_t>(v);
+  uintptr_t p = to_uintptr_t(vaddress);
+  return (p >> (12 + vpn_idx * 9)) & 0x1ff;
+}
 
-  // We are mapping now from 0x00000000 to 0x800000000
-  // This is to QEMU Risc V platform
-  // TODO: Change the code to generalize it
+Expected<VPN> walk_table(PageTable **table_ptr, void *vaddress,
+                         VPN current_vpn) {
 
-  char *address = 0;
+  PageTable *table = *table_ptr;
 
-  first.point_to_frame(reinterpret_cast<PageFrame *>(address));
-  first.make_readable(true);
-  first.make_writable(true);
-  first.make_executable(true);
+  if (table == nullptr) {
+    return error<VPN>(Error::INVALID_PAGE_TABLE);
+  }
 
-  address = address + 0xC0000000;
+  // We can't walk the table anymore, thus everything stays the same
+  if (current_vpn == VPN::KB_VPN) {
+    return value(current_vpn);
+  }
 
-  second.point_to_frame(reinterpret_cast<PageFrame *>(address));
-  second.make_readable(true);
-  second.make_writable(true);
-  second.make_executable(true);
+  uintptr_t vpn = get_page_entry_index(current_vpn, vaddress);
+
+  auto &entry = table->get_entry(vpn);
+
+  if (!entry.is_valid()) {
+    return error<VPN>(Error::INVALID_PAGE_ENTRY);
+  }
+
+  if (!entry.is_leaf()) {
+    *table_ptr = entry.as_table_pointer();
+  }
+
+  size_t i = static_cast<size_t>(current_vpn);
+
+  return value(static_cast<VPN>(i - entry.is_leaf() ? 0 : 1));
+}
+
+Expected<void *> get_physical_address(PageTable *start_table, void *vaddress) {
+  if (start_table == nullptr)
+    return error<void *>(Error::INVALID_PAGE_TABLE);
+
+  VPN last_vpn = VPN::TB_VPN;
+  PageTable *table = start_table;
+  while (true) {
+    auto result = walk_table(&table, vaddress, last_vpn);
+    if (result.is_error()) {
+      return error<void *>(result.get_error());
+    }
+    VPN current_vpn = result.get_value();
+    if (current_vpn == last_vpn)
+      break;
+    last_vpn = current_vpn;
+  }
+
+  size_t vpn_idx = get_page_entry_index(last_vpn, vaddress);
+  PageEntry &entry = table->get_entry(vpn_idx);
+  uintptr_t p = 0;
+
+  if (!entry.is_valid() || !entry.is_leaf()) {
+    return error<void *>(Error::INVALID_PAGE_ENTRY);
+  }
+
+  switch (last_vpn) {
+  case VPN::TB_VPN:
+    p = to_uintptr_t(entry.as_frame_pointer<VPN::TB_VPN>());
+    break;
+  case VPN::GB_VPN:
+    p = to_uintptr_t(entry.as_frame_pointer<VPN::GB_VPN>());
+    break;
+  case VPN::MB_VPN:
+    p = to_uintptr_t(entry.as_frame_pointer<VPN::MB_VPN>());
+    break;
+  case VPN::KB_VPN:
+    p = to_uintptr_t(entry.as_frame_pointer<VPN::KB_VPN>());
+    break;
+  }
+
+  p += calculate_virtual_ptr_offset(last_vpn, vaddress);
+
+  return value(to_ptr(p));
+}
+
+bool is_address_used(void *address) { return false; }
+
+void *kmmap(PageTable *start_table, void *vaddress, size_t length,
+            void *physical_address) {
+
+  // First lets check if it is already mapped
+  auto g_address_result = get_physical_address(start_table, vaddress);
+  if (g_address_result.is_value())
+    return g_address_result.get_value();
+
+  PageTable *table = start_table;
+  VPN p_frame_vpn = [](size_t v) {
+    size_t rval = 0;
+    return VPN::KB_VPN;
+  }(length);
+
+  // TODO: FINISH IMPLEMENTING
+}
+
+void setup_kernel_memory_mapping() {
+  PageFrameManager &manager = PageFrameManager::instance();
+  auto result = manager.get_frame();
+  if (result.is_error()) {
+    print("Can't get kernel page frame.");
+  }
+
+  kernel_page_table = reinterpret_cast<PageTable *>(result.get_value());
+  memset(kernel_page_table, 0, sizeof(PageTable));
+
+  kmmap(kernel_page_table, to_ptr(0x00000000), 1024 * 1024 * 1024,
+        to_ptr(0x00000000));
+
+  kmmap(kernel_page_table, to_ptr(0x40000000), 1024 * 1024 * 1024,
+        to_ptr(0x40000000));
 }
 
 } // namespace hls

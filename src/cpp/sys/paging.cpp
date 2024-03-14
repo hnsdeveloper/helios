@@ -86,14 +86,16 @@ PageFrameManager &PageFrameManager::__internal_instance(void *base_address,
 
 PageFrameManager::PageFrameManager(void *base_address, size_t mem_size) {
   m_bitmap = reinterpret_cast<BMap *>(base_address);
-  PageFrame *temp_frames =
-      reinterpret_cast<PageFrame *>(align(base_address, alignof(PageFrame)));
-  PageFrame *mem_end =
-      reinterpret_cast<PageFrame *>((char *)base_address + mem_size);
+  PageFrame<VPN::KB_VPN> *temp_frames =
+      reinterpret_cast<PageFrame<VPN::KB_VPN> *>(
+          align(base_address, alignof(PageFrame<VPN::KB_VPN>)));
+  PageFrame<VPN::KB_VPN> *mem_end = reinterpret_cast<PageFrame<VPN::KB_VPN> *>(
+      (char *)base_address + mem_size);
 
-  if (!is_aligned(mem_end, alignof(PageFrame))) {
-    mem_end =
-        reinterpret_cast<PageFrame *>(align(mem_end, alignof(PageFrame))) - 1;
+  if (!is_aligned(mem_end, alignof(PageFrame<VPN::KB_VPN>))) {
+    mem_end = reinterpret_cast<PageFrame<VPN::KB_VPN> *>(
+                  align(mem_end, alignof(PageFrame<VPN::KB_VPN>))) -
+              1;
   }
 
   size_t temp_frame_count = mem_end - temp_frames;
@@ -107,14 +109,14 @@ PageFrameManager::PageFrameManager(void *base_address, size_t mem_size) {
     new (m_bitmap + i) BMap();
   }
 
-  frames = reinterpret_cast<PageFrame *>(
-      align(m_bitmap + m_bitmap_count, alignof(PageFrame)));
+  frames = reinterpret_cast<PageFrame<VPN::KB_VPN> *>(
+      align(m_bitmap + m_bitmap_count, alignof(PageFrame<VPN::KB_VPN>)));
 
   m_frame_count = mem_end - frames;
 
   debug(" frames: ")(frames)(" m_bitmap + bitmap_count: ")(m_bitmap +
                                                            m_bitmap_count)(
-      " alignof(PageFrame)")(alignof(PageFrame))("\r\n");
+      " alignof(PageFrame)")(alignof(PageFrame<VPN::KB_VPN>))("\r\n");
 }
 
 PageFrameManager &PageFrameManager::instance() {
@@ -142,7 +144,7 @@ bool PageFrameManager::init(void *base_address, size_t mem_size) {
   return is_initialized;
 }
 
-void PageFrameManager::release_frame(PageFrame *frame) {
+void PageFrameManager::release_frame(PageFrame<VPN::KB_VPN> *frame) {
   if (frame < frames)
     return;
 
@@ -150,10 +152,10 @@ void PageFrameManager::release_frame(PageFrame *frame) {
   set_bit(idx, false);
 }
 
-Expected<PageFrame *> PageFrameManager::get_frame() {
+Expected<PageFrame<VPN::KB_VPN> *> PageFrameManager::get_frame() {
   auto result = find_free_frame();
   if (result.is_error())
-    return error<PageFrame *>(result.get_error());
+    return error<PageFrame<VPN::KB_VPN> *>(result.get_error());
 
   size_t idx = result.get_value();
 

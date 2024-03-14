@@ -26,9 +26,15 @@ SOFTWARE.
 #ifndef _PLAT_DEF_H_
 #define _PLAT_DEF_H_
 
+#include "include/arch/riscv/registers.h"
 #include "include/types.h"
+#include "sys/mem.hpp"
+#include "ulib/expected.hpp"
 
 namespace hls {
+
+Expected<uint64_t> read_csr(MCSR csr_number);
+Expected<uint64_t> write_csr(MCSR csr_code, uint64_t data);
 
 static const size_t PAGE_LEVELS = 4;
 static const size_t PAGE_FRAME_SIZE = 4096;
@@ -42,48 +48,92 @@ static const size_t READ_BIT = 1;
 static const size_t WRITE_BIT = 2;
 static const size_t EXECUTE_BIT = 3;
 
-static const size_t KB_VPN = 0;
-static const size_t MB_VPN = 1;
-static const size_t GB_VPN = 2;
-static const size_t TB_VPN = 3;
+enum class VPN : size_t {
+  KB_VPN = 0,
+  MB_VPN = 1,
+  GB_VPN = 2,
+  TB_VPN = 3,
+  LAST_VPN = TB_VPN
+};
 
-enum class VPN : size_t { KB_VPN = 0, MB_VPN = 1, GB_VPN = 2, TB_VPN = 3 };
+template <VPN n> struct PAGESIZE;
+
+template <> struct PAGESIZE<VPN::KB_VPN> {
+  static constexpr size_t size = 4096;
+  static constexpr VPN page_type = VPN::KB_VPN;
+};
+
+template <> struct PAGESIZE<VPN::MB_VPN> {
+  static constexpr size_t size = 512ul * PAGESIZE<VPN::KB_VPN>::size;
+  static constexpr VPN page_type = VPN::MB_VPN;
+};
+
+template <> struct PAGESIZE<VPN::GB_VPN> {
+  static constexpr size_t size = 512ul * PAGESIZE<VPN::MB_VPN>::size;
+  static constexpr VPN page_type = VPN::GB_VPN;
+};
+
+template <> struct PAGESIZE<VPN::TB_VPN> {
+  static constexpr size_t size = 512ul * PAGESIZE<VPN::GB_VPN>::size;
+  static constexpr VPN page_type = VPN::TB_VPN;
+};
 
 struct PageEntry;
 struct PageTable;
-struct PageFrame;
 
-struct __attribute__((packed)) __attribute__((aligned(PAGE_TABLE_ENTRY_SIZE)))
-PageEntry {
+template <VPN type> struct PageFrame;
+
+struct __attribute__((packed)) PageEntry {
   uint64_t data = 0;
 
   void make_writable(bool v);
   void make_readable(bool v);
   void make_executable(bool v);
 
-  void make_leaf();
   bool is_valid();
 
   bool is_leaf();
+  bool is_table_pointer();
 
   bool is_writable();
   bool is_readable();
   bool is_executable();
 
   void point_to_table(PageTable *table);
-  void point_to_frame(PageFrame *frame);
+
+  template <VPN v> void point_to_frame(PageFrame<v> *frame) {
+    static constexpr uintptr_t HIGH_BITS = 0xff10000000000000;
+
+    using frame_t = PageFrame<v>;
+    if (is_aligned(frame, alignof(frame_t))) {
+      data = to_uintptr_t(frame) >> 12;
+      data = ((data << 9 | 0x1ul) | HIGH_BITS) ^ HIGH_BITS;
+      this->make_readable(true);
+    }
+  }
+
+  PageTable *as_table_pointer();
+
+  template <VPN v> PageFrame<v> *as_frame_pointer() {
+    return reinterpret_cast<PageFrame<v> *>(((data >> 9) << 12));
+  };
 };
 
-struct __attribute__((packed)) __attribute__((aligned(4096))) PageTable {
-  __attribute__((packed)) PageEntry entries[ENTRIES_PER_TABLE];
+struct __attribute__((packed)) PageTable {
+  PageEntry entries[ENTRIES_PER_TABLE];
 
   PageEntry &get_entry(size_t entry_index);
 };
 
-struct __attribute__((packed)) __attribute__((aligned(4096))) PageFrame {
-  char data[PAGE_FRAME_SIZE];
+template <VPN v> struct __attribute__((packed)) PageFrame {
+  char data[PAGESIZE<v>::size];
 
-  PageTable *as_table();
+  PageTable *as_table() {
+    if (PAGESIZE<v>::page_type == VPN::KB_VPN)
+      return reinterpret_cast<PageTable *>(this);
+
+    return nullptr;
+  }
 };
 
 size_t get_vpn_index(void *v_address, VPN vpn);

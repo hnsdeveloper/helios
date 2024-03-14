@@ -23,6 +23,7 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
+#include "include/arch/riscv/plat_def.h"
 #include "sys/memmap.hpp"
 #include "sys/paging.hpp"
 #include "sys/print.hpp"
@@ -33,13 +34,31 @@ namespace hls {
 
 void die() { _die(); }
 
-void check_system_capabilities() {}
+void check_system_capabilities() {
+  uint64_t misa_val = read_csr(MCSR::misa).get_value();
+  auto calc_shift = [](char c) { return c - 'a'; };
+
+  misa_val = 0;
+
+  if (!(misa_val & 0x1ul << calc_shift('i')))
+    print("I extension required to run HeliOS.\r\n");
+  if (!(misa_val & 0x1ul << calc_shift('m')))
+    print("M extension required to run HeliOS.\r\n");
+  if (!(misa_val & 0x1ul << calc_shift('a')))
+    print("A extension required to run HeliOS.\r\n");
+  if (!(misa_val & 0x1ul << calc_shift('f')))
+    print("F extension required to run HeliOS.\r\n");
+  if (!(misa_val & 0x1ul << calc_shift('d')))
+    print("D extension required to run HeliOS.\r\n");
+  if (!(misa_val & 0x1ul << calc_shift('c')))
+    print("C extension required to run HeliOS.\r\n");
+};
 
 void main(int argc, const char **argv) {
 
   // Stops compiler complains for now
   for (int i = 0; i < argc; ++i) {
-    argv[i] = argv[i];
+    void *x = argv + i;
   }
 
   setup_printing();
@@ -51,8 +70,8 @@ void main(int argc, const char **argv) {
   strprintln("Setting up paging system.");
   setup_paging();
 
-  strprintln("Mapping memory.");
-  setup_memory_mapping();
+  strprintln("Mapping kernel memory.");
+  setup_kernel_memory_mapping();
 }
 
 } // namespace hls

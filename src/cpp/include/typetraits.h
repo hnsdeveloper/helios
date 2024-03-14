@@ -107,6 +107,25 @@ template <typename T> struct remove_cvref {
 
 template <typename T> using remove_cvref_t = remove_cvref<T>::type;
 
+// decay trait
+template <typename T> struct decay {
+  using type = remove_cv_t<remove_reference_t<T>>;
+};
+
+template <typename T, size_t N> struct decay<T[N]> {
+  using type = T *;
+};
+
+template <typename T, typename... Args> struct decay<T(Args...)> {
+private:
+  T (*funcptr)(Args...);
+
+public:
+  using type = decltype(funcptr);
+};
+
+template <typename T> using decay_t = decay<T>::type;
+
 // is_reference trait
 template <typename T> struct is_reference : false_type {};
 

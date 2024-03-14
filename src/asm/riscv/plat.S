@@ -1,5 +1,3 @@
-#include "include/arch/riscv/registers.h"
-
 # Definition of some functions used throughout the code
 
 .section .text
@@ -24,14 +22,6 @@ addi    t2, t2, 1
 bltu    t2, t1, loop_begin
 
 ret
-
-
-.global _csr_set
-_csr_set:
-add     t0, zero, a0
-
-
-
 
 .global _die
 _die:

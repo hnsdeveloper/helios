@@ -39,8 +39,7 @@ template <typename T> inline T set_bit(T data, size_t n, bool val) {
   static_assert(is_integral_v<T> && !signed_integral_v<T>,
                 "Operation supported only on unsigned integrals.");
 
-  if (!(n >= sizeof(T) * 8)) {
-
+  if (n < sizeof(T) * 8) {
     if (val)
       data = data | (T)(1) << n;
     else

@@ -39,7 +39,7 @@ namespace hls {
 using BMap = Bit<BITSET_SIZE>;
 
 class PageFrameManager {
-  PageFrame *frames = nullptr; // A pointer to the first frame
+  PageFrame<VPN::KB_VPN> *frames = nullptr; // A pointer to the first frame
   BMap *m_bitmap;
   size_t m_frame_count;
   size_t m_bitmap_count;
@@ -59,8 +59,8 @@ public:
   ~PageFrameManager() {}
 
   size_t frame_count() const;
-  Expected<PageFrame *> get_frame();
-  void release_frame(PageFrame *frame);
+  Expected<PageFrame<VPN::KB_VPN> *> get_frame();
+  void release_frame(PageFrame<VPN::KB_VPN> *frame);
 
   static PageFrameManager &instance();
   static bool init(void *base_address, size_t mem_size);

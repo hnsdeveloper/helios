@@ -23,4 +23,9 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-template <typename T> class PhysicalPointer {};
+template <typename T> class PhysicalPointer {
+
+  T *m_ptr;
+
+public:
+};
