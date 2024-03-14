@@ -33,8 +33,8 @@ SOFTWARE.
 
 namespace hls {
 
-Expected<uint64_t> read_csr(MCSR csr_number);
-Expected<uint64_t> write_csr(MCSR csr_code, uint64_t data);
+Result<uint64_t> read_csr(MCSR csr_number);
+Result<uint64_t> write_csr(MCSR csr_code, uint64_t data);
 
 static const size_t PAGE_LEVELS = 4;
 static const size_t PAGE_FRAME_SIZE = 4096;

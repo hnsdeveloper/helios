@@ -48,7 +48,7 @@ template <typename T> inline T set_bit(T data, size_t n, bool val) {
   return data;
 }
 
-template <typename T> inline Expected<bool> get_bit(T data, size_t n) {
+template <typename T> inline Result<bool> get_bit(T data, size_t n) {
   static_assert(is_integral_v<T> && !is_signed_v<T>,
                 "Operation supported only on unsigned integrals.");
 
@@ -96,7 +96,7 @@ public:
     return accumulator;
   }
 
-  Expected<bool> get_bit(size_t n) const {
+  Result<bool> get_bit(size_t n) const {
     if (n >= s_data_size * 8) {
       return error<bool>(Error::OUT_OF_BOUNDS);
     }

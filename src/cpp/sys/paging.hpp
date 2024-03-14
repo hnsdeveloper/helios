@@ -45,7 +45,7 @@ class PageFrameManager {
   size_t m_bitmap_count;
 
   bool is_frame_aligned(void *ptr);
-  Expected<size_t> find_free_frame();
+  Result<size_t> find_free_frame();
   void set_bit(size_t idx, bool value);
 
   static PageFrameManager &__internal_instance(void *base_address,
@@ -59,7 +59,7 @@ public:
   ~PageFrameManager() {}
 
   size_t frame_count() const;
-  Expected<PageFrame<VPN::KB_VPN> *> get_frame();
+  Result<PageFrame<VPN::KB_VPN> *> get_frame();
   void release_frame(PageFrame<VPN::KB_VPN> *frame);
 
   static PageFrameManager &instance();

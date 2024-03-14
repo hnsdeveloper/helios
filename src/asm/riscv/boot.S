@@ -46,7 +46,11 @@ _start:
 	addi	a0, a0, 8
 	bltu	a0, a1, 1b
 2:	
+	# Store the stack frame, so we can unwind whenever the kernel panics!
+	la		fp, _stack_end
 	la		sp, _stack_end
+	
+
 	# Calls bootmain, so we start using C code
 	call	bootmain
 3:

@@ -26,7 +26,7 @@ SOFTWARE.
 
 using namespace hls;
 
-Expected<uint64_t> hls::read_csr(MCSR csr_number) {
+Result<uint64_t> hls::read_csr(MCSR csr_number) {
   uint64_t result;
   using enum MCSR;
 
@@ -140,7 +140,7 @@ Expected<uint64_t> hls::read_csr(MCSR csr_number) {
   return value(result);
 }
 
-Expected<uint64_t> hls::write_csr(MCSR csr_number, uint64_t data) {
+Result<uint64_t> hls::write_csr(MCSR csr_number, uint64_t data) {
   using enum MCSR;
   switch (csr_number) {
 #define __GENERATE_WRITE_CASE(enum_name)                                       \

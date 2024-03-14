@@ -30,6 +30,7 @@ SOFTWARE.
 #include "include/typetraits.h"
 #include "include/utilities.h"
 #include "misc/new.hpp"
+#include "sys/panic.hpp"
 
 namespace hls {
 
@@ -48,7 +49,7 @@ enum class Error : uint64_t {
 
 template <typename T>
   requires(!is_reference_v<T>)
-class Expected {
+class Result {
 
   union {
     Error e;
@@ -57,22 +58,22 @@ class Expected {
 
   bool m_is_error = false;
 
-  Expected() {}
+  Result() {}
 
-  Expected(const T &v) { new (&m_stored.value) T(v); }
+  Result(const T &v) { new (&m_stored.value) T(v); }
 
-  Expected(T &&v) {
+  Result(T &&v) {
     using type = remove_cvref_t<T>;
     new (&m_stored.value) type(hls::move(v));
   }
 
-  Expected(Error e) {
+  Result(Error e) {
     m_stored.e = e;
     m_is_error = true;
   }
 
 public:
-  Expected(Expected &&other) {
+  Result(Result &&other) {
     if (other.is_error()) {
       m_stored.e = other.m_stored.e;
     } else {
@@ -81,7 +82,7 @@ public:
     }
   }
 
-  Expected(const Expected &other) {
+  Result(const Result &other) {
     if (other.is_error()) {
       m_stored.e = other.m_stored.e;
     } else {
@@ -90,7 +91,7 @@ public:
     }
   }
 
-  ~Expected() {
+  ~Result() {
     if (is_value()) {
       m_stored.value.~T();
     }
@@ -103,34 +104,49 @@ public:
 
   bool is_value() const { return !is_error(); }
 
-  value_type &get_value() { return m_stored.value; }
+  value_type &get_value() {
+    const auto &a = *this;
+    return const_cast<value_type &>(a.get_value());
+  }
 
-  const value_type &get_value() const { return m_stored.value; }
+  // Given that a value is expected, in Kernel code if it doesn't hold, we
+  // panic, after all, the system might end in a unusable state if we consume
+  // the value as if it was proper.
+  const value_type &get_value() const {
+    if (is_error()) {
+      PANIC("Result contains error instead of expected value.");
+    }
+    return m_stored.value;
+  }
 
-  Error get_error() { return m_stored.e; }
+  Error get_error() const {
+    if (!is_error())
+      PANIC("Result contains value instead of error.");
+    return m_stored.e;
+  }
 
   static auto error(Error e) {
     using type = remove_cvref_t<T>;
-    return Expected<type>(e);
+    return Result<type>(e);
   }
 
   static auto value(T &&v) {
     using type = remove_cvref_t<T>;
 
-    return Expected<type>(hls::move(v));
+    return Result<type>(hls::move(v));
   }
 
-  static Expected value(const T &v) {
+  static Result value(const T &v) {
     using type = remove_cvref_t<T>;
-    return Expected<type>(v);
+    return Result<type>(v);
   }
 };
 
-template <typename T> auto error = &Expected<T>::error;
+template <typename T> auto error = &Result<T>::error;
 
 auto value(auto v) {
   using type = remove_cvref_t<decltype(v)>;
-  return Expected<type>::value(hls::forward<decltype(v)>(v));
+  return Result<type>::value(hls::forward<decltype(v)>(v));
 }
 
 } // namespace hls

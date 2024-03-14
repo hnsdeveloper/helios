@@ -51,8 +51,7 @@ size_t get_page_entry_index(VPN v, void *vaddress) {
   return (p >> (12 + vpn_idx * 9)) & 0x1ff;
 }
 
-Expected<VPN> walk_table(PageTable **table_ptr, void *vaddress,
-                         VPN current_vpn) {
+Result<VPN> walk_table(PageTable **table_ptr, void *vaddress, VPN current_vpn) {
 
   PageTable *table = *table_ptr;
 
@@ -82,7 +81,7 @@ Expected<VPN> walk_table(PageTable **table_ptr, void *vaddress,
   return value(static_cast<VPN>(i - entry.is_leaf() ? 0 : 1));
 }
 
-Expected<void *> get_physical_address(PageTable *start_table, void *vaddress) {
+Result<void *> get_physical_address(PageTable *start_table, void *vaddress) {
   if (start_table == nullptr)
     return error<void *>(Error::INVALID_PAGE_TABLE);
 

@@ -33,8 +33,6 @@ extern "C" void _die();
 
 namespace hls {
 
-void die() { _die(); }
-
 void check_system_capabilities() {
   uint64_t misa_val = read_csr(MCSR::misa).get_value();
   auto calc_shift = [](char c) { return c - 'a'; };
@@ -81,4 +79,4 @@ void main(int argc, const char **argv) {
 
 } // namespace hls
 
-extern "C" void bootmain() { hls::main(0, nullptr); }
+extern "C" void bootmain(int argc, const char **argv) { hls::main(argc, argv); }

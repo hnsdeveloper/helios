@@ -51,7 +51,7 @@ bool PageFrameManager::is_frame_aligned(void *ptr) {
   return !(p & 0xFFF);
 }
 
-Expected<size_t> PageFrameManager::find_free_frame() {
+Result<size_t> PageFrameManager::find_free_frame() {
   for (size_t i = 0; i < m_bitmap_count; ++i) {
     auto &bmap = m_bitmap[i];
 
@@ -152,7 +152,7 @@ void PageFrameManager::release_frame(PageFrame<VPN::KB_VPN> *frame) {
   set_bit(idx, false);
 }
 
-Expected<PageFrame<VPN::KB_VPN> *> PageFrameManager::get_frame() {
+Result<PageFrame<VPN::KB_VPN> *> PageFrameManager::get_frame() {
   auto result = find_free_frame();
   if (result.is_error())
     return error<PageFrame<VPN::KB_VPN> *>(result.get_error());

@@ -42,21 +42,21 @@ namespace hls {
 
 // Writes val to a MMIO address + offset (in bytes).
 template <typename IntegerType>
-Expected<IntegerType> mmio_write(volatile void *address, size_t offset,
-                                 IntegerType val) {
+Result<IntegerType> mmio_write(volatile void *address, size_t offset,
+                               IntegerType val) {
   if (is_mmio_address(address)) {
     volatile IntegerType *addr = reinterpret_cast<volatile IntegerType *>(
         reinterpret_cast<volatile char *>(address) + offset);
     *addr = val;
-    return Expected<IntegerType>::value(val);
+    return Result<IntegerType>::value(val);
   }
 
-  return Expected<IntegerType>::error(Error{});
+  return Result<IntegerType>::error(Error{});
 }
 
 // Reads a IntegerType value from device_address + offset (in bytes).
 template <typename IntegerType>
-Expected<IntegerType> mmio_read(volatile void *address, size_t offset) {
+Result<IntegerType> mmio_read(volatile void *address, size_t offset) {
   if (is_mmio_address) {
     volatile IntegerType *addr = reinterpret_cast<volatile IntegerType *>(
         reinterpret_cast<volatile char *>(address) + offset);
