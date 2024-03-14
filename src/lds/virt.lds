@@ -51,7 +51,7 @@ telling the linker script here that we have one pool of RAM.
 */
 MEMORY
 {
-  ram  (wxa) : ORIGIN = 0x80000000, LENGTH = 128M
+  ram  (wxa) : ORIGIN = 0x80000000, LENGTH = 10M
 }
 
 /*
@@ -102,7 +102,7 @@ SECTIONS
 		CURRENT location ('.' = current memory location). This current
 		memory location moves as we add things.
 	  */
-
+	. = ALIGN(4096);
     PROVIDE(_text_start = .);
 	/*
 	  We are going to layout all text sections here, starting with 
@@ -132,6 +132,7 @@ SECTIONS
 	  Again, with PROVIDE, we're providing a readable symbol called _text_end, which is
 	  set to the memory address AFTER .text.init, .text, and .text.*'s have been added.
 	*/
+	. = ALIGN(4096);
     PROVIDE(_text_end = .);
 	/*
 	  The portion after the right brace is in an odd format. However, this is telling the
@@ -170,9 +171,11 @@ SECTIONS
 	 to be able to do.
    */
   .rodata : {
+	. = ALIGN(4096);
     PROVIDE(_rodata_start = .);
     *(.rodata .rodata.*)
-    PROVIDE(_rodata_end = .);
+    . = ALIGN(4096);
+	PROVIDE(_rodata_end = .);
 	/*
 	   Again, we're placing the rodata section in the memory segment "ram" and we're putting
 	   it in the :text program header. We don't have one for rodata anyway.
@@ -200,13 +203,16 @@ SECTIONS
 	   ...in that order.
 	*/
     *(.sdata .sdata.*) *(.data .data.*)
-    PROVIDE(_data_end = .);
+    . = ALIGN(4096);
+	PROVIDE(_data_end = .);
   } >ram AT>ram :data
 
   .bss : {
+	. = ALIGN(4096);
     PROVIDE(_bss_start = .);
     *(.sbss .sbss.*) *(.bss .bss.*)
-    PROVIDE(_bss_end = .);
+    . = ALIGN(4096);
+	PROVIDE(_bss_end = .);
   } >ram AT>ram :bss
 
   /*
@@ -231,6 +237,7 @@ SECTIONS
   */
   PROVIDE(_stack_start = _bss_end);
   PROVIDE(_stack_end = _stack_start + 0x80000);
+  . = ALIGN(4096);
   PROVIDE(_memory_end = ORIGIN(ram) + LENGTH(ram));
 
   /* 

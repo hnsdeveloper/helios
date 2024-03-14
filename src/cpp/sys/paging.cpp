@@ -31,20 +31,19 @@ SOFTWARE.
 namespace hls {
 
 void setup_paging() {
-  void *START_ADDRESS = &_heap_start;
-  size_t MEM_SIZE = 1024 * 1024 * 10 - (&_heap_start - &_text_start);
+  size_t heap_size = reinterpret_cast<uint64_t>(&_heap_size);
 
-  debug("HEAP START ADDRESS IS: ")(START_ADDRESS)("\r\n");
-  debug("HEAP END ADDRESS IS: ")((char *)(START_ADDRESS) + MEM_SIZE)("\r\n");
+  kdebug(&_heap_start);
+  kdebug(heap_size);
 
-  print("Initializing PageFrameManager with ")(MEM_SIZE /
-                                               1024)("kb of memory.\n");
+  kprintln("Initializing PageFrameManager with {} kb of memory.\r\n",
+           heap_size / 1024);
 
-  PageFrameManager::init(START_ADDRESS, MEM_SIZE);
+  PageFrameManager::init(&_heap_start, heap_size);
   PageFrameManager &manager = PageFrameManager::instance();
 
-  print("Total of ")(manager.frame_count())(" page frames.\r\n");
-  print("PageFrameManager initialized.\r\n");
+  kprintln("PageFrameManager initialized with a total of {} page frames.",
+           manager.frame_count());
 }
 
 bool PageFrameManager::is_frame_aligned(void *ptr) {
@@ -101,9 +100,10 @@ PageFrameManager::PageFrameManager(void *base_address, size_t mem_size) {
   size_t temp_frame_count = mem_end - temp_frames;
   m_bitmap_count = temp_frame_count / 64 + (temp_frame_count % 64 ? 1 : 0);
 
-  debug("temp_frames: ")(temp_frames)(" mem_end: ")(
-      mem_end)(" temp_frame_count: ")(temp_frame_count)(" m_bitmap_count: ")(
-      m_bitmap_count)("\r\n");
+  kdebug(temp_frames);
+  kdebug(temp_frame_count);
+  kdebug(mem_end);
+  kdebug(m_bitmap_count);
 
   for (size_t i = 0; i < m_bitmap_count; ++i) {
     new (m_bitmap + i) BMap();
@@ -114,9 +114,9 @@ PageFrameManager::PageFrameManager(void *base_address, size_t mem_size) {
 
   m_frame_count = mem_end - frames;
 
-  debug(" frames: ")(frames)(" m_bitmap + bitmap_count: ")(m_bitmap +
-                                                           m_bitmap_count)(
-      " alignof(PageFrame)")(alignof(PageFrame<VPN::KB_VPN>))("\r\n");
+  kdebug(frames);
+  kdebug(m_bitmap + m_bitmap_count);
+  kdebug(alignof(PageFrame<VPN::KB_VPN>));
 }
 
 PageFrameManager &PageFrameManager::instance() {

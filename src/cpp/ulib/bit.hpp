@@ -36,7 +36,7 @@ extern "C" size_t _popcount(size_t data);
 namespace hls {
 
 template <typename T> inline T set_bit(T data, size_t n, bool val) {
-  static_assert(is_integral_v<T> && !signed_integral_v<T>,
+  static_assert(is_integral_v<T> && !is_signed_v<T>,
                 "Operation supported only on unsigned integrals.");
 
   if (n < sizeof(T) * 8) {
@@ -49,7 +49,7 @@ template <typename T> inline T set_bit(T data, size_t n, bool val) {
 }
 
 template <typename T> inline Expected<bool> get_bit(T data, size_t n) {
-  static_assert(is_integral_v<T> && !signed_integral_v<T>,
+  static_assert(is_integral_v<T> && !is_signed_v<T>,
                 "Operation supported only on unsigned integrals.");
 
   if (n >= sizeof(T) * 8)

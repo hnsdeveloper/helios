@@ -28,6 +28,8 @@ SOFTWARE.
 #include "include/types.h"
 #include "include/typetraits.h"
 
+extern "C" putchar_func_ptr putchar;
+
 namespace hls {
 
 void setup_printing();
@@ -39,34 +41,72 @@ void intprint(int64_t);
 void uintprint(uint64_t);
 void floatprint(double);
 
-auto print(auto p) {
-  using type = decltype(p);
-
-  if constexpr (is_same_v<type, const char *>) {
-    strprint(p);
-  } else if constexpr (is_pointer_v<type>) {
-    ptrprint(p);
-  } else if constexpr (is_integral_v<type>) {
-    if (signed_integral_v<type>) {
-      intprint(p);
-    } else if constexpr (!signed_integral_v<type>) {
-      uintprint(p);
-    }
-  } else if constexpr (is_floating_point_v<type>) {
-    floatprint(p);
+template <typename T, typename... Args>
+void print_v(const char *str, T p, Args... args) {
+  if (str == nullptr) {
+    strprint("Can't print nullptr string.");
   }
 
-  auto rec_lamb = [](auto z) { return print(z); };
-  return rec_lamb;
+  while (*str) {
+    auto c = *str;
+    if (c == '{') {
+      if (*(str + 1) != '}') {
+        strprint("{");
+        print_v(str + 1, p, args...);
+        break;
+      }
+      using type = decltype(p);
+      if constexpr (is_same_v<type, const char *>) {
+        strprint(p);
+      } else if constexpr (is_pointer_v<type>) {
+        ptrprint(p);
+      } else if constexpr (is_integral_v<type>) {
+        if (is_signed<type>::value) {
+          intprint(p);
+        } else if constexpr (!is_signed<type>::value) {
+          uintprint(p);
+        }
+      } else if constexpr (is_floating_point_v<type>) {
+        floatprint(p);
+      } else {
+        strprint("Type printing not supported!");
+      }
+      if constexpr (sizeof...(args)) {
+        print_v(str + 2, args...);
+      } else {
+        if (*(str + 2))
+          strprint(str + 2);
+      }
+      break;
+    }
+
+    putchar(c);
+    ++str;
+  }
 }
 
-auto debug(auto p) {
-  constexpr bool debug_enabled =
-      true; // For now we will have it here, but at some point kernel debugging
-            // should become optional
-  if (debug_enabled)
-    return print(p);
+template <typename... Args> void kprint(const char *str, Args... args) {
+  if constexpr (sizeof...(args) == 0) {
+    strprint(str);
+  } else {
+    print_v(str, args...);
+  }
 }
+
+template <typename... Args> void kprintln(const char *str, Args... args) {
+  if constexpr (sizeof...(args) == 0) {
+    strprint(str);
+  } else {
+    print_v(str, args...);
+  }
+
+  strprint("\r\n");
+}
+
+#define kdebug(expr)                                                           \
+  if constexpr (true) {                                                        \
+    kprintln(#expr " : {}", expr);                                             \
+  }
 
 } // namespace hls
 

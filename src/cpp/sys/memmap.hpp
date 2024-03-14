@@ -26,8 +26,15 @@ SOFTWARE.
 #ifndef _MEMMAP_HPP_
 #define _MEMMAP_HPP_
 
+#include "include/arch/riscv/plat_def.h"
+#include "ulib/expected.hpp"
+
 namespace hls {
+
+Expected<VPN> walk_table(PageTable **table_ptr, void *vaddress,
+                         VPN current_vpn);
+
 void setup_kernel_memory_mapping();
-}
+} // namespace hls
 
 #endif

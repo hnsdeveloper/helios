@@ -23,8 +23,48 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-template <typename T> class VirtualPointer {
-  T *m_ptr;
+#ifndef _VIRTUALPOINTER_HPP_
+#define _VIRTUALPOINTER_HPP_
 
+#include "include/arch/riscv/plat_def.h"
+#include "sys/memmap.hpp"
+
+namespace hls {
+
+template <typename T> class VPtr {
 public:
+  using type = T;
+
+  ~VPtr(){};
+
+  T &operator*() { return *get_physical_address(); }
+  T *operator->() { return get_physical_address(); }
+
+  T *get_vaddress() { return m_ptr; }
+  T *get_physical_address() { VPN current_page_level = m_page_level; }
+
+private:
+  type *m_ptr;
+  PageTable *m_table;
+  VPN m_page_level;
 };
+
+// We don't have the need of this for now, but I will leave it here as to
+// remember.
+// template <typename T> class VPtr<T *> {
+//
+//  T *m_ptr;
+//  PageTable *m_table;
+//  VPN m_page_level;
+//
+// public:
+//  ~VPtr(){};
+//  V
+//};
+
+template <typename T>
+VPtr make_vptr(T *vaddr, PageTable *table, VPN page_level) {}
+
+} // namespace hls
+
+#endif

@@ -24,11 +24,10 @@ SOFTWARE.
 ---------------------------------------------------------------------------------*/
 
 #include "sys/memmap.hpp"
-#include "include/arch/riscv/plat_def.h"
+#include "include/symbols.h"
 #include "sys/mem.hpp"
 #include "sys/paging.hpp"
 #include "sys/print.hpp"
-#include "ulib/expected.hpp"
 
 hls::PageTable *kernel_page_table;
 
@@ -130,7 +129,7 @@ Expected<void *> get_physical_address(PageTable *start_table, void *vaddress) {
 
 bool is_address_used(void *address) { return false; }
 
-void *kmmap(PageTable *start_table, void *vaddress, size_t length,
+void *kmmap(PageTable *start_table, void *vaddress, VPN page_level,
             void *physical_address) {
 
   // First lets check if it is already mapped
@@ -139,29 +138,28 @@ void *kmmap(PageTable *start_table, void *vaddress, size_t length,
     return g_address_result.get_value();
 
   PageTable *table = start_table;
-  VPN p_frame_vpn = [](size_t v) {
-    size_t rval = 0;
-    return VPN::KB_VPN;
-  }(length);
+  VPN current_page_level = VPN::LAST_VPN;
 
-  // TODO: FINISH IMPLEMENTING
+  while (current_page_level != page_level) {
+    auto result = walk_table(&start_table, vaddress, current_page_level);
+    if (result.is_error()) // Theoretically nullptr is still a valid value
+      return nullptr;
+  }
 }
 
 void setup_kernel_memory_mapping() {
   PageFrameManager &manager = PageFrameManager::instance();
   auto result = manager.get_frame();
   if (result.is_error()) {
-    print("Can't get kernel page frame.");
+    // print("Can't get kernel page frame.");
   }
 
   kernel_page_table = reinterpret_cast<PageTable *>(result.get_value());
   memset(kernel_page_table, 0, sizeof(PageTable));
 
-  kmmap(kernel_page_table, to_ptr(0x00000000), 1024 * 1024 * 1024,
-        to_ptr(0x00000000));
+  kmmap(kernel_page_table, to_ptr(0x00000000), VPN::GB_VPN, to_ptr(0x00000000));
 
-  kmmap(kernel_page_table, to_ptr(0x40000000), 1024 * 1024 * 1024,
-        to_ptr(0x40000000));
+  kmmap(kernel_page_table, to_ptr(0x40000000), VPN::GB_VPN, to_ptr(0x40000000));
 }
 
 } // namespace hls

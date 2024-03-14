@@ -26,6 +26,7 @@ SOFTWARE.
 #include "include/arch/riscv/plat_def.h"
 #include "sys/memmap.hpp"
 #include "sys/paging.hpp"
+#include "sys/panic.hpp"
 #include "sys/print.hpp"
 
 extern "C" void _die();
@@ -41,18 +42,20 @@ void check_system_capabilities() {
   misa_val = 0;
 
   if (!(misa_val & 0x1ul << calc_shift('i')))
-    print("I extension required to run HeliOS.\r\n");
+    kprint("I extension required to run HeliOS.\r\n");
   if (!(misa_val & 0x1ul << calc_shift('m')))
-    print("M extension required to run HeliOS.\r\n");
+    kprint("M extension required to run HeliOS.\r\n");
   if (!(misa_val & 0x1ul << calc_shift('a')))
-    print("A extension required to run HeliOS.\r\n");
+    kprint("A extension required to run HeliOS.\r\n");
   if (!(misa_val & 0x1ul << calc_shift('f')))
-    print("F extension required to run HeliOS.\r\n");
+    kprint("F extension required to run HeliOS.\r\n");
   if (!(misa_val & 0x1ul << calc_shift('d')))
-    print("D extension required to run HeliOS.\r\n");
+    kprint("D extension required to run HeliOS.\r\n");
   if (!(misa_val & 0x1ul << calc_shift('c')))
-    print("C extension required to run HeliOS.\r\n");
+    kprint("C extension required to run HeliOS.\r\n");
 };
+
+void test_func() { PANIC("This is a kernel panic test!"); }
 
 void main(int argc, const char **argv) {
 
@@ -63,6 +66,8 @@ void main(int argc, const char **argv) {
 
   setup_printing();
   strprintln("Booting HeliOS!");
+
+  test_func();
 
   strprintln("Checking system capabilities!");
   check_system_capabilities();

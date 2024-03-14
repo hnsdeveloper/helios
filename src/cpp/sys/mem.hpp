@@ -42,7 +42,6 @@ bool is_aligned(const void *ptr, size_t alignment);
 void *align(const void *ptr, size_t alignment);
 
 bool is_paging_enabled();
-void setup_paging();
 } // namespace hls
 
 #endif

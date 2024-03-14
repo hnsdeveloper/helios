@@ -31,6 +31,8 @@ SOFTWARE.
 extern "C" byte _text_start;
 extern "C" byte _text_end;
 extern "C" byte _global_pointer;
+extern "C" byte _rodata_start;
+extern "C" byte _rodata_end;
 extern "C" byte _data_start;
 extern "C" byte _data_end;
 extern "C" byte _bss_start;
@@ -38,5 +40,6 @@ extern "C" byte _bss_end;
 extern "C" byte _stack_start;
 extern "C" byte _stack_end;
 extern "C" byte _heap_start;
+extern "C" uint64_t _heap_size;
 
 #endif

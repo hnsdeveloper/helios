@@ -183,13 +183,12 @@ template <typename T> struct check_signed<T *> {
 
 }; // namespace detail
 
-template <typename T> struct signed_integral {
+template <typename T> struct is_signed {
   static constexpr bool value =
       is_integral_v<T> && detail::check_signed<T>::value;
 };
 
-template <typename T>
-constexpr bool signed_integral_v = signed_integral<T>::value;
+template <typename T> constexpr bool is_signed_v = is_signed<T>::value;
 
 template <typename> struct is_pointer : false_type {};
 

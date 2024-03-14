@@ -88,10 +88,10 @@ void intprint(int64_t v) {
     if (v == ~decltype(v){0}) {
       v += 1;
       v = -v;
-      uintprint(0u + v + 1);
+      uintprint((uint64_t(0) + v) + 1);
     } else {
       v = -v;
-      uintprint(0u + v);
+      uintprint(v);
     }
   }
 }
