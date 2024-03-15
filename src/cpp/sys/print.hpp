@@ -58,6 +58,8 @@ void print_v(const char *str, T p, Args... args) {
       using type = decltype(p);
       if constexpr (is_same_v<type, const char *>) {
         strprint(p);
+      } else if constexpr (is_same_v<remove_cvref_t<type>, char>) {
+        putchar(p);
       } else if constexpr (is_pointer_v<type>) {
         ptrprint(p);
       } else if constexpr (is_integral_v<type>) {
@@ -105,7 +107,13 @@ template <typename... Args> void kprintln(const char *str, Args... args) {
 
 #define kdebug(expr)                                                           \
   if constexpr (true) {                                                        \
-    kprintln(#expr " : {}", expr);                                             \
+    if constexpr (is_integral_v<decltype(expr)>) {                             \
+      void *p = reinterpret_cast<void *>(expr);                                \
+      auto p2 = expr;                                                          \
+      kprintln(#expr " : {} " #expr " hex: {}", p2, p);                        \
+    } else {                                                                   \
+      kprintln(#expr ": {}", expr);                                            \
+    }                                                                          \
   }
 
 } // namespace hls

@@ -31,8 +31,7 @@ SOFTWARE.
 
 namespace hls {
 
-Expected<VPN> walk_table(PageTable **table_ptr, void *vaddress,
-                         VPN current_vpn);
+Result<VPN> walk_table(PageTable **table_ptr, void *vaddress, VPN current_vpn);
 
 void setup_kernel_memory_mapping();
 } // namespace hls

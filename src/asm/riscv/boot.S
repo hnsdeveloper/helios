@@ -49,7 +49,6 @@ _start:
 	# Store the stack frame, so we can unwind whenever the kernel panics!
 	la		fp, _stack_end
 	la		sp, _stack_end
-	
 
 	# Calls bootmain, so we start using C code
 	call	bootmain

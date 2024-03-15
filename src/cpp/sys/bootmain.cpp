@@ -24,36 +24,54 @@ SOFTWARE.
 ---------------------------------------------------------------------------------*/
 
 #include "include/arch/riscv/plat_def.h"
+#include "misc/githash.hpp"
+#include "misc/splash.hpp"
 #include "sys/memmap.hpp"
 #include "sys/paging.hpp"
 #include "sys/panic.hpp"
 #include "sys/print.hpp"
 
-extern "C" void _die();
-
 namespace hls {
 
+void display_initial_info() {
+  // Prints the splash logo
+  strprint(splash);
+  // Prints copyright notice, the year and the commit which this build was based
+  // at.
+  kprintln("Copyright (C) {}. Built from {}.", __DATE__ + 7, GIT_HASH);
+}
+
 void check_system_capabilities() {
-  uint64_t misa_val = read_csr(MCSR::misa).get_value();
+  uint64_t misa = read_csr(MCSR::misa).get_value();
   auto calc_shift = [](char c) { return c - 'a'; };
+  auto has_extension = [calc_shift](char extension, uint64_t misa) -> bool {
+    return misa & (0x1u << calc_shift(extension));
+  };
 
-  misa_val = 0;
+  kdebug(misa);
 
-  if (!(misa_val & 0x1ul << calc_shift('i')))
-    kprint("I extension required to run HeliOS.\r\n");
-  if (!(misa_val & 0x1ul << calc_shift('m')))
-    kprint("M extension required to run HeliOS.\r\n");
-  if (!(misa_val & 0x1ul << calc_shift('a')))
-    kprint("A extension required to run HeliOS.\r\n");
-  if (!(misa_val & 0x1ul << calc_shift('f')))
-    kprint("F extension required to run HeliOS.\r\n");
-  if (!(misa_val & 0x1ul << calc_shift('d')))
-    kprint("D extension required to run HeliOS.\r\n");
-  if (!(misa_val & 0x1ul << calc_shift('c')))
-    kprint("C extension required to run HeliOS.\r\n");
-};
-
-void test_func() { PANIC("This is a kernel panic test!"); }
+  for (char c = 'A'; c <= 'Z'; ++c) {
+    switch (c) {
+    case 'I':
+    case 'M':
+    case 'A':
+    case 'F':
+    case 'D':
+    case 'C':
+    case 'S':
+    case 'U':
+      if (!has_extension(c, misa)) {
+        kprintln("Extension {} required to run HeliOS.", c);
+        PANIC();
+      }
+    default:
+      if (has_extension(c, misa)) {
+        kprintln("Extension {} present.", c);
+        break;
+      }
+    }
+  };
+}
 
 void main(int argc, const char **argv) {
 
@@ -63,14 +81,13 @@ void main(int argc, const char **argv) {
   }
 
   setup_printing();
-  strprintln("Booting HeliOS!");
 
-  test_func();
+  display_initial_info();
 
   strprintln("Checking system capabilities!");
   check_system_capabilities();
 
-  strprintln("Setting up paging system.");
+  strprintln("Setting up pageframe manager.");
   setup_paging();
 
   strprintln("Mapping kernel memory.");

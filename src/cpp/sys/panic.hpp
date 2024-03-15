@@ -33,8 +33,10 @@ struct hart;
 extern "C" void print_registers(hart *);
 extern "C" void _die();
 
+// Might wanna look into jumping to some label
+// Using the macro throughout the code will quickly add up
 #define REGPRINT()                                                             \
-  asm("1:                                                                     \
+  asm("1:                                                                      \
        addi sp, sp, -256;           \
        sd x1, 0(x2);                \
        sd x3, 16(x2);               \
