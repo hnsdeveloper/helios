@@ -1,3 +1,7 @@
 /target
 /gcm.cache
 .DS_Store
+hdd.dmg
+hdd.dsk
+u-boot-spl-dtb.bin
+u-boot.itb
