@@ -36,8 +36,9 @@ void setup_paging() {
   kdebug(&_heap_start);
   kdebug(heap_size);
 
-  kprintln("Initializing PageFrameManager with {} kb of memory.\r\n",
-           heap_size / 1024);
+  kprintln("Initializing PageFrameManager with {} kb of memory. Memory starts "
+           "at {}.\r\n",
+           heap_size / 1024, &_heap_start);
 
   PageFrameManager::init(&_heap_start, heap_size);
   PageFrameManager &manager = PageFrameManager::instance();
@@ -84,50 +85,38 @@ PageFrameManager &PageFrameManager::__internal_instance(void *base_address,
 }
 
 PageFrameManager::PageFrameManager(void *base_address, size_t mem_size) {
-  m_bitmap = reinterpret_cast<BMap *>(base_address);
-  PageFrame<VPN::KB_VPN> *temp_frames =
-      reinterpret_cast<PageFrame<VPN::KB_VPN> *>(
-          align(base_address, alignof(PageFrame<VPN::KB_VPN>)));
-  PageFrame<VPN::KB_VPN> *mem_end = reinterpret_cast<PageFrame<VPN::KB_VPN> *>(
-      (char *)base_address + mem_size);
+  m_bitmap = reinterpret_cast<BMap *>(align(base_address, alignof(BMap)));
+  m_frames = reinterpret_cast<PageKB *>(base_address);
 
-  if (!is_aligned(mem_end, alignof(PageFrame<VPN::KB_VPN>))) {
-    mem_end = reinterpret_cast<PageFrame<VPN::KB_VPN> *>(
-                  align(mem_end, alignof(PageFrame<VPN::KB_VPN>))) -
-              1;
-  }
+  PageKB *mem_end =
+      reinterpret_cast<PageKB *>((char *)(base_address) + mem_size);
+  size_t temp_frame_count = mem_end - m_frames;
 
-  size_t temp_frame_count = mem_end - temp_frames;
   m_bitmap_count = temp_frame_count / 64 + (temp_frame_count % 64 ? 1 : 0);
+  m_frames = reinterpret_cast<PageKB *>(
+      align(m_bitmap + m_bitmap_count, PageKB::alignment));
 
-  kdebug(temp_frames);
-  kdebug(temp_frame_count);
+  m_frame_count = mem_end - m_frames;
+
+  kdebug(base_address);
+  kdebug(m_frames);
   kdebug(mem_end);
+  kdebug(temp_frame_count);
   kdebug(m_bitmap_count);
 
   for (size_t i = 0; i < m_bitmap_count; ++i) {
     new (m_bitmap + i) BMap();
   }
-
-  frames = reinterpret_cast<PageFrame<VPN::KB_VPN> *>(
-      align(m_bitmap + m_bitmap_count, alignof(PageFrame<VPN::KB_VPN>)));
-
-  m_frame_count = mem_end - frames;
-
-  kdebug(frames);
-  kdebug(m_bitmap + m_bitmap_count);
-  kdebug(alignof(PageFrame<VPN::KB_VPN>));
 }
 
 PageFrameManager &PageFrameManager::instance() {
   bool initialized = init(nullptr, 0);
-  if (initialized)
-    return __internal_instance(nullptr, 0);
 
-  // TODO: PANIC, for now return nullptr
+  if (!initialized) {
+    PANIC("PageFrameManager not initialized.");
+  }
 
-  PageFrameManager *p = nullptr;
-  return *p;
+  return __internal_instance(nullptr, 0);
 }
 
 bool PageFrameManager::init(void *base_address, size_t mem_size) {
@@ -144,24 +133,24 @@ bool PageFrameManager::init(void *base_address, size_t mem_size) {
   return is_initialized;
 }
 
-void PageFrameManager::release_frame(PageFrame<VPN::KB_VPN> *frame) {
-  if (frame < frames)
+void PageFrameManager::release_frame(PageKB *frame) {
+  if (frame < m_frames)
     return;
 
-  size_t idx = frame - frames;
+  size_t idx = frame - m_frames;
   set_bit(idx, false);
 }
 
-Result<PageFrame<VPN::KB_VPN> *> PageFrameManager::get_frame() {
+Result<PageKB *> PageFrameManager::get_frame() {
   auto result = find_free_frame();
   if (result.is_error())
-    return error<PageFrame<VPN::KB_VPN> *>(result.get_error());
+    return error<PageKB *>(result.get_error());
 
   size_t idx = result.get_value();
 
   set_bit(idx, true);
 
-  return value(frames + idx);
+  return value(m_frames + idx);
 }
 
 size_t PageFrameManager::frame_count() const { return m_frame_count; }

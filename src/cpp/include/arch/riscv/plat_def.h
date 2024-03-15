@@ -56,31 +56,30 @@ enum class VPN : size_t {
   LAST_VPN = TB_VPN
 };
 
-template <VPN n> struct PAGESIZE;
+template <VPN n> struct FrameInfo;
 
-template <> struct PAGESIZE<VPN::KB_VPN> {
+template <> struct FrameInfo<VPN::KB_VPN> {
   static constexpr size_t size = 4096;
   static constexpr VPN page_type = VPN::KB_VPN;
 };
 
-template <> struct PAGESIZE<VPN::MB_VPN> {
-  static constexpr size_t size = 512ul * PAGESIZE<VPN::KB_VPN>::size;
+template <> struct FrameInfo<VPN::MB_VPN> {
+  static constexpr size_t size = 512ul * FrameInfo<VPN::KB_VPN>::size;
   static constexpr VPN page_type = VPN::MB_VPN;
 };
 
-template <> struct PAGESIZE<VPN::GB_VPN> {
-  static constexpr size_t size = 512ul * PAGESIZE<VPN::MB_VPN>::size;
+template <> struct FrameInfo<VPN::GB_VPN> {
+  static constexpr size_t size = 512ul * FrameInfo<VPN::MB_VPN>::size;
   static constexpr VPN page_type = VPN::GB_VPN;
 };
 
-template <> struct PAGESIZE<VPN::TB_VPN> {
-  static constexpr size_t size = 512ul * PAGESIZE<VPN::GB_VPN>::size;
+template <> struct FrameInfo<VPN::TB_VPN> {
+  static constexpr size_t size = 512ul * FrameInfo<VPN::GB_VPN>::size;
   static constexpr VPN page_type = VPN::TB_VPN;
 };
 
 struct PageEntry;
 struct PageTable;
-
 template <VPN type> struct PageFrame;
 
 struct __attribute__((packed)) PageEntry {
@@ -126,15 +125,24 @@ struct __attribute__((packed)) PageTable {
 };
 
 template <VPN v> struct __attribute__((packed)) PageFrame {
-  char data[PAGESIZE<v>::size];
+  static constexpr size_t s_size = FrameInfo<v>::size;
+  static constexpr VPN s_type = FrameInfo<v>::page_type;
+  static constexpr size_t alignment = FrameInfo<v>::size;
+
+  char data[FrameInfo<v>::size];
 
   PageTable *as_table() {
-    if (PAGESIZE<v>::page_type == VPN::KB_VPN)
+    if (FrameInfo<v>::page_type == VPN::KB_VPN)
       return reinterpret_cast<PageTable *>(this);
 
     return nullptr;
   }
 };
+
+using PageKB = PageFrame<VPN::KB_VPN>;
+using PageMB = PageFrame<VPN::MB_VPN>;
+using PageGB = PageFrame<VPN::GB_VPN>;
+using PageTB = PageFrame<VPN::TB_VPN>;
 
 size_t get_vpn_index(void *v_address, VPN vpn);
 

@@ -1,5 +1,6 @@
 /target
 /gcm.cache
+/.vscode
 .DS_Store
 hdd.dmg
 hdd.dsk
