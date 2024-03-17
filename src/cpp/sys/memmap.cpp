@@ -148,13 +148,12 @@ void *kmmap(PageTable *start_table, void *vaddress, VPN page_level,
 
 void setup_kernel_memory_mapping() {
   PageFrameManager &manager = PageFrameManager::instance();
-  auto result = manager.get_frame();
-  if (result.is_error()) {
-    // print("Can't get kernel page frame.");
-  }
 
-  kernel_page_table = reinterpret_cast<PageTable *>(result.get_value());
+  kernel_page_table =
+      reinterpret_cast<PageTable *>(manager.get_frame().get_value());
   memset(kernel_page_table, 0, sizeof(PageTable));
+
+  kdebug(kernel_page_table);
 
   kmmap(kernel_page_table, to_ptr(0x00000000), VPN::GB_VPN, to_ptr(0x00000000));
 

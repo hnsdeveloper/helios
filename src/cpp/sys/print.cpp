@@ -73,6 +73,8 @@ void ptrprint(const void *ptr) {
     v = v >> 4;
   }
 
+  putchar('0');
+  putchar('x');
   for (size_t i = 0; i < buffer_size; ++i) {
     char &c = buffer[buffer_size - i - 1];
     putchar(c);

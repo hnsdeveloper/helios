@@ -73,6 +73,24 @@ void check_system_capabilities() {
   };
 }
 
+void test_function3(int x) {
+  int a = 0;
+  a = x + 10;
+  PANIC("THIS IS A TEST!!!");
+}
+
+void test_function2(int x) {
+  int a = 0;
+  a = x + 10;
+  test_function3(a);
+}
+
+void test_function1() {
+  int a = 0;
+  a = 0 + 10;
+  test_function2(a);
+}
+
 void main(int argc, const char **argv) {
 
   // Stops compiler complains for now
@@ -86,6 +104,8 @@ void main(int argc, const char **argv) {
 
   strprintln("Checking system capabilities!");
   check_system_capabilities();
+
+  test_function1();
 
   strprintln("Setting up pageframe manager.");
   setup_paging();

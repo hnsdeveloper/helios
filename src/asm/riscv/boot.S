@@ -47,8 +47,13 @@ _start:
 	bltu	a0, a1, 1b
 2:	
 	# Store the stack frame, so we can unwind whenever the kernel panics!
-	la		fp, _stack_end
+	add		fp, x0, x0
 	la		sp, _stack_end
+
+	addi	sp, sp, -16
+	sd		x0, 0(sp)
+	la		t4, 3f
+	sd		t4, 8(sp)
 
 	# Calls bootmain, so we start using C code
 	call	bootmain
@@ -57,10 +62,10 @@ _start:
 	j	3b
 
 # Control registers, set the stack, mstatus, mepc,
-	# and mtvec to return to the main function.
-	# li		t5, 0xffff;
-	# csrw	medeleg, t5
-	# csrw	mideleg, t5
+# and mtvec to return to the main function.
+# li		t5, 0xffff;
+# csrw	medeleg, t5
+# csrw	mideleg, t5
 
 
 # We use mret here so that the mstatus register

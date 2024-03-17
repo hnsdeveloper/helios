@@ -14,6 +14,6 @@ else
     exit
 fi
 
-qemu-system-riscv64 -machine virt -cpu rv64 -smp 1 -m 1G -machine virt -bios none  -device ich9-ahci,id=ahci -drive if=none,file=hdd.dmg,format=raw,id=mydisk -device ide-hd,drive=mydisk,bus=ahci.0 -serial stdio  -device qemu-xhci,id=xhci -device usb-kbd,bus=xhci.0 -kernel $kernel_image
+qemu-system-riscv64 -machine virt -cpu rv64 -smp 1 -m 1G -machine virt -bios none  -device ich9-ahci,id=ahci -drive if=none,file=hdd.dmg,format=raw,id=mydisk -device ide-hd,drive=mydisk,bus=ahci.0 -monitor stdio -device qemu-xhci,id=xhci -device usb-kbd,bus=xhci.0 -kernel $kernel_image
 
-# -bios u-boot-spl-dtb.bin -device loader,file=u-boot.itb,addr=0x80200000 -device VGA
+# -bios u-boot-spl-dtb.bin -device loader,file=u-boot.itb,addr=0x80200000 -device VGA -serial stdio 

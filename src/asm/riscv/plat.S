@@ -3,7 +3,6 @@
 .section .text
 # Simple popcount
 .global _popcount
-
 _popcount:
 add     t0, zero, a0
 addi    t1, zero, 64
@@ -23,7 +22,3 @@ bltu    t2, t1, loop_begin
 
 ret
 
-.global _die
-_die:
-    wfi
-    j _die    
