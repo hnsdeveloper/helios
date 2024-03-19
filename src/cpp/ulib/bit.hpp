@@ -29,7 +29,7 @@ SOFTWARE.
 #include "include/types.h"
 #include "include/typetraits.h"
 #include "sys/mem.hpp"
-#include "ulib/expected.hpp"
+#include "ulib/result.hpp"
 
 extern "C" size_t _popcount(size_t data);
 

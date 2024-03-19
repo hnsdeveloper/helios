@@ -30,22 +30,21 @@ SOFTWARE.
 
 struct hart;
 
-extern "C" void print_registers(hart *);
-extern "C" void panic_message_print(const char *msg);
-extern "C" void location_print(const char *msg);
 extern "C" void stack_trace();
 extern "C" void _die();
 
 // Might wanna look into jumping to some label
 // Using the macro throughout the code will quickly add up
 #define PRINT_REGISTERS()                                                      \
-  asm volatile("1:"                                                            \
-               "addi sp, sp, -288;"                                            \
-               "sd   x10, 0(sp);"                                              \
-               "la   x10, 1b;"                                                 \
-               "add  x10, x10, -4;"                                            \
-               "sd   x10, 8(sp);"                                              \
-               "jal  x10, _print_registers;");
+  {                                                                            \
+    asm volatile("1:"                                                          \
+                 "addi sp, sp, -288;"                                          \
+                 "sd   x10, 0(sp);"                                            \
+                 "la   x10, 1b;"                                               \
+                 "add  x10, x10, -4;"                                          \
+                 "sd   x10, 8(sp);"                                            \
+                 "jal  x10, _print_registers;");                               \
+  }
 
 #define PANIC(msg)                                                             \
   PRINT_REGISTERS();                                                           \

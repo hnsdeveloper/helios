@@ -64,7 +64,6 @@ void print_stack_trace(void *address, size_t level) {
 }
 
 extern "C" void print_registers(hart *h) {
-  kprintln("Registers status: ");
   for (size_t i = 0; i < 32; ++i) {
     kprint("x{}: {} ", i, reinterpret_cast<void *>(h->reg.array[i]));
     if ((i + 1) % 4 == 0) {

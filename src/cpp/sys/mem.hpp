@@ -39,7 +39,7 @@ uintptr_t to_uintptr_t(const void *ptr);
 void *to_ptr(uintptr_t v);
 
 bool is_aligned(const void *ptr, size_t alignment);
-void *align(const void *ptr, size_t alignment);
+void *align_forward(const void *ptr, size_t alignment);
 
 bool is_paging_enabled();
 } // namespace hls

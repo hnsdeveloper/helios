@@ -30,7 +30,7 @@ SOFTWARE.
 #include "include/global.h"
 #include "include/symbols.h"
 #include "ulib/bit.hpp"
-#include "ulib/expected.hpp"
+#include "ulib/result.hpp"
 
 const size_t BITSET_SIZE = 64;
 
@@ -67,7 +67,7 @@ public:
   static bool init(void *base_address, size_t mem_size);
 };
 
-void setup_paging();
+void setup_page_frame_manager();
 
 } // namespace hls
 

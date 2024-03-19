@@ -48,8 +48,6 @@ void check_system_capabilities() {
     return misa & (0x1u << calc_shift(extension));
   };
 
-  kdebug(misa);
-
   for (char c = 'A'; c <= 'Z'; ++c) {
     switch (c) {
     case 'I':
@@ -64,6 +62,7 @@ void check_system_capabilities() {
         kprintln("Extension {} required to run HeliOS.", c);
         PANIC();
       }
+      break;
     default:
       if (has_extension(c, misa)) {
         kprintln("Extension {} present.", c);
@@ -73,31 +72,12 @@ void check_system_capabilities() {
   };
 }
 
-void test_function3(int x) {
-  int a = 0;
-  a = x + 10;
-  PANIC("THIS IS A TEST!!!");
-}
-
-void test_function2(int x) {
-  int a = 0;
-  a = x + 10;
-  test_function3(a);
-}
-
-void test_function1() {
-  int a = 0;
-  a = 0 + 10;
-  test_function2(a);
-}
-
-void main(int argc, const char **argv) {
+[[noreturn]] void main(int argc, const char **argv) {
 
   // Stops compiler complains for now
   for (int i = 0; i < argc; ++i) {
     void *x = argv + i;
   }
-
   setup_printing();
 
   display_initial_info();
@@ -105,15 +85,18 @@ void main(int argc, const char **argv) {
   strprintln("Checking system capabilities!");
   check_system_capabilities();
 
-  test_function1();
-
   strprintln("Setting up pageframe manager.");
-  setup_paging();
+  setup_page_frame_manager();
 
   strprintln("Mapping kernel memory.");
   setup_kernel_memory_mapping();
+
+  while (true)
+    ;
 }
 
 } // namespace hls
 
-extern "C" void bootmain(int argc, const char **argv) { hls::main(argc, argv); }
+extern "C" [[noreturn]] void bootmain(int argc, const char **argv) {
+  hls::main(argc, argv);
+}

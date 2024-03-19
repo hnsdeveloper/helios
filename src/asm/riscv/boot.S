@@ -2,13 +2,7 @@
 .option norvc
 
 .section .data
-
-.global _argc
-_argc:
-.dword 0 
-.global _argv
-_argv:
-.dword 0 
+ 
 .global _kernel_page_addr
 _kernel_page_addr:
 .dword 0
@@ -31,20 +25,14 @@ _start:
 	csrr	t0, mhartid
 	bnez	t0, 3f
 	
-	# Lets store argc and argv
-	la t0, _argc
-	la t1, _argv
-	sd a0, (t0)
-	sd a1, (t1)
-	
 	# Zeroes the BSS section
-	la 		a0, _bss_start
-	la		a1, _bss_end
-	bgeu	a0, a1, 2f
+	la 		t0, _bss_start
+	la		t1, _bss_end
+	bgeu	t0, t1, 2f
 1:
-	sd		x0, (a0)
-	addi	a0, a0, 8
-	bltu	a0, a1, 1b
+	sd		x0, (t0)
+	addi	t0, t0, 8
+	bltu	t0, t1, 1b
 2:	
 	# Store the stack frame, so we can unwind whenever the kernel panics!
 	add		fp, x0, x0
@@ -55,7 +43,7 @@ _start:
 	la		t4, 3f
 	sd		t4, 8(sp)
 
-	# Calls bootmain, so we start using C code
+	# Calls bootmain, so we start using C code. a0 and a1 should contain argc and argv
 	call	bootmain
 3:
 	wfi

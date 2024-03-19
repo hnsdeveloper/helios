@@ -30,7 +30,7 @@ SOFTWARE.
 
 namespace hls {
 
-void setup_paging() {
+void setup_page_frame_manager() {
   size_t heap_size = reinterpret_cast<uint64_t>(&_heap_size);
 
   kdebug(&_heap_start);
@@ -85,7 +85,8 @@ PageFrameManager &PageFrameManager::__internal_instance(void *base_address,
 }
 
 PageFrameManager::PageFrameManager(void *base_address, size_t mem_size) {
-  m_bitmap = reinterpret_cast<BMap *>(align(base_address, alignof(BMap)));
+  m_bitmap =
+      reinterpret_cast<BMap *>(align_forward(base_address, alignof(BMap)));
   m_frames = reinterpret_cast<PageKB *>(base_address);
 
   PageKB *mem_end =
@@ -94,7 +95,7 @@ PageFrameManager::PageFrameManager(void *base_address, size_t mem_size) {
 
   m_bitmap_count = temp_frame_count / 64 + (temp_frame_count % 64 ? 1 : 0);
   m_frames = reinterpret_cast<PageKB *>(
-      align(m_bitmap + m_bitmap_count, PageKB::alignment));
+      align_forward(m_bitmap + m_bitmap_count, PageKB::alignment));
 
   m_frame_count = mem_end - m_frames;
 

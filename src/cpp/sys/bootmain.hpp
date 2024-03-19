@@ -26,7 +26,7 @@ SOFTWARE.
 #define _BOOTMAIN_HPP_
 
 namespace hls {
-void main(int argc, const char **argv);
+[[noreturn]] void main(int argc, const char **argv);
 }
 
 #endif

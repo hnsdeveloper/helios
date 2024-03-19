@@ -27,7 +27,7 @@ SOFTWARE.
 #define _MEMMAP_HPP_
 
 #include "include/arch/riscv/plat_def.h"
-#include "ulib/expected.hpp"
+#include "ulib/result.hpp"
 
 namespace hls {
 

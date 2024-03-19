@@ -33,26 +33,19 @@ hls::PageTable *kernel_page_table;
 
 namespace hls {
 
-uintptr_t calculate_virtual_ptr_offset(VPN vpn, void *vaddress) {
-  uintptr_t vaddress_uint = to_uintptr_t(vaddress);
-  uintptr_t p = 0;
-  p += vaddress_uint & 0xfff;
+uintptr_t calculate_virtual_ptr_offset(void *vaddress) {
+  uintptr_t p = to_uintptr_t(vaddress);
 
-  for (size_t i = 0; i < static_cast<size_t>(vpn); ++i) {
-    p += (vaddress_uint >> (12 + i * 9)) & 0x1FF;
-  }
-
-  return p;
+  return p & 0xFFF;
 }
 
 size_t get_page_entry_index(VPN v, void *vaddress) {
   size_t vpn_idx = static_cast<size_t>(v);
-  uintptr_t p = to_uintptr_t(vaddress);
-  return (p >> (12 + vpn_idx * 9)) & 0x1ff;
+  uintptr_t idx = to_uintptr_t(vaddress) >> 12;
+  return (idx >> (vpn_idx * 9)) & 0x1FF;
 }
 
-Result<VPN> walk_table(PageTable **table_ptr, void *vaddress, VPN current_vpn) {
-
+Result<VPN> walk_table(PageTable **table_ptr, void *vaddress, VPN page_level) {
   PageTable *table = *table_ptr;
 
   if (table == nullptr) {
@@ -60,11 +53,11 @@ Result<VPN> walk_table(PageTable **table_ptr, void *vaddress, VPN current_vpn) {
   }
 
   // We can't walk the table anymore, thus everything stays the same
-  if (current_vpn == VPN::KB_VPN) {
-    return value(current_vpn);
+  if (page_level == VPN::KB_VPN) {
+    return error<VPN>(Error::VALUE_LIMIT_REACHED);
   }
 
-  uintptr_t vpn = get_page_entry_index(current_vpn, vaddress);
+  uintptr_t vpn = get_page_entry_index(page_level, vaddress);
 
   auto &entry = table->get_entry(vpn);
 
@@ -74,76 +67,136 @@ Result<VPN> walk_table(PageTable **table_ptr, void *vaddress, VPN current_vpn) {
 
   if (!entry.is_leaf()) {
     *table_ptr = entry.as_table_pointer();
+    page_level = next_vpn(page_level);
   }
 
-  size_t i = static_cast<size_t>(current_vpn);
-
-  return value(static_cast<VPN>(i - entry.is_leaf() ? 0 : 1));
+  return value(page_level);
 }
 
 Result<void *> get_physical_address(PageTable *start_table, void *vaddress) {
   if (start_table == nullptr)
     return error<void *>(Error::INVALID_PAGE_TABLE);
 
-  VPN last_vpn = VPN::TB_VPN;
-  PageTable *table = start_table;
-  while (true) {
-    auto result = walk_table(&table, vaddress, last_vpn);
-    if (result.is_error()) {
-      return error<void *>(result.get_error());
-    }
-    VPN current_vpn = result.get_value();
-    if (current_vpn == last_vpn)
+  for (size_t i = static_cast<size_t>(VPN::LAST_VPN); true; --i) {
+    VPN v = static_cast<VPN>(i);
+    size_t idx = get_page_entry_index(v, vaddress);
+    auto &entry = start_table->get_entry(idx);
+    start_table->print_entries();
+
+    if (entry.is_valid()) {
+      if (entry.is_leaf()) {
+        auto p = to_uintptr_t(entry.as_pointer());
+        p |= (to_uintptr_t(vaddress) & 0xFFF);
+
+        for (size_t j = 0; j < static_cast<size_t>(v); ++j) {
+          size_t offset = get_page_entry_index(static_cast<VPN>(j), vaddress);
+          p |= offset << (12 + 9 * j);
+        }
+        return value(to_ptr(p));
+      } else {
+        start_table = entry.as_table_pointer();
+        continue;
+      }
+    } else {
       break;
-    last_vpn = current_vpn;
+    }
+
+    if (i == 0)
+      break;
   }
 
-  size_t vpn_idx = get_page_entry_index(last_vpn, vaddress);
-  PageEntry &entry = table->get_entry(vpn_idx);
-  uintptr_t p = 0;
-
-  if (!entry.is_valid() || !entry.is_leaf()) {
-    return error<void *>(Error::INVALID_PAGE_ENTRY);
-  }
-
-  switch (last_vpn) {
-  case VPN::TB_VPN:
-    p = to_uintptr_t(entry.as_frame_pointer<VPN::TB_VPN>());
-    break;
-  case VPN::GB_VPN:
-    p = to_uintptr_t(entry.as_frame_pointer<VPN::GB_VPN>());
-    break;
-  case VPN::MB_VPN:
-    p = to_uintptr_t(entry.as_frame_pointer<VPN::MB_VPN>());
-    break;
-  case VPN::KB_VPN:
-    p = to_uintptr_t(entry.as_frame_pointer<VPN::KB_VPN>());
-    break;
-  }
-
-  p += calculate_virtual_ptr_offset(last_vpn, vaddress);
-
-  return value(to_ptr(p));
+  return error<void *>(Error::INVALID_PAGE_ENTRY);
 }
 
 bool is_address_used(void *address) { return false; }
 
-void *kmmap(PageTable *start_table, void *vaddress, VPN page_level,
-            void *physical_address) {
+Result<void *> kmmap(PageTable *start_table, void *vaddress, VPN page_level,
+                     void *physical_address) {
 
   // First lets check if it is already mapped
-  auto g_address_result = get_physical_address(start_table, vaddress);
-  if (g_address_result.is_value())
-    return g_address_result.get_value();
+  auto address_result = get_physical_address(start_table, vaddress);
+  if (address_result.is_value()) {
+    return error<void *>(Error::ADDRESS_ALREADY_MAPPED);
+  } // If the result is an error, then that address is not mapped
 
+  // Here we presume we are always using and starting from the highest available
+  // paging mode. TODO: change algorithm to accept different starting levels!
   PageTable *table = start_table;
   VPN current_page_level = VPN::LAST_VPN;
 
+  PageFrameManager &frame_manager = PageFrameManager::instance();
+
   while (current_page_level != page_level) {
-    auto result = walk_table(&start_table, vaddress, current_page_level);
-    if (result.is_error()) // Theoretically nullptr is still a valid value
-      return nullptr;
+    auto result = walk_table(&table, vaddress, current_page_level);
+    if (result.is_error()) {
+      switch (result.get_error()) {
+      case Error::INVALID_PAGE_TABLE:
+        return error<void *>(result.get_error());
+      case Error::INVALID_PAGE_ENTRY:
+        // This is the interesting case, given that we need to allocate a page
+        // table
+        {
+          size_t entry_idx = get_page_entry_index(current_page_level, vaddress);
+          PageEntry &entry = table->get_entry(entry_idx);
+          auto frame_result = frame_manager.get_frame();
+
+          if (frame_result.is_error()) {
+            return error<void *>(frame_result.get_error());
+          }
+
+          PageTable *new_table =
+              reinterpret_cast<PageTable *>(frame_result.get_value());
+
+          entry.point_to_table(new_table);
+          table = new_table;
+          current_page_level = next_vpn(current_page_level);
+          continue;
+        }
+      case Error::VALUE_LIMIT_REACHED:
+        PANIC("Error case shouldn't occur.");
+        break;
+      default: {
+        PANIC("Unhandled error while walking page tables.");
+      }
+      }
+    }
+    current_page_level = result.get_value();
   }
+
+  auto &entry =
+      table->get_entry(get_page_entry_index(current_page_level, vaddress));
+
+  auto point_lambda = [](PageEntry &entry, void *addr, VPN page_level) {
+    switch (page_level) {
+    case VPN::TB_VPN:
+      entry.point_to_frame<VPN::TB_VPN>(
+          reinterpret_cast<PageFrame<VPN::TB_VPN> *>(addr));
+      break;
+    case VPN::GB_VPN:
+      entry.point_to_frame<VPN::GB_VPN>(
+          reinterpret_cast<PageFrame<VPN::GB_VPN> *>(addr));
+      break;
+    case VPN::MB_VPN:
+      entry.point_to_frame<VPN::MB_VPN>(
+          reinterpret_cast<PageFrame<VPN::MB_VPN> *>(addr));
+      break;
+    case VPN::KB_VPN:
+      entry.point_to_frame<VPN::KB_VPN>(
+          reinterpret_cast<PageFrame<VPN::KB_VPN> *>(addr));
+      break;
+    }
+  };
+
+  bool map_to_physical = true;
+
+  if (map_to_physical) {
+    point_lambda(entry, physical_address, page_level);
+  } else {
+    // Find frame, create it and blablabla
+    // TODO: IMPLEMENT
+  }
+
+  return value(vaddress);
 }
 
 void setup_kernel_memory_mapping() {
@@ -153,11 +206,30 @@ void setup_kernel_memory_mapping() {
       reinterpret_cast<PageTable *>(manager.get_frame().get_value());
   memset(kernel_page_table, 0, sizeof(PageTable));
 
-  kdebug(kernel_page_table);
-
   kmmap(kernel_page_table, to_ptr(0x00000000), VPN::GB_VPN, to_ptr(0x00000000));
 
   kmmap(kernel_page_table, to_ptr(0x40000000), VPN::GB_VPN, to_ptr(0x40000000));
+
+  kprintln("Past printing!!");
+
+  auto a = get_physical_address(kernel_page_table, (void *)(0x50000000));
+  if (a.is_error()) {
+    switch (a.get_error()) {
+    case Error::INVALID_PAGE_ENTRY:
+      kprintln("Invalid page entry.");
+      break;
+    default:
+      kprintln("Other error.");
+    }
+  } else {
+    kdebug(a.get_value());
+  }
+
+  // void *test_val =
+  //   get_physical_address(kernel_page_table, (void
+  //   *)(0x30000000)).get_value();
+
+  // kdebug(test_val);
 }
 
 } // namespace hls

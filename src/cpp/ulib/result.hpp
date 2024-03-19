@@ -39,8 +39,11 @@ enum class Error : uint64_t {
   INVALID_INDEX,
   INVALID_PAGE_TABLE,
   INVALID_PAGE_ENTRY,
+  PAGE_ALREADY_MAPPED,
+  ADDRESS_ALREADY_MAPPED,
   OUT_OF_MEMORY,
   OUT_OF_BOUNDS,
+  VALUE_LIMIT_REACHED,
   READ_NOT_ALLOWED,
   WRITE_NOT_ALLOWED,
   EXECUTE_NOT_ALLOWED,
@@ -120,8 +123,9 @@ public:
   }
 
   Error get_error() const {
-    if (!is_error())
+    if (!is_error()) {
       PANIC("Result contains value instead of error.");
+    }
     return m_stored.e;
   }
 

@@ -148,11 +148,8 @@ Result<uint64_t> hls::write_csr(MCSR csr_number, uint64_t data) {
     asm("csrw " #enum_name ", %0" : : "r"(data));                              \
     break;
   case mvendorid:
-    [[falltrhough]];
   case marchid:
-    [[falltrhough]];
   case mimpid:
-    [[falltrhough]];
   case mhartid:
     return error<uint64_t>(Error::WRITE_NOT_ALLOWED);
     __GENERATE_WRITE_CASE(mstatus)
@@ -293,6 +290,8 @@ bool PageEntry::is_valid() {
   return result;
 }
 
+void *PageEntry::as_pointer() { return to_ptr(((data << 10) >> 20) << 12); }
+
 bool PageEntry::is_leaf() {
   return is_valid() && (is_readable() || is_executable());
 }
@@ -302,12 +301,15 @@ bool PageEntry::is_readable() { return data & (1u << READ_BIT); }
 bool PageEntry::is_executable() { return data & (1u << EXECUTE_BIT); }
 
 PageTable *PageEntry::as_table_pointer() {
-  return reinterpret_cast<PageTable *>(to_ptr(data));
+  return reinterpret_cast<PageTable *>(to_ptr((data >> 10) << 12));
 }
 
 void PageEntry::point_to_table(PageTable *table) {
   if (is_aligned(table, alignof(PageTable))) {
-    data = to_uintptr_t(table) + 0x1ul;
+    data = to_uintptr_t(table);
+    data = (data << 10) >> 10;
+    data = (data >> 12) << 10;
+    data |= 0x1;
   }
 }
 
@@ -322,4 +324,16 @@ size_t get_page_entry_index(void *v_address, VPN vpn) {
   result = (addr >> (12 + (vpn_idx * 9))) & 0x1FF;
 
   return result;
+}
+
+VPN hls::next_vpn(VPN v) {
+  return static_cast<VPN>(static_cast<size_t>(v) - 1);
+}
+
+void PageTable::print_entries() {
+  for (size_t i = 0; i < ENTRIES_PER_TABLE; ++i) {
+    auto &entry = entries[i];
+    kprintln("i: {} entry_data: {} {} entry address: {}", i, entry.data,
+             entry.as_pointer(), &entry.data);
+  }
 }

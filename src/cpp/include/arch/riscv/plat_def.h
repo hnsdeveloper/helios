@@ -29,12 +29,12 @@ SOFTWARE.
 #include "include/arch/riscv/registers.h"
 #include "include/types.h"
 #include "sys/mem.hpp"
-#include "ulib/expected.hpp"
+#include "ulib/result.hpp"
 
 namespace hls {
 
-Result<uint64_t> read_csr(MCSR csr_number);
-Result<uint64_t> write_csr(MCSR csr_code, uint64_t data);
+Result<uint64_t> read_csr(MCSR csr_address);
+Result<uint64_t> write_csr(MCSR csr_address, uint64_t data);
 
 static const size_t PAGE_LEVELS = 4;
 static const size_t PAGE_FRAME_SIZE = 4096;
@@ -56,26 +56,66 @@ enum class VPN : size_t {
   LAST_VPN = TB_VPN
 };
 
-template <VPN n> struct FrameInfo;
+VPN next_vpn(VPN v);
+
+template <VPN...> struct FrameInfo;
 
 template <> struct FrameInfo<VPN::KB_VPN> {
   static constexpr size_t size = 4096;
   static constexpr VPN page_type = VPN::KB_VPN;
+  static constexpr size_t alignment = size;
 };
 
 template <> struct FrameInfo<VPN::MB_VPN> {
   static constexpr size_t size = 512ul * FrameInfo<VPN::KB_VPN>::size;
   static constexpr VPN page_type = VPN::MB_VPN;
+  static constexpr size_t alignment = size;
 };
 
 template <> struct FrameInfo<VPN::GB_VPN> {
   static constexpr size_t size = 512ul * FrameInfo<VPN::MB_VPN>::size;
   static constexpr VPN page_type = VPN::GB_VPN;
+  static constexpr size_t alignment = size;
 };
 
 template <> struct FrameInfo<VPN::TB_VPN> {
   static constexpr size_t size = 512ul * FrameInfo<VPN::GB_VPN>::size;
   static constexpr VPN page_type = VPN::TB_VPN;
+  static constexpr size_t alignment = size;
+};
+
+template <> struct FrameInfo<> {
+  static constexpr size_t size_query(VPN v) {
+    switch (v) {
+    case VPN::KB_VPN:
+      return FrameInfo<VPN::KB_VPN>::size;
+    case VPN::MB_VPN:
+      return FrameInfo<VPN::MB_VPN>::size;
+    case VPN::GB_VPN:
+      return FrameInfo<VPN::GB_VPN>::size;
+    case VPN::TB_VPN:
+      return FrameInfo<VPN::TB_VPN>::size;
+    default: {
+      PANIC("Invalid page level.");
+    }
+    }
+  };
+
+  static constexpr size_t alignment_query(VPN v) {
+    switch (v) {
+    case VPN::KB_VPN:
+      return FrameInfo<VPN::KB_VPN>::alignment;
+    case VPN::MB_VPN:
+      return FrameInfo<VPN::MB_VPN>::alignment;
+    case VPN::GB_VPN:
+      return FrameInfo<VPN::GB_VPN>::alignment;
+    case VPN::TB_VPN:
+      return FrameInfo<VPN::TB_VPN>::alignment;
+    default: {
+      PANIC("Invalid page level.");
+    }
+    }
+  }
 };
 
 struct PageEntry;
@@ -101,20 +141,22 @@ struct __attribute__((packed)) PageEntry {
   void point_to_table(PageTable *table);
 
   template <VPN v> void point_to_frame(PageFrame<v> *frame) {
-    static constexpr uintptr_t HIGH_BITS = 0xff10000000000000;
-
     using frame_t = PageFrame<v>;
     if (is_aligned(frame, alignof(frame_t))) {
-      data = to_uintptr_t(frame) >> 12;
-      data = ((data << 9 | 0x1ul) | HIGH_BITS) ^ HIGH_BITS;
-      this->make_readable(true);
+      data = to_uintptr_t(frame);
+      data = (data << 10) >> 10;
+      data = (data >> 12) << 10;
+      data |= 0x1;
+      make_readable(true);
     }
   }
+
+  void *as_pointer();
 
   PageTable *as_table_pointer();
 
   template <VPN v> PageFrame<v> *as_frame_pointer() {
-    return reinterpret_cast<PageFrame<v> *>(((data >> 9) << 12));
+    return reinterpret_cast<PageFrame<v> *>(as_pointer());
   };
 };
 
@@ -122,6 +164,8 @@ struct __attribute__((packed)) PageTable {
   PageEntry entries[ENTRIES_PER_TABLE];
 
   PageEntry &get_entry(size_t entry_index);
+
+  void print_entries();
 };
 
 template <VPN v> struct __attribute__((packed)) PageFrame {
@@ -145,7 +189,6 @@ using PageGB = PageFrame<VPN::GB_VPN>;
 using PageTB = PageFrame<VPN::TB_VPN>;
 
 size_t get_vpn_index(void *v_address, VPN vpn);
-
 } // namespace hls
 
 #endif

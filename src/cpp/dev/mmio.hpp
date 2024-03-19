@@ -29,7 +29,7 @@ SOFTWARE.
 #include "include/types.h"
 #include "include/utilities.h"
 #include "sys/mem.hpp"
-#include "ulib/expected.hpp"
+#include "ulib/result.hpp"
 
 // TODO: implement
 bool is_mmio_address(volatile void *address) {

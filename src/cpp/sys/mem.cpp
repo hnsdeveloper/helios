@@ -58,7 +58,7 @@ bool is_aligned(const void *ptr, size_t alignment) {
   return (p / alignment * alignment) == p;
 }
 
-void *align(const void *ptr, size_t alignment) {
+void *align_forward(const void *ptr, size_t alignment) {
   uintptr_t p = to_uintptr_t(ptr);
 
   if (alignment == 1 || is_aligned(ptr, alignment))
@@ -71,6 +71,15 @@ void *align(const void *ptr, size_t alignment) {
   }
 
   return nullptr;
+}
+
+void *align_back(const void *ptr, size_t alignment) {
+  uintptr_t p = to_uintptr_t(ptr);
+  if (alignment == 1 || is_aligned(ptr, alignment))
+    return to_ptr(p);
+
+  p = (p / alignment) * alignment;
+  return to_ptr(p);
 }
 
 } // namespace hls
