@@ -35,7 +35,6 @@ namespace hls {
 
 uintptr_t calculate_virtual_ptr_offset(void *vaddress) {
   uintptr_t p = to_uintptr_t(vaddress);
-
   return p & 0xFFF;
 }
 
@@ -58,7 +57,6 @@ Result<VPN> walk_table(PageTable **table_ptr, void *vaddress, VPN page_level) {
   }
 
   uintptr_t vpn = get_page_entry_index(page_level, vaddress);
-
   auto &entry = table->get_entry(vpn);
 
   if (!entry.is_valid()) {
@@ -104,7 +102,6 @@ Result<void *> get_physical_address(PageTable *start_table, void *vaddress) {
     if (i == 0)
       break;
   }
-
   return error<void *>(Error::INVALID_PAGE_ENTRY);
 }
 
@@ -200,36 +197,33 @@ Result<void *> kmmap(PageTable *start_table, void *vaddress, VPN page_level,
 }
 
 void setup_kernel_memory_mapping() {
+  // TODO: For now the only "machine" supported is the QEMU virtual machine,
+  // thus addresses
+  //  are hardcoded. With time we shall refactor the code and get the addresses
+  //  dynamically
   PageFrameManager &manager = PageFrameManager::instance();
 
   kernel_page_table =
       reinterpret_cast<PageTable *>(manager.get_frame().get_value());
   memset(kernel_page_table, 0, sizeof(PageTable));
-
   kmmap(kernel_page_table, to_ptr(0x00000000), VPN::GB_VPN, to_ptr(0x00000000));
-
   kmmap(kernel_page_table, to_ptr(0x40000000), VPN::GB_VPN, to_ptr(0x40000000));
 
-  kprintln("Past printing!!");
+  for (byte *c = &_text_start; c < &_stack_end; c += 4096) {
+    kmmap(kernel_page_table, c, VPN::KB_VPN, c);
 
-  auto a = get_physical_address(kernel_page_table, (void *)(0x50000000));
-  if (a.is_error()) {
-    switch (a.get_error()) {
-    case Error::INVALID_PAGE_ENTRY:
-      kprintln("Invalid page entry.");
-      break;
-    default:
-      kprintln("Other error.");
+    auto r = get_physical_address(kernel_page_table, c + 299);
+
+    if (r.is_error()) {
+      kprintln("Why is it error??");
     }
-  } else {
-    kdebug(a.get_value());
-  }
 
-  // void *test_val =
-  //   get_physical_address(kernel_page_table, (void
-  //   *)(0x30000000)).get_value();
+    else {
+      kdebug(r.get_value());
+    }
+  };
 
-  // kdebug(test_val);
+  // Now we have the kernel mapped!!!
 }
 
 } // namespace hls
