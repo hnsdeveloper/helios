@@ -52,45 +52,43 @@ _start:
 	wfi
 	j	3b
 
-.global _kernel_start
-_kernel_start:
-
-	srli		a0, a0, 12		#	Storing page table address and setting up mode		
-	li			t5, 0x9
-	slli		t5, t5, 60
-	or			a0, a0, t5
-	csrrs		a0, satp, a0
-
-	add			a0, x0, a1		#	Move argc and argv to a0 and a1 so they are there
-	add			a1, x0, a2		# 	when we call kernel_main
-
-	csrrs		x0, medeleg, x0		# 	all interrupts handled at M-MODE for now
-	csrrs		x0, mideleg, x0		# 	all interrupts handled at M-MODE for now
-
-	la 			t3, m_mode_trap_vector		# Setting machine mode trap vector
-	csrrs		t3, mtvec, t3				
-
-	addi		t0, x0, -1
-	csrrs		t0, pmpaddr0, t0
-
-	li			t0, 0b11000
-	csrrs		t0, pmpcfg0, t0
-
-	li			t0, (0b1 << 11) | (0 << 7) | (1 << 5) | (0 << 3) | (1 << 1)
-	csrrs		t0, mstatus, t0
-
-	li			t3, (1 << 3) | (1 << 7) | (1 << 11)
-	csrrs		t3, mie, t3
-
-	
-
-	#la			ra, kernel_main
-
-	# Loads kernel main to mepc 
-	la  		t0, kernel_main
-	csrrs 		t0, mepc, t0
-
-	mret
+#.global _kernel_start
+#_kernel_start:
+#
+#	srli		a0, a0, 12		#	Storing page table address and setting up mode		
+#	li			t5, 0x9
+#	slli		t5, t5, 60
+#	or			a0, a0, t5
+#	csrrs		a0, satp, a0
+#
+#	add			a0, x0, a1		#	Move argc and argv to a0 and a1 so they are there
+#	add			a1, x0, a2		# 	when we call kernel_main
+#
+#	csrrs		x0, medeleg, x0		# 	all interrupts handled at M-MODE for now
+#	csrrs		x0, mideleg, x0		# 	all interrupts handled at M-MODE for now
+#
+#	la 			t3, m_mode_trap_vector		# Setting machine mode trap vector
+#	csrrs		t3, mtvec, t3				
+#
+#	addi		t0, x0, -1
+#	csrrs		t0, pmpaddr0, t0
+#
+#	li			t0, 0b11000
+#	csrrs		t0, pmpcfg0, t0
+#
+#	li			t0, (0b1 << 11) | (0 << 7) | (1 << 5) | (0 << 3) | (1 << 1)
+#	csrrs		t0, mstatus, t0
+#
+#	li			t3, (1 << 3) | (1 << 7) | (1 << 11)
+#	csrrs		t3, mie, t3
+#
+#	#la			ra, kernel_main
+#
+#	# Loads kernel main to mepc 
+#	la  		t0, kernel_main
+#	csrrs 		t0, mepc, t0
+#
+#	mret
 
 # Control registers, set the stack, mstatus, mepc,
 # and mtvec to return to the main function.

@@ -35,6 +35,29 @@ extern "C" size_t _popcount(size_t data);
 
 namespace hls {
 
+template <typename T>
+  requires(is_integral_v<T> && !is_signed_v<T>)
+Result<size_t> msb_set(T data) {
+  if (data == 0) {
+    return error<size_t>(Error::INVALID_ARGUMENT);
+  }
+
+  uint64_t blk_idx = 0;
+  uint64_t bit_idx = 0;
+  for (size_t i = 0; i < sizeof(data); ++i) {
+    uint64_t v = (data >> (i * 8)) & 0xFF;
+    size_t j = 0;
+    while (v) {
+      blk_idx = i;
+      v = v >> 1;
+      ++j;
+    }
+    bit_idx = j;
+  }
+
+  return value((size_t)(blk_idx * 8 + bit_idx));
+}
+
 template <typename T> inline T set_bit(T data, size_t n, bool val) {
   static_assert(is_integral_v<T> && !is_signed_v<T>,
                 "Operation supported only on unsigned integrals.");

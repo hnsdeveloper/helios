@@ -118,10 +118,4 @@ void floatprint(double) {
   strprint("Floating point values printing not supported yet!");
 }
 
-extern "C" void test_print() {
-  while (true)
-    ;
-  strprintln("Into vector trap!");
-}
-
 } // namespace hls

@@ -30,8 +30,9 @@ SOFTWARE.
 #include "sys/paging.hpp"
 #include "sys/panic.hpp"
 #include "sys/print.hpp"
+#include "sys/string.hpp"
 
-extern "C" void _kernel_start(void *, int argc, const char **argv);
+// extern "C" void _kernel_start(void *, int argc, const char **argv);
 
 namespace hls {
 
@@ -90,8 +91,22 @@ void check_system_capabilities() {
   // strprintln("Checking system capabilities!");
   // check_system_capabilities();
 
-  while (true)
-    ;
+  if (argc) {
+    {
+      auto rst = hex_to_uint(argv[0]);
+      if (rst.is_value()) {
+        kdebug(rst.get_value());
+      } else {
+        kprintln("Fail0");
+      }
+    }
+    auto rst = hex_to_uint(argv[1]);
+    if (rst.is_value()) {
+      kdebug(rst.get_value());
+    } else {
+      kprintln("Fail1");
+    }
+  }
 
   strprintln("Setting up pageframe manager.");
   setup_page_frame_manager();
@@ -99,11 +114,11 @@ void check_system_capabilities() {
   strprintln("Mapping kernel memory.");
   void *kernel_page_table = setup_kernel_memory_mapping();
 
-  _kernel_start(kernel_page_table, argc, argv);
+  //_kernel_start(kernel_page_table, argc, argv);
 }
 
 } // namespace hls
 
 extern "C" [[noreturn]] void bootmain(int argc, const char **argv) {
-  hls::main(0, nullptr);
+  hls::main(argc, argv);
 }

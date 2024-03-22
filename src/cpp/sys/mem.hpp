@@ -33,15 +33,12 @@ namespace hls {
 void memcpy(void *dest, void *src, size_t bytes);
 void memset(void *dest, byte c, size_t n);
 
-size_t popcount(size_t data);
-
 uintptr_t to_uintptr_t(const void *ptr);
 void *to_ptr(uintptr_t v);
 
 bool is_aligned(const void *ptr, size_t alignment);
 void *align_forward(const void *ptr, size_t alignment);
 
-bool is_paging_enabled();
 } // namespace hls
 
 #endif

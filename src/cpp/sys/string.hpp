@@ -23,9 +23,29 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-template <typename T> class PhysicalPointer {
+#ifndef _STRING_FUNCTIONS_HPP_
+#define _STRING_FUNCTIONS_HPP_
 
-  T *m_ptr;
+#include "include/types.h"
+#include "ulib/result.hpp"
 
-public:
-};
+namespace hls {
+
+int strcmp(const char *str1, const char *str2);
+int strncmp(const char *str1, const char *str2, size_t n);
+size_t strlen(const char *str);
+const char *strchr(const char *str, char c);
+
+char to_upper(char c);
+char to_lower(char c);
+
+bool is_dec_digit(char c);
+bool is_letter(char c);
+bool is_alphanumeric(char c);
+bool is_hex_digit(char c);
+
+Result<uint64_t> hex_to_uint(const char *str);
+
+} // namespace hls
+
+#endif
