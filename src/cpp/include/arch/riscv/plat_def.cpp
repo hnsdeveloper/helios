@@ -290,7 +290,9 @@ bool PageEntry::is_valid() {
   return result;
 }
 
-void *PageEntry::as_pointer() { return to_ptr(((data << 10) >> 20) << 12); }
+void *PageEntry::as_pointer() {
+  return to_ptr((data << 2) & 0x00fffffffffff000);
+}
 
 bool PageEntry::is_leaf() {
   return is_valid() && (is_readable() || is_executable());
@@ -306,9 +308,7 @@ PageTable *PageEntry::as_table_pointer() {
 
 void PageEntry::point_to_table(PageTable *table) {
   if (is_aligned(table, alignof(PageTable))) {
-    data = to_uintptr_t(table);
-    data = (data << 10) >> 10;
-    data = (data >> 12) << 10;
+    data = to_uintptr_t(table) >> 2;
     data |= 0x1;
   }
 }

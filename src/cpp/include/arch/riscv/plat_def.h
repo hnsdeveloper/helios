@@ -138,22 +138,20 @@ struct __attribute__((packed)) PageEntry {
   bool is_readable();
   bool is_executable();
 
+  void *as_pointer();
+
+  PageTable *as_table_pointer();
+
   void point_to_table(PageTable *table);
 
   template <VPN v> void point_to_frame(PageFrame<v> *frame) {
     using frame_t = PageFrame<v>;
     if (is_aligned(frame, alignof(frame_t))) {
-      data = to_uintptr_t(frame);
-      data = (data << 10) >> 10;
-      data = (data >> 12) << 10;
+      data = to_uintptr_t(frame) >> 2;
       data |= 0x1;
       make_readable(true);
     }
   }
-
-  void *as_pointer();
-
-  PageTable *as_table_pointer();
 
   template <VPN v> PageFrame<v> *as_frame_pointer() {
     return reinterpret_cast<PageFrame<v> *>(as_pointer());
@@ -176,7 +174,7 @@ template <VPN v> struct __attribute__((packed)) PageFrame {
   char data[FrameInfo<v>::size];
 
   PageTable *as_table() {
-    if (FrameInfo<v>::page_type == VPN::KB_VPN)
+    if constexpr (FrameInfo<v>::page_type == VPN::KB_VPN)
       return reinterpret_cast<PageTable *>(this);
 
     return nullptr;

@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include "include/arch/riscv/plat_def.h"
 #include "sys/memmap.hpp"
+#include "ulib/result.hpp"
 
 namespace hls {
 
@@ -41,12 +42,19 @@ public:
   T *operator->() { return get_physical_address(); }
 
   T *get_vaddress() { return m_ptr; }
-  T *get_physical_address() { VPN current_page_level = m_page_level; }
+
+  Result<T *> get_physical_address() {
+    auto result = ::hls::get_physical_address(m_table, m_ptr);
+    if (result.is_error()) {
+      return error<T *>(result.get_error());
+    }
+
+    return reinterpret_cast<T *>(result.get_value());
+  }
 
 private:
   type *m_ptr;
   PageTable *m_table;
-  VPN m_page_level;
 };
 
 // We don't have the need of this for now, but I will leave it here as to

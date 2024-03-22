@@ -27,6 +27,7 @@ SOFTWARE.
 #include "dev/uart/uart.hpp"
 #include "include/types.h"
 #include "sys/mem.hpp"
+#include "sys/opensbi.hpp"
 
 const bool UART_PRINTING = true;
 
@@ -36,11 +37,7 @@ putchar_func_ptr putchar = &empty_putchar;
 
 namespace hls {
 
-void setup_printing() {
-  if (UART_PRINTING) {
-    putchar = setup_uart_as_print();
-  }
-}
+void setup_printing() { putchar = &hls::opensbi_putchar; }
 
 void strprint(const char *str) {
   while (*str) {
@@ -119,6 +116,12 @@ void uintprint(uint64_t v) {
 
 void floatprint(double) {
   strprint("Floating point values printing not supported yet!");
+}
+
+extern "C" void test_print() {
+  while (true)
+    ;
+  strprintln("Into vector trap!");
 }
 
 } // namespace hls

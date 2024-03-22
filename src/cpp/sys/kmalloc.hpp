@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------------------------
 MIT License
 
-Copyright (c) 2024 Helio Nunes Santos
+Copyright (c) 2022 Helio Nunes Santos
 
         Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"), to
@@ -23,18 +23,15 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef _MEMMAP_HPP_
-#define _MEMMAP_HPP_
-
-#include "include/arch/riscv/plat_def.h"
-#include "ulib/result.hpp"
+#ifndef _KMALLOC_
+#define _KMALLOC_
 
 namespace hls {
+class KMalloc {
 
-Result<VPN> walk_table(PageTable **table_ptr, void *vaddress, VPN current_vpn);
-Result<void *> get_physical_address(PageTable *start_table, void *vaddress);
+public:
+};
 
-void *setup_kernel_memory_mapping();
-} // namespace hls
+}; // namespace hls
 
 #endif

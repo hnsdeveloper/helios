@@ -31,6 +31,8 @@ SOFTWARE.
 #include "sys/panic.hpp"
 #include "sys/print.hpp"
 
+extern "C" void _kernel_start(void *, int argc, const char **argv);
+
 namespace hls {
 
 void display_initial_info() {
@@ -42,7 +44,9 @@ void display_initial_info() {
 }
 
 void check_system_capabilities() {
+  kprintln("here1");
   uint64_t misa = read_csr(MCSR::misa).get_value();
+  kprintln("here2");
   auto calc_shift = [](char c) { return c - 'a'; };
   auto has_extension = [calc_shift](char extension, uint64_t misa) -> bool {
     return misa & (0x1u << calc_shift(extension));
@@ -63,6 +67,9 @@ void check_system_capabilities() {
         PANIC();
       }
       break;
+    case 'X':
+      kprintln("Non standard extension(s) present.");
+      break;
     default:
       if (has_extension(c, misa)) {
         kprintln("Extension {} present.", c);
@@ -74,29 +81,29 @@ void check_system_capabilities() {
 
 [[noreturn]] void main(int argc, const char **argv) {
 
-  // Stops compiler complains for now
-  for (int i = 0; i < argc; ++i) {
-    void *x = argv + i;
-  }
   setup_printing();
 
   display_initial_info();
 
-  strprintln("Checking system capabilities!");
-  check_system_capabilities();
+  // Reading MISA register is not supported anymore, given that now we are
+  // running on top of OpenSBI on S-Mode
+  // strprintln("Checking system capabilities!");
+  // check_system_capabilities();
+
+  while (true)
+    ;
 
   strprintln("Setting up pageframe manager.");
   setup_page_frame_manager();
 
   strprintln("Mapping kernel memory.");
-  setup_kernel_memory_mapping();
+  void *kernel_page_table = setup_kernel_memory_mapping();
 
-  while (true)
-    ;
+  _kernel_start(kernel_page_table, argc, argv);
 }
 
 } // namespace hls
 
 extern "C" [[noreturn]] void bootmain(int argc, const char **argv) {
-  hls::main(argc, argv);
+  hls::main(0, nullptr);
 }

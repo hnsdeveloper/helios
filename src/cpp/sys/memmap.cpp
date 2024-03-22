@@ -75,46 +75,50 @@ Result<void *> get_physical_address(PageTable *start_table, void *vaddress) {
   if (start_table == nullptr)
     return error<void *>(Error::INVALID_PAGE_TABLE);
 
-  for (size_t i = static_cast<size_t>(VPN::LAST_VPN); true; --i) {
-    VPN v = static_cast<VPN>(i);
+  for (size_t i = 0; i < static_cast<size_t>(VPN::LAST_VPN) + 1; ++i) {
+    VPN v = static_cast<VPN>(static_cast<size_t>(VPN::LAST_VPN) - i);
     size_t idx = get_page_entry_index(v, vaddress);
     auto &entry = start_table->get_entry(idx);
-    start_table->print_entries();
 
-    if (entry.is_valid()) {
-      if (entry.is_leaf()) {
-        auto p = to_uintptr_t(entry.as_pointer());
-        p |= (to_uintptr_t(vaddress) & 0xFFF);
-
-        for (size_t j = 0; j < static_cast<size_t>(v); ++j) {
-          size_t offset = get_page_entry_index(static_cast<VPN>(j), vaddress);
-          p |= offset << (12 + 9 * j);
-        }
-        return value(to_ptr(p));
-      } else {
-        start_table = entry.as_table_pointer();
-        continue;
-      }
-    } else {
+    if (!entry.is_valid())
       break;
+
+    if (!entry.is_leaf()) {
+      start_table = entry.as_table_pointer();
+      continue;
     }
 
-    if (i == 0)
-      break;
+    auto p = to_uintptr_t(entry.as_pointer());
+    p |= (to_uintptr_t(vaddress) & 0xFFF);
+
+    for (size_t j = 0; j < static_cast<size_t>(v); ++j) {
+      size_t offset = get_page_entry_index(static_cast<VPN>(j), vaddress);
+      p |= offset << (12 + 9 * j);
+    }
+
+    return value(to_ptr(p));
   }
+
   return error<void *>(Error::INVALID_PAGE_ENTRY);
 }
 
 bool is_address_used(void *address) { return false; }
 
+// TODO: IMPLEMENT MAPPING "REAL" VIRTUAL ADDRESSES
+
+// TODO: IMPLEMENT FLAGS FOR MAPED ADDRESSES
 Result<void *> kmmap(PageTable *start_table, void *vaddress, VPN page_level,
-                     void *physical_address) {
+                     void *physical_address, bool writable = false,
+                     bool executable = false) {
 
   // First lets check if it is already mapped
   auto address_result = get_physical_address(start_table, vaddress);
+
   if (address_result.is_value()) {
-    return error<void *>(Error::ADDRESS_ALREADY_MAPPED);
-  } // If the result is an error, then that address is not mapped
+    return error<void *>(
+        Error::ADDRESS_ALREADY_MAPPED); // If the result is an error, then that
+                                        // address is not mapped
+  }
 
   // Here we presume we are always using and starting from the highest available
   // paging mode. TODO: change algorithm to accept different starting levels!
@@ -127,31 +131,25 @@ Result<void *> kmmap(PageTable *start_table, void *vaddress, VPN page_level,
     auto result = walk_table(&table, vaddress, current_page_level);
     if (result.is_error()) {
       switch (result.get_error()) {
+      case Error::INVALID_PAGE_ENTRY: {
+        size_t entry_idx = get_page_entry_index(current_page_level, vaddress);
+        PageEntry &entry = table->get_entry(entry_idx);
+        auto frame_result = frame_manager.get_frame();
+
+        if (frame_result.is_error()) {
+          return error<void *>(frame_result.get_error());
+        }
+
+        PageTable *new_table =
+            reinterpret_cast<PageTable *>(frame_result.get_value());
+
+        entry.point_to_table(new_table);
+        table = new_table;
+        current_page_level = next_vpn(current_page_level);
+        continue;
+      }
       case Error::INVALID_PAGE_TABLE:
         return error<void *>(result.get_error());
-      case Error::INVALID_PAGE_ENTRY:
-        // This is the interesting case, given that we need to allocate a page
-        // table
-        {
-          size_t entry_idx = get_page_entry_index(current_page_level, vaddress);
-          PageEntry &entry = table->get_entry(entry_idx);
-          auto frame_result = frame_manager.get_frame();
-
-          if (frame_result.is_error()) {
-            return error<void *>(frame_result.get_error());
-          }
-
-          PageTable *new_table =
-              reinterpret_cast<PageTable *>(frame_result.get_value());
-
-          entry.point_to_table(new_table);
-          table = new_table;
-          current_page_level = next_vpn(current_page_level);
-          continue;
-        }
-      case Error::VALUE_LIMIT_REACHED:
-        PANIC("Error case shouldn't occur.");
-        break;
       default: {
         PANIC("Unhandled error while walking page tables.");
       }
@@ -193,10 +191,37 @@ Result<void *> kmmap(PageTable *start_table, void *vaddress, VPN page_level,
     // TODO: IMPLEMENT
   }
 
+  if (executable) {
+    entry.make_executable(true);
+  }
+  if (writable) {
+    entry.make_writable(true);
+  }
+
   return value(vaddress);
 }
 
-void setup_kernel_memory_mapping() {
+void print_table(PageTable *t) {
+  kprintln("Pagetable address {}.", t);
+
+  for (size_t i = 0; i < 512; ++i) {
+    auto &entry = t->get_entry(i);
+
+    if (entry.is_valid()) {
+      kprintln(
+          "Entry {}. Is leaf?  {}, Pointed address: {}. Permissions: {}{}{}", i,
+          entry.is_leaf(), entry.as_pointer(),
+          entry.is_executable() ? 'w' : '-', entry.is_writable() ? 'w' : '-',
+          entry.is_readable() ? 'r' : '-');
+
+      if (!entry.is_leaf()) {
+        print_table(entry.as_table_pointer());
+      }
+    }
+  }
+}
+
+void *setup_kernel_memory_mapping() {
   // TODO: For now the only "machine" supported is the QEMU virtual machine,
   // thus addresses
   //  are hardcoded. With time we shall refactor the code and get the addresses
@@ -206,24 +231,19 @@ void setup_kernel_memory_mapping() {
   kernel_page_table =
       reinterpret_cast<PageTable *>(manager.get_frame().get_value());
   memset(kernel_page_table, 0, sizeof(PageTable));
-  kmmap(kernel_page_table, to_ptr(0x00000000), VPN::GB_VPN, to_ptr(0x00000000));
-  kmmap(kernel_page_table, to_ptr(0x40000000), VPN::GB_VPN, to_ptr(0x40000000));
+  kmmap(kernel_page_table, to_ptr(0x00000000), VPN::GB_VPN, to_ptr(0x00000000),
+        true, true);
+  kmmap(kernel_page_table, to_ptr(0x40000000), VPN::GB_VPN, to_ptr(0x40000000),
+        true, true);
 
   for (byte *c = &_text_start; c < &_stack_end; c += 4096) {
-    kmmap(kernel_page_table, c, VPN::KB_VPN, c);
-
-    auto r = get_physical_address(kernel_page_table, c + 299);
-
-    if (r.is_error()) {
-      kprintln("Why is it error??");
-    }
-
-    else {
-      kdebug(r.get_value());
-    }
+    kmmap(kernel_page_table, c, VPN::KB_VPN, c, true, true);
   };
 
   // Now we have the kernel mapped!!!
+  // write_csr(hls::MCSR::mstatus, to_uintptr_t(kernel_page_table));
+
+  return kernel_page_table;
 }
 
 } // namespace hls
