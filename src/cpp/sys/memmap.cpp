@@ -102,8 +102,6 @@ Result<void *> get_physical_address(PageTable *start_table, void *vaddress) {
   return error<void *>(Error::INVALID_PAGE_ENTRY);
 }
 
-bool is_address_used(void *address) { return false; }
-
 // TODO: IMPLEMENT MAPPING "REAL" VIRTUAL ADDRESSES
 
 // TODO: IMPLEMENT FLAGS FOR MAPED ADDRESSES

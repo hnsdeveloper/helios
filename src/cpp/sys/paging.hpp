@@ -27,8 +27,8 @@ SOFTWARE.
 #define _PAGING_HPP_
 
 #include "include/arch/riscv/plat_def.h"
-#include "include/global.h"
 #include "include/symbols.h"
+#include "misc/libfdt/libfdt.h"
 #include "ulib/bit.hpp"
 #include "ulib/result.hpp"
 
@@ -67,7 +67,7 @@ public:
   static bool init(void *base_address, size_t mem_size);
 };
 
-void setup_page_frame_manager();
+void setup_page_frame_manager(void *fdt);
 
 } // namespace hls
 

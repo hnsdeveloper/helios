@@ -24,28 +24,12 @@ SOFTWARE.
 ---------------------------------------------------------------------------------*/
 
 #include "sys/paging.hpp"
+#include "misc/libfdt/libfdt.h"
 #include "misc/new.hpp"
 #include "sys/mem.hpp"
 #include "sys/print.hpp"
 
 namespace hls {
-
-void setup_page_frame_manager() {
-  size_t heap_size = reinterpret_cast<uint64_t>(&_heap_size);
-
-  kdebug(&_heap_start);
-  kdebug(heap_size);
-
-  kprintln("Initializing PageFrameManager with {} kb of memory. Memory starts "
-           "at {}.\r\n",
-           heap_size / 1024, &_heap_start);
-
-  PageFrameManager::init(&_heap_start, heap_size);
-  PageFrameManager &manager = PageFrameManager::instance();
-
-  kprintln("PageFrameManager initialized with a total of {} page frames.",
-           manager.frame_count());
-}
 
 bool PageFrameManager::is_frame_aligned(void *ptr) {
   uintptr_t p = to_uintptr_t(ptr);
@@ -155,5 +139,27 @@ Result<PageKB *> PageFrameManager::get_frame() {
 }
 
 size_t PageFrameManager::frame_count() const { return m_frame_count; }
+
+void setup_page_frame_manager(void *fdt) {
+
+  for (auto node = fdt_first_subnode(fdt, 0); node >= 0;
+       node = fdt_next_subnode(fdt, node)) {
+  };
+
+  size_t heap_size = reinterpret_cast<uint64_t>(&_heap_size);
+
+  kdebug(&_heap_start);
+  kdebug(heap_size);
+
+  kprintln("Initializing PageFrameManager with {} kb of memory. Memory starts "
+           "at {}.\r\n",
+           heap_size / 1024, &_heap_start);
+
+  PageFrameManager::init(&_heap_start, heap_size);
+  PageFrameManager &manager = PageFrameManager::instance();
+
+  kprintln("PageFrameManager initialized with a total of {} page frames.",
+           manager.frame_count());
+}
 
 } // namespace hls

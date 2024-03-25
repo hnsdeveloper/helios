@@ -3,10 +3,10 @@ MIT License
 
 Copyright (c) 2022 Helio Nunes Santos
 
-        Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"), to
+deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
         copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
@@ -23,9 +23,21 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef _GLOBAL_HPP_
-#define _GLOBAL_HPP_
+#ifndef _CONCEPTS_H_
+#define _CONCEPTS_H_
 
+#include "include/typetraits.h"
 
+namespace hls {
+template <typename T>
+concept Integral = is_integral_v<T>;
+
+template <typename T>
+concept SignedIntegral = is_integral_v<T> && is_signed_v<T>;
+
+template <typename T>
+concept UnsignedIntegral = is_integral_v<T> && !is_signed_v<T>;
+
+}; // namespace hls
 
 #endif

@@ -23,55 +23,34 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef _VIRTUALPOINTER_HPP_
-#define _VIRTUALPOINTER_HPP_
+#ifndef _PAIR_HPP_
+#define _PAIR_HPP_
 
-#include "include/arch/riscv/plat_def.h"
-#include "sys/memmap.hpp"
-#include "ulib/result.hpp"
+#include "include/typetraits.h"
+#include "include/utilities.h"
 
 namespace hls {
 
-template <typename T> class VPtr {
+template <typename T, typename U> class Pair {
+
 public:
-  using type = T;
+  Pair() = default;
+  Pair(T &&a, U &&b) : first(hls::move(a)), second(hls::move(b)){};
+  Pair(const T &a, const U &b) : first(a), second(b){};
+  Pair(Pair &&p) : first(hls::move(p.first)), second(hls::move(p.second)){};
+  Pair(const Pair &p) : first(p.first), second(p.second){};
+  ~Pair() = default;
 
-  ~VPtr(){};
-
-  T &operator*() { return *get_physical_address(); }
-  T *operator->() { return get_physical_address(); }
-
-  T *get_vaddress() { return m_ptr; }
-
-  Result<T *> get_physical_address() {
-    auto result = ::hls::get_physical_address(m_table, m_ptr);
-    if (result.is_error()) {
-      return error<T *>(result.get_error());
-    }
-
-    return reinterpret_cast<T *>(result.get_value());
-  }
-
-private:
-  type *m_ptr;
-  PageTable *m_table;
+  T first;
+  U second;
 };
 
-// We don't have the need of this for now, but I will leave it here as to
-// remember.
-// template <typename T> class VPtr<T *> {
-//
-//  T *m_ptr;
-//  PageTable *m_table;
-//  VPN m_page_level;
-//
-// public:
-//  ~VPtr(){};
-//  V
-//};
+template <typename T, typename U> auto make_pair(T &&first, U &&second) {
+  using first_type = hls::remove_cvref_t<decltype(first)>;
+  using second_type = hls::remove_cvref_t<decltype(second)>;
 
-template <typename T>
-VPtr make_vptr(T *vaddr, PageTable *table, VPN page_level) {}
+  return Pair<first_type, second_type>(hls::move(first), hls::move(second));
+};
 
 } // namespace hls
 

@@ -64,9 +64,32 @@ int strncmp(const char *str1, const char *str2, size_t n) {
 
 size_t strlen(const char *str) {
   size_t i = 0;
-  for (; str[i] != '\0'; ++i)
-    ;
+  if (str)
+    for (; str[i] != '\0'; ++i)
+      ;
   return i;
+}
+
+size_t strnlen(const char *str, size_t maxlen) {
+  size_t i = 0;
+  if (str) {
+    while (i < maxlen && *str != '\0') {
+      ++i;
+    }
+  }
+  return i;
+}
+
+Result<size_t> find_first_idx(const char *str, char to_find) {
+  if (str) {
+    for (size_t i = 0; *(str + i); ++i) {
+      char c = *(str + i);
+      if (to_find == c)
+        return value(i);
+    }
+  }
+
+  return error<size_t>(Error::NOT_FOUND);
 }
 
 const char *strchr(const char *str, char c) {
@@ -80,6 +103,82 @@ const char *strchr(const char *str, char c) {
   }
 
   return str;
+}
+
+const char *strrchr(const char *str, char c) {
+  if (str) {
+    size_t idx = 0;
+    for (size_t i; *(str + i); ++i) {
+      char z = *(str + i);
+      if (z == c)
+        idx = i;
+    }
+
+    if (idx || *str == c)
+      return str + idx;
+  }
+
+  return nullptr;
+}
+
+// TODO: DOES NOT BEHAVE ENTIRELY LIKE THE C STANDARD ONE
+// THUS ANY WHERE IT IS USED, THE CODE SHOULD BE REWORKED
+unsigned long strtoul(const char *nptr, char **endptr, int base) {
+  const unsigned long ULONG_MAX = (0ul - 1ul);
+
+  const char *s;
+  unsigned long acc, cutoff;
+  int c;
+  int neg, any, cutlim;
+  /*
+   * See strtol for comments as to the logic used.
+   */
+  s = nptr;
+  do {
+    c = (unsigned char)*s++;
+  } while (is_space(c));
+  if (c == '-') {
+    neg = 1;
+    c = *s++;
+  } else {
+    neg = 0;
+    if (c == '+')
+      c = *s++;
+  }
+  if ((base == 0 || base == 16) && c == '0' && (*s == 'x' || *s == 'X')) {
+    c = s[1];
+    s += 2;
+    base = 16;
+  }
+  if (base == 0)
+    base = c == '0' ? 8 : 10;
+  cutoff = ULONG_MAX / (unsigned long)base;
+  cutlim = ULONG_MAX % (unsigned long)base;
+  for (acc = 0, any = 0;; c = (unsigned char)*s++) {
+    if (is_dec_digit(c))
+      c -= '0';
+    else if (is_alpha(c))
+      c -= is_upper(c) ? 'A' - 10 : 'a' - 10;
+    else
+      break;
+    if (c >= base)
+      break;
+    if (any < 0)
+      continue;
+    if (acc > cutoff || (acc == cutoff && c > cutlim)) {
+      any = -1;
+      acc = ULONG_MAX;
+    } else {
+      any = 1;
+      acc *= (unsigned long)base;
+      acc += c;
+    }
+  }
+  if (neg && any > 0)
+    acc = -acc;
+  if (endptr != 0)
+    *endptr = (char *)(any ? s - 1 : nptr);
+  return (acc);
 }
 
 char to_upper(char c) {
@@ -96,16 +195,24 @@ char to_lower(char c) {
   return c;
 }
 
-bool is_dec_digit(char c) { return c >= '0' && c <= '9'; }
-bool is_letter(char c) {
-  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-};
-bool is_alphanumeric(char c) { return is_dec_digit(c) || is_letter(c); }
+bool is_dec_digit(char c) {
+  c = to_lower(c);
+  return c >= '0' && c <= '9';
+}
+bool is_oct_digit(char c) {
+  c = to_lower(c);
+  return c >= '0' && c <= '7';
+}
 
 bool is_hex_digit(char c) {
   c = to_lower(c);
   return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
 }
+
+bool is_alpha(char c) {
+  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+};
+bool is_alphanumeric(char c) { return is_dec_digit(c) || is_alpha(c); }
 
 Result<uint64_t> hex_to_uint(const char *str) {
   if (str == nullptr)
@@ -129,5 +236,10 @@ Result<uint64_t> hex_to_uint(const char *str) {
 
   return value(temp);
 }
+
+bool is_space(char c) { return c == ' '; }
+
+bool is_upper(char c) { return to_upper(c) == c; }
+bool is_lower(char c) { return to_lower(c) == c; };
 
 } // namespace hls

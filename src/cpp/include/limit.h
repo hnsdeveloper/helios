@@ -23,13 +23,24 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef _KMALLOC_
-#define _KMALLOC_
+#ifndef _LIMITS_H_
+#define _LIMITS_H_
+
+#include "include/concepts.h"
+#include "include/types.h"
 
 namespace hls {
-class KMalloc {
 
-public:
+template <typename T> struct limit;
+
+template <SignedIntegral T> struct limit<T> {
+  static constexpr T max = (((1 << (sizeof(T) - 2)) - 1) * 2) + 1;
+  static constexpr T min = (-max) - 1;
+};
+
+template <UnsignedIntegral T> struct limit<T> {
+  static constexpr T max = T(0) - T(1);
+  static constexpr T min = T(0);
 };
 
 }; // namespace hls

@@ -34,15 +34,26 @@ namespace hls {
 int strcmp(const char *str1, const char *str2);
 int strncmp(const char *str1, const char *str2, size_t n);
 size_t strlen(const char *str);
+size_t strnlen(const char *str, size_t maxlen);
 const char *strchr(const char *str, char c);
+const char *strrchr(const char *str, char c);
+unsigned long int strtoul(const char *str, char **endptr, int base);
+
+Result<size_t> find_first_idx(const char *str, char to_find);
 
 char to_upper(char c);
 char to_lower(char c);
 
 bool is_dec_digit(char c);
-bool is_letter(char c);
-bool is_alphanumeric(char c);
+bool is_oct_digit(char c);
 bool is_hex_digit(char c);
+
+bool is_alpha(char c);
+bool is_alphanumeric(char c);
+bool is_space(char c);
+
+bool is_upper(char c);
+bool is_lower(char c);
 
 Result<uint64_t> hex_to_uint(const char *str);
 

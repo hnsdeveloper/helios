@@ -36,6 +36,8 @@ namespace hls {
 
 enum class Error : uint64_t {
   UNDEFINED_ERROR,
+  NOT_FOUND,
+  INVALID_ARGUMENT,
   INVALID_INDEX,
   INVALID_PAGE_TABLE,
   INVALID_PAGE_ENTRY,
@@ -48,8 +50,8 @@ enum class Error : uint64_t {
   WRITE_NOT_ALLOWED,
   EXECUTE_NOT_ALLOWED,
   OPERATION_NOT_ALLOWED,
-  INVALID_ARGUMENT,
-  OVERFLOW
+  OVERFLOW,
+  CORRUPTED_DATA_STRUCTURE
 };
 
 template <typename T>
@@ -58,18 +60,18 @@ class Result {
 
   union {
     Error e;
-    T value;
+    alignas(T) char value[sizeof(T)];
   } m_stored;
 
   bool m_is_error = false;
 
-  Result() {}
-
-  Result(const T &v) { new (&m_stored.value) T(v); }
+  Result(const T &v) {
+    new (reinterpret_cast<value_type *>(m_stored.value)) T(v);
+  }
 
   Result(T &&v) {
     using type = remove_cvref_t<T>;
-    new (&m_stored.value) type(hls::move(v));
+    new (reinterpret_cast<value_type *>(m_stored.value)) type(hls::move(v));
   }
 
   Result(Error e) {
@@ -82,8 +84,9 @@ public:
     if (other.is_error()) {
       m_stored.e = other.m_stored.e;
     } else {
-      auto *p = &m_stored.value;
-      new (p) T((hls::move(other.m_stored.value)));
+      auto *p = reinterpret_cast<value_type *>(m_stored.value);
+      new (p)
+          T(hls::move(reinterpret_cast<value_type &>(other.m_stored.value)));
     }
   }
 
@@ -91,14 +94,14 @@ public:
     if (other.is_error()) {
       m_stored.e = other.m_stored.e;
     } else {
-      auto *p = &m_stored.value;
-      new (p) T((other.m_stored.value));
+      auto *p = reinterpret_cast<value_type *>(m_stored.value);
+      new (p) T(reinterpret_cast<const value_type &>(other.m_stored.value));
     }
   }
 
   ~Result() {
     if (is_value()) {
-      m_stored.value.~T();
+      reinterpret_cast<value_type *>(m_stored.value)->~T();
     }
   }
 
@@ -121,7 +124,7 @@ public:
     if (is_error()) {
       PANIC("Result contains error instead of expected value.");
     }
-    return m_stored.value;
+    return *reinterpret_cast<const value_type *>(m_stored.value);
   }
 
   Error get_error() const {

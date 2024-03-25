@@ -31,6 +31,11 @@ fn find_files(dir: &String, ext: &String, recurse: bool) -> Vec<PathBuf> {
 fn main() {
     let cpp_files = find_files(&"./src".to_string(), &"cpp".to_string(), true);
     let assembly_files = find_files(&"./src".to_string(), &"S".to_string(), true);
+    let c_files = find_files(&"./src".to_string(), &"c".to_string(), true);
+
+    for path in &cpp_files {
+        println!("{}", path.to_str().expect("msg"));
+    }
 
     println!("Building cpp");
     // Builds cpp files
@@ -48,7 +53,8 @@ fn main() {
         .std("c++20")
         .shared_flag(true)
         .include("./src/cpp/")
+        .files(c_files.into_iter())
         .files(cpp_files.into_iter())
         .files(assembly_files.into_iter())
-        .compile("implementations");
+        .compile("c++");
 }

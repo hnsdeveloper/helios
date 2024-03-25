@@ -25,6 +25,7 @@ SOFTWARE.
 
 #include "include/arch/riscv/plat_def.h"
 #include "misc/githash.hpp"
+#include "misc/libfdt/libfdt.h"
 #include "misc/splash.hpp"
 #include "sys/memmap.hpp"
 #include "sys/paging.hpp"
@@ -36,6 +37,10 @@ SOFTWARE.
 
 namespace hls {
 
+/**
+ * @brief Displays HeliOS logo and copyright notice.
+ *
+ */
 void display_initial_info() {
   // Prints the splash logo
   strprint(splash);
@@ -80,6 +85,24 @@ void check_system_capabilities() {
   };
 }
 
+Result<void *> get_fdt(int argc, const char **argv) {
+  // TODO: FOR NOW WE USING THE SECOND ARGUMENT AS THE ADDRESS OF THE FDT
+
+  void *fdt = to_ptr(hex_to_uint(argv[1]).get_value());
+  int fdt_check_result = fdt_check_header(fdt);
+
+  if (fdt_check_result != 0)
+    return error<void *>(Error::CORRUPTED_DATA_STRUCTURE);
+
+  return value(fdt);
+}
+
+/**
+ * @brief Main function. Initialize the required kernel subsystems.
+ *
+ * @param argc Argument count
+ * @param argv Array of string arguments
+ */
 [[noreturn]] void main(int argc, const char **argv) {
 
   setup_printing();
@@ -91,34 +114,39 @@ void check_system_capabilities() {
   // strprintln("Checking system capabilities!");
   // check_system_capabilities();
 
-  if (argc) {
-    {
-      auto rst = hex_to_uint(argv[0]);
-      if (rst.is_value()) {
-        kdebug(rst.get_value());
-      } else {
-        kprintln("Fail0");
-      }
-    }
-    auto rst = hex_to_uint(argv[1]);
-    if (rst.is_value()) {
-      kdebug(rst.get_value());
-    } else {
-      kprintln("Fail1");
-    }
-  }
+  void *device_tree = get_fdt(argc, argv).get_value();
 
   strprintln("Setting up pageframe manager.");
-  setup_page_frame_manager();
+  setup_page_frame_manager(device_tree);
 
   strprintln("Mapping kernel memory.");
   void *kernel_page_table = setup_kernel_memory_mapping();
 
-  //_kernel_start(kernel_page_table, argc, argv);
+  // TODO:
+  // Integrate libfdt
+  // Solve TODOs. Refactor whole code. Write documentation.
+  // Initialize scheduler
+  // First userland application (included in the kernel itself). Should be shell
+  // with a simple echo command
+  // Develop file system module
+  // Load first userland application from filesystem
+  // Enable swapping
+  // Improve shell, allow it to issue other commands
+  // Implement libc (probably use newlib)
+  // Have simple commands running simultaneously
+  // Detect devices
+  // Implement drivers
+  // Implement multiple terminals
 }
 
 } // namespace hls
 
+/**
+ * @brief Accessible symbol from assembly. Used to call the real main function/
+ *
+ * @param argc Argument count
+ * @param argv Array of string arguments
+ */
 extern "C" [[noreturn]] void bootmain(int argc, const char **argv) {
   hls::main(argc, argv);
 }
