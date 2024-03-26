@@ -140,26 +140,115 @@ Result<PageKB *> PageFrameManager::get_frame() {
 
 size_t PageFrameManager::frame_count() const { return m_frame_count; }
 
+// TODO: Refactor.
+bool is_memory_node(void *fdt, int node) {
+  const char *const MEMORY_STRING = "memory@";
+  int len = 0;
+  const char *node_name = fdt_get_name(fdt, node, &len);
+
+  if (len) {
+    if (strncmp(MEMORY_STRING, node_name, strlen(MEMORY_STRING)) == 0)
+      return true;
+  }
+  return false;
+}
+
+void get_memory_region(void *fdt, int node, void **p_ptr, size_t *size) {
+  kdebug(fdt_get_name(fdt, node, nullptr));
+
+  // memory has as its parent the root node, which should define
+  // address_cells and size_cells
+  size_t address_cells = fdt_address_cells(fdt, 0);
+  size_t size_cells = fdt_size_cells(fdt, 0);
+
+  int len = 0;
+  const struct fdt_property *prop = fdt_get_property(fdt, node, "reg", &len);
+
+  kdebug(address_cells);
+  kdebug(size_cells);
+
+  kdebug(prop);
+  kdebug(len);
+
+  if (len < 0) {
+    PANIC("Corrupted FDT.");
+  }
+
+  auto get_address = [&](size_t idx) {
+    const char *d = reinterpret_cast<const char *>(prop->data);
+    d += idx *
+         (sizeof(uint32_t) * address_cells + sizeof(uint32_t) * size_cells);
+    uintptr_t p = 0;
+
+    if (address_cells == 1)
+      p = fdt32_ld(reinterpret_cast<const fdt32_t *>(d));
+    else if (address_cells == 2)
+      p = fdt64_ld(reinterpret_cast<const fdt64_t *>(d));
+
+    return to_ptr(p);
+  };
+
+  auto get_size = [&](size_t idx) {
+    const char *d = reinterpret_cast<const char *>(prop->data);
+    d += idx *
+         (sizeof(uint32_t) * address_cells + sizeof(uint32_t) * size_cells);
+    size_t p = 0;
+
+    d += address_cells * sizeof(uint32_t);
+
+    if (size_cells == 1)
+      p = fdt32_ld(reinterpret_cast<const fdt32_t *>(d));
+    else if (size_cells == 2)
+      p = fdt64_ld(reinterpret_cast<const fdt64_t *>(d));
+
+    return p;
+  };
+
+  kdebug(get_address(0));
+  kdebug(get_size(0));
+
+  *p_ptr = get_address(0);
+  *size = get_size(0);
+}
+
 void setup_page_frame_manager(void *fdt) {
 
   for (auto node = fdt_first_subnode(fdt, 0); node >= 0;
        node = fdt_next_subnode(fdt, node)) {
+
+    if (!is_memory_node(fdt, node))
+      continue;
+
+    if (fdt_address_cells(fdt, node) < 0 || fdt_size_cells(fdt, node) < 0) {
+      PANIC("Corrupted FDT.");
+    }
+
+    void *mem = nullptr;
+    size_t size = 0;
+    get_memory_region(fdt, node, &mem, &size);
+
+    if (mem == nullptr || size == 0) {
+      PANIC("No memory available for PageFrameManager.");
+    }
+
+    kdebug(mem);
+    kdebug(size);
+
+    ptrdiff_t commited = &_heap_start - (reinterpret_cast<const byte *>(mem));
+    size -= commited;
+
+    kprintln("Initializing PageFrameManager with {} kb of memory. Using from "
+             "{} to {}.",
+             size / 1024, &_heap_start, &_heap_start + size);
+
+    PageFrameManager::init(mem, size);
+    PageFrameManager &manager = PageFrameManager::instance();
+
+    kprintln("PageFrameManager initialized with a total of {} page frames.",
+             manager.frame_count());
+
+    break;
   };
-
-  size_t heap_size = reinterpret_cast<uint64_t>(&_heap_size);
-
-  kdebug(&_heap_start);
-  kdebug(heap_size);
-
-  kprintln("Initializing PageFrameManager with {} kb of memory. Memory starts "
-           "at {}.\r\n",
-           heap_size / 1024, &_heap_start);
-
-  PageFrameManager::init(&_heap_start, heap_size);
-  PageFrameManager &manager = PageFrameManager::instance();
-
-  kprintln("PageFrameManager initialized with a total of {} page frames.",
-           manager.frame_count());
 }
 
 } // namespace hls

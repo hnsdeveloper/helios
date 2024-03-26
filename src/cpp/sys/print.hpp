@@ -108,7 +108,7 @@ template <typename... Args> void kprintln(const char *str, Args... args) {
 #define kdebug(expr)                                                           \
   if constexpr (true) {                                                        \
     if constexpr (is_integral_v<decltype(expr)>) {                             \
-      void *p = reinterpret_cast<void *>(expr);                                \
+      const void *p = reinterpret_cast<const void *>(expr);                    \
       auto p2 = expr;                                                          \
       kprintln(#expr " : {} " #expr " hex: {}", p2, p);                        \
     } else {                                                                   \

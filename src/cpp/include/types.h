@@ -42,6 +42,7 @@ using int64_t = long int;
 using uint64_t = unsigned long int;
 using size_t = uint64_t;
 using uintptr_t = size_t;
+using ptrdiff_t = size_t;
 
 static_assert(sizeof(uintptr_t) == sizeof(void *));
 

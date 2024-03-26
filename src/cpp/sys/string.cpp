@@ -218,13 +218,12 @@ Result<uint64_t> hex_to_uint(const char *str) {
   if (str == nullptr)
     return error<uint64_t>(Error::INVALID_ARGUMENT);
 
-  if (*str != '0' && to_lower(*(str + 1)) != 'x') {
-    return error<uint64_t>(Error::INVALID_ARGUMENT);
-  }
+  if (*str == '0' && to_lower(*(str + 1)) == 'x')
+    str = str + 2;
 
   uint64_t temp = 0;
-  for (auto str2 = str + 2; *str2; ++str2) {
-    char c = to_lower(*str2);
+  for (; *str; ++str) {
+    char c = to_lower(*str);
     if (!is_hex_digit(c)) {
       return error<uint64_t>(Error::INVALID_ARGUMENT);
     }

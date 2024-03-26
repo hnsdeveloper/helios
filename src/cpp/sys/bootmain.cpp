@@ -88,8 +88,13 @@ void check_system_capabilities() {
 Result<void *> get_fdt(int argc, const char **argv) {
   // TODO: FOR NOW WE USING THE SECOND ARGUMENT AS THE ADDRESS OF THE FDT
 
+  kdebug(argv[1]);
+
   void *fdt = to_ptr(hex_to_uint(argv[1]).get_value());
+  kdebug(fdt);
   int fdt_check_result = fdt_check_header(fdt);
+
+  kdebug(fdt_check_result);
 
   if (fdt_check_result != 0)
     return error<void *>(Error::CORRUPTED_DATA_STRUCTURE);

@@ -34,7 +34,7 @@ namespace hls {
 template <typename T> struct limit;
 
 template <SignedIntegral T> struct limit<T> {
-  static constexpr T max = (((1 << (sizeof(T) - 2)) - 1) * 2) + 1;
+  static constexpr T max = (((1 << (sizeof(T) * 8 - 2)) - 1) * 2) + 1;
   static constexpr T min = (-max) - 1;
 };
 
