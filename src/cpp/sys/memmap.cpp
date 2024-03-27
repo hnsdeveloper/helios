@@ -106,8 +106,7 @@ Result<void *> get_physical_address(PageTable *start_table, void *vaddress) {
 
 // TODO: IMPLEMENT FLAGS FOR MAPED ADDRESSES
 Result<void *> kmmap(PageTable *start_table, void *vaddress, VPN page_level,
-                     void *physical_address, bool writable = false,
-                     bool executable = false) {
+                     void *physical_address, bool writable, bool executable) {
 
   // First lets check if it is already mapped
   auto address_result = get_physical_address(start_table, vaddress);

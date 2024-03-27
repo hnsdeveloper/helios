@@ -102,4 +102,18 @@ extern "C" void stack_trace() {
   }
 }
 
+/**
+ * @todo Implement properly
+ *
+ */
+extern "C" void die() {
+
+  bool is_system_loaded = false;
+  if (is_system_loaded) {
+  } else {
+    while (true)
+      ;
+  }
+}
+
 extern "C" void panic_message_print(const char *msg) { kprintln("{}", msg); }

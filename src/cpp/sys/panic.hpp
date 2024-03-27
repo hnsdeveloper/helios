@@ -30,11 +30,24 @@ SOFTWARE.
 
 struct hart;
 
+/**
+ * @brief Prints a stack trace, where caller addresses are printed.
+ *
+ */
 extern "C" void stack_trace();
-extern "C" void _die();
 
-// Might wanna look into jumping to some label
-// Using the macro throughout the code will quickly add up
+/**
+ * @brief Kills the system.
+ * @todo Implement so that when the system is fully loaded, it saves a dump of
+ * everything and reboots. If the system is not fully loaded, then it should
+ * print to console and freeze.
+ */
+extern "C" void die();
+
+/**
+ * @brief Macro used to print current registers values.
+ *
+ */
 #define PRINT_REGISTERS()                                                      \
   {                                                                            \
     asm volatile("1:"                                                          \
@@ -46,11 +59,16 @@ extern "C" void _die();
                  "jal  x10, _print_registers;");                               \
   }
 
+/**
+ * @brief Macro used for kernel panics. Prints registers values, shows a panic
+ * message, calling location and stack trace.
+ *
+ */
 #define PANIC(msg)                                                             \
   PRINT_REGISTERS();                                                           \
   kprintln("Panic message: {}", #msg);                                         \
   kprintln("At {} {} line: {}", __FILE__, __PRETTY_FUNCTION__, __LINE__);      \
   stack_trace();                                                               \
-  _die();
+  die();
 
 #endif

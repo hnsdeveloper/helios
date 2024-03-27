@@ -32,15 +32,70 @@ extern "C" putchar_func_ptr putchar;
 
 namespace hls {
 
+/**
+ * @brief Set the up printing function for printing to a default console.
+ * @remark Thread safety: ST.
+ */
 void setup_printing();
 
-void strprint(const char *);
-void strprintln(const char *);
-void ptrprint(const void *);
-void intprint(int64_t);
-void uintprint(uint64_t);
-void floatprint(double);
+/**
+ * @brief Prints string **str** to default console without formatting.
+ * @remark Thread safety: ST.
+ * @param str String to be printed.
+ */
+void strprint(const char *str);
 
+/**
+ * @brief Same as strprint, but inserts new line at the end.
+ * @remark Thread safety: ST.
+ * @param str String to be printed.
+ */
+void strprintln(const char *str);
+
+/**
+ * @brief Prints a pointer value to default console as a hex integral.
+ * @remark Thread safety: ST.
+ * @param p Pointer value to be printed.
+ */
+void ptrprint(const void *p);
+
+/**
+ * @brief Prints a signed integral value to default console.
+ * @remark Thread safety: ST.
+ * @param v Value to be printed.
+ */
+void intprint(int64_t v);
+
+/**
+ * @brief Prints an unsigned integral value to default console.
+ * @remark Thread safety: ST.
+ * @param v Value to be printed.
+ */
+void uintprint(uint64_t v);
+
+/**
+ * @brief Prints a float value to default console.
+ * @remark Thread safety: ST.
+ * @todo Implement
+ * @param d The value to be printed
+ */
+void floatprint(double d);
+
+/**
+ * @brief Prints string with formatting (to default console), using the pair {}
+ * as placeholder for arguments. Supports printing other strings, pointers and
+ * integral values. Note that printing a const char* will print it as a string,
+ * not as a pointer. It is safe in the sense that it will not read garbage from
+ * the stack if there is a mismatch of placeholders and arguments.
+ * Should generally not be used directly.
+ *
+ * @remark Thread safety: ST.
+ * @tparam T The type of a first {} argument.
+ * @tparam Args The types of the remaining arguments if any
+ * @param str String containing formatting placeholders.
+ * @param p The argument to be formatted into the string.
+ * @param args The remaining arguments to be formated into the string.
+ */
 template <typename T, typename... Args>
 void print_v(const char *str, T p, Args... args) {
   if (str == nullptr) {
@@ -87,6 +142,13 @@ void print_v(const char *str, T p, Args... args) {
   }
 }
 
+/**
+ * @brief Function to print to default console, supporting formatting.
+ * @remark Thread safety: ST.
+ * @tparam Args Type of arguments to be printed if any.
+ * @param str String to be printed and/or formatted if needed.
+ * @param args Arguments to be formatted into string.
+ */
 template <typename... Args> void kprint(const char *str, Args... args) {
   if constexpr (sizeof...(args) == 0) {
     strprint(str);
@@ -95,6 +157,13 @@ template <typename... Args> void kprint(const char *str, Args... args) {
   }
 }
 
+/**
+ * @brief Same as kprint, but inserts a new line at the end.
+ * @remark Thread safety: ST.
+ * @tparam Args Type of arguments to be printed if any.
+ * @param str String to be printed and/or formatted if needed.
+ * @param args Arguments to be formatted into string.
+ */
 template <typename... Args> void kprintln(const char *str, Args... args) {
   if constexpr (sizeof...(args) == 0) {
     strprint(str);
@@ -105,6 +174,10 @@ template <typename... Args> void kprintln(const char *str, Args... args) {
   strprint("\r\n");
 }
 
+/**
+ * @brief Macro to debug expressions/values.
+ * @todo Make it so that it is only enabled when some debug macro is defined.
+ */
 #define kdebug(expr)                                                           \
   if constexpr (true) {                                                        \
     if constexpr (is_integral_v<decltype(expr)>) {                             \

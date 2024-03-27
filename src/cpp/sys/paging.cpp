@@ -31,11 +31,6 @@ SOFTWARE.
 
 namespace hls {
 
-bool PageFrameManager::is_frame_aligned(void *ptr) {
-  uintptr_t p = to_uintptr_t(ptr);
-  return !(p & 0xFFF);
-}
-
 Result<size_t> PageFrameManager::find_free_frame() {
   for (size_t i = 0; i < m_bitmap_count; ++i) {
     auto &bmap = m_bitmap[i];

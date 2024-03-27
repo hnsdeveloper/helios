@@ -25,14 +25,24 @@ SOFTWARE.
 
 #include "sys/print.hpp"
 #include "dev/uart/uart.hpp"
+#include "include/limit.h"
 #include "include/types.h"
 #include "sys/mem.hpp"
 #include "sys/opensbi.hpp"
 
 const bool UART_PRINTING = true;
 
-void empty_putchar(char _c) { _c = _c; }
+/**
+ * @brief Used as placeholder.
+ *
+ */
+void empty_putchar(char) {}
 
+/**
+ * @brief Function pointer to a putchar like function. Should put char to
+ * default console.
+ *
+ */
 putchar_func_ptr putchar = &empty_putchar;
 
 namespace hls {
@@ -84,7 +94,7 @@ void intprint(int64_t v) {
   else {
     strprint("-");
     // Check if v is equal to INT_MIN
-    if (v == ~decltype(v){0}) {
+    if (v == hls::limit<int64_t>::min) {
       v += 1;
       v = -v;
       uintprint((uint64_t(0) + v) + 1);

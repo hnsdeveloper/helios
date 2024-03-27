@@ -128,7 +128,6 @@ Result<void *> get_fdt(int argc, const char **argv) {
   void *kernel_page_table = setup_kernel_memory_mapping();
 
   // TODO:
-  // Integrate libfdt
   // Solve TODOs. Refactor whole code. Write documentation.
   // Initialize scheduler
   // First userland application (included in the kernel itself). Should be shell

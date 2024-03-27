@@ -182,14 +182,14 @@ unsigned long strtoul(const char *nptr, char **endptr, int base) {
 }
 
 char to_upper(char c) {
-  if (c >= 'a' && c <= 'z')
+  if (is_lower(c))
     return c - 'a' + 'A';
 
   return c;
 }
 
 char to_lower(char c) {
-  if (c >= 'A' && c <= 'Z')
+  if (is_upper(c))
     return c - 'A' + 'a';
 
   return c;
@@ -212,6 +212,7 @@ bool is_hex_digit(char c) {
 bool is_alpha(char c) {
   return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 };
+
 bool is_alphanumeric(char c) { return is_dec_digit(c) || is_alpha(c); }
 
 Result<uint64_t> hex_to_uint(const char *str) {

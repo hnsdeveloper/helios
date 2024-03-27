@@ -23,21 +23,23 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef _MEMMAP_HPP_
-#define _MEMMAP_HPP_
-
-#include "include/arch/riscv/plat_def.h"
-#include "ulib/result.hpp"
+#ifndef _REFERENCE_HPP_
+#define _REFERENCE_HPP_
 
 namespace hls {
+template <typename T> class Ref {
+  T *m_value;
 
-Result<VPN> walk_table(PageTable **table_ptr, void *vaddress, VPN current_vpn);
-Result<void *> get_physical_address(PageTable *start_table, void *vaddress);
-Result<void *> kmmap(PageTable *start_table, void *vaddress, VPN page_level,
-                     void *physical_address, bool writable = false,
-                     bool executable = false);
+public:
+  Ref(T &value) { m_value = &value; }
+  Ref(const Ref &other) { m_value = other.m_value; }
+  ~Ref() = default;
+  T &operatorT &() const { return get(); }
+  T &get() const { return *m_value; }
+};
 
-void *setup_kernel_memory_mapping();
-} // namespace hls
+template <typename T> Ref<T> make_ref(T &v) { return Ref<T>(v); }
+
+}; // namespace hls
 
 #endif
