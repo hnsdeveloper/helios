@@ -30,6 +30,7 @@ SOFTWARE.
 #include "include/symbols.h"
 #include "misc/libfdt/libfdt.h"
 #include "ulib/bit.hpp"
+#include "ulib/reference.hpp"
 #include "ulib/result.hpp"
 
 const size_t BITSET_SIZE = sizeof(uint64_t) * 8;
@@ -131,10 +132,10 @@ public:
    * @param base_address The physical memory address from which PageFrameManager
    * will manage pageframes.
    * @param mem_size Memory size in bytes (end_address - base_address).
-   * @return Result<Ref<PageFrameManager>>
+   * @return True if it is initialized successfully
+   * @return False if it is not initialzied succesfully
    */
-  static Result<Ref<PageFrameManager>> init(void *base_address,
-                                            size_t mem_size);
+  static bool init(void *base_address, size_t mem_size);
 };
 
 void setup_page_frame_manager(void *fdt);

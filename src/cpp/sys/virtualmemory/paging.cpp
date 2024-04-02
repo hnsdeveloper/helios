@@ -23,7 +23,7 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "sys/paging.hpp"
+#include "sys/virtualmemory/paging.hpp"
 #include "misc/libfdt/libfdt.h"
 #include "misc/new.hpp"
 #include "sys/mem.hpp"
@@ -236,7 +236,7 @@ void setup_page_frame_manager(void *fdt) {
              "{} to {}.",
              size / 1024, &_heap_start, &_heap_start + size);
 
-    PageFrameManager::init(mem, size);
+    PageFrameManager::init(&_heap_start, size);
     PageFrameManager &manager = PageFrameManager::instance();
 
     kprintln("PageFrameManager initialized with a total of {} page frames.",

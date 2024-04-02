@@ -32,7 +32,7 @@ _start:
 	sd			x0, 0(sp)
 	la			t4, 3f
 	sd			t4, 8(sp)
-
+3:
 	# Calls bootmain, so we start using C code. a0 and a1 should contain argc and argv
 	call		bootmain
 

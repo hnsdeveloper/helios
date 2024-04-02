@@ -23,21 +23,34 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "include/types.h"
-#include "ulib/result.hpp"
+#include "sys/virtualmemory/common.hpp"
 
-#ifndef _OPENSBI_HPP_
-#define _OPENSBI_HPP_
+hls::PageTable *kernel_page_table = nullptr;
 
 namespace hls {
-void sbi_call(uint64_t extension, uint64_t function_id, uint64_t arg1,
-              uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5,
-              uint64_t arg6, uint64_t &error, uint64_t &value);
 
-void opensbi_putchar(char c);
+void print_table(PageTable *t) {
+  kprintln("Pagetable address {}.", t);
 
-void opensbi_set_timer(uint64_t time);
+  for (size_t i = 0; i < 512; ++i) {
+    auto &entry = t->get_entry(i);
+
+    if (entry.is_valid()) {
+      kprintln(
+          "Entry {}. Is leaf?  {}, Pointed address: {}. Permissions: {}{}{}", i,
+          entry.is_leaf(), entry.as_pointer(),
+          entry.is_executable() ? 'x' : '-', entry.is_writable() ? 'w' : '-',
+          entry.is_readable() ? 'r' : '-');
+
+      if (!entry.is_leaf()) {
+        print_table(entry.as_table_pointer());
+      }
+    }
+  }
+}
+
+void *get_kernel_begin_address() { return &_text_start; }
+
+void *get_kernel_end_address() { return &_heap_start; }
 
 }; // namespace hls
-
-#endif

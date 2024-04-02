@@ -317,7 +317,7 @@ PageEntry &PageTable::get_entry(size_t entry_index) {
   return entries[entry_index];
 }
 
-size_t get_page_entry_index(void *v_address, VPN vpn) {
+size_t get_page_entry_index(void *v_address, PageLevel vpn) {
   size_t result = 0;
   size_t vpn_idx = static_cast<size_t>(vpn);
   auto addr = to_uintptr_t(v_address);
@@ -326,8 +326,8 @@ size_t get_page_entry_index(void *v_address, VPN vpn) {
   return result;
 }
 
-VPN hls::next_vpn(VPN v) {
-  return static_cast<VPN>(static_cast<size_t>(v) - 1);
+PageLevel hls::next_vpn(PageLevel v) {
+  return static_cast<PageLevel>(static_cast<size_t>(v) - 1);
 }
 
 void PageTable::print_entries() {

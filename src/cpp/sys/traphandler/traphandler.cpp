@@ -23,21 +23,41 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "include/types.h"
-#include "ulib/result.hpp"
+#include "include/arch/riscv/plat_def.h"
+#include "sys/print.hpp"
 
-#ifndef _OPENSBI_HPP_
-#define _OPENSBI_HPP_
-
+using namespace hls;
 namespace hls {
-void sbi_call(uint64_t extension, uint64_t function_id, uint64_t arg1,
-              uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5,
-              uint64_t arg6, uint64_t &error, uint64_t &value);
 
-void opensbi_putchar(char c);
+void setup_trap_handling() {
+  asm volatile("la t0, _s_trap;"
+               "csrrw t0, stvec, t0;"
+               "li t0, 0x222;"
+               "csrrw t0, sie, t0;"
+               "csrsi sstatus, 2");
+}
 
-void opensbi_set_timer(uint64_t time);
+} // namespace hls
 
-}; // namespace hls
+extern "C" void traphandler(hart *h) {
 
-#endif
+  uintreg_t scause = 0;
+  asm volatile("csrrw %1, scause, %0" : "=r"(scause) : "r"(scause));
+
+  const bool is_sync = (scause >> 63);
+  const uintreg_t cause = (scause << 1) >> 1; // Discards the MSB
+
+  if (is_sync) {
+    switch (cause) {
+
+    default:
+      PANIC("Unhandled synchronous trap cause.");
+    }
+  } else {
+    switch (cause) {
+
+    default:
+      PANIC("Unhandled asynchronous trap cause.");
+    }
+  }
+}

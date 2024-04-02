@@ -239,7 +239,7 @@ Result<uint64_t> hex_to_uint(const char *str) {
 
 bool is_space(char c) { return c == ' '; }
 
-bool is_upper(char c) { return to_upper(c) == c; }
-bool is_lower(char c) { return to_lower(c) == c; };
+bool is_upper(char c) { return c >= 'A' && c <= 'Z'; }
+bool is_lower(char c) { return c >= 'a' && c <= 'Z'; };
 
 } // namespace hls

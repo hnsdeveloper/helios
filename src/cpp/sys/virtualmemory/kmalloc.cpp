@@ -23,21 +23,40 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef _MEMMAP_HPP_
-#define _MEMMAP_HPP_
-
-#include "include/arch/riscv/plat_def.h"
-#include "ulib/result.hpp"
+#include "sys/virtualmemory/kmalloc.hpp"
+#include "sys/virtualmemory/common.hpp"
+#include "sys/virtualmemory/memmap.hpp"
 
 namespace hls {
 
-Result<VPN> walk_table(PageTable **table_ptr, void *vaddress, VPN current_vpn);
-Result<void *> get_physical_address(PageTable *start_table, void *vaddress);
-Result<void *> kmmap(PageTable *start_table, void *vaddress, VPN page_level,
-                     void *physical_address, bool writable = false,
-                     bool executable = false);
+class KernelMemoryAllocator {
 
-void *setup_kernel_memory_mapping();
+  static KernelMemoryAllocator &__internal_instance() {
+    static KernelMemoryAllocator allocator;
+    return allocator;
+  }
+
+  KernelMemoryAllocator(){
+
+  };
+
+public:
+  static bool init() { return false; }
+
+  static KernelMemoryAllocator &instance() {}
+
+  void *allocate(size_t n) { return nullptr; }
+  void free(const void *ptr) {
+    (void)0;
+    return;
+  }
+};
+
+void *kmalloc(size_t n) {
+  return KernelMemoryAllocator::instance().allocate(n);
+};
+
+void kfree(void *ptr) { return KernelMemoryAllocator::instance().free(ptr); }
+
+void initialize_kmalloc() {}
 } // namespace hls
-
-#endif

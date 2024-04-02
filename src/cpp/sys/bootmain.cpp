@@ -27,13 +27,14 @@ SOFTWARE.
 #include "misc/githash.hpp"
 #include "misc/libfdt/libfdt.h"
 #include "misc/splash.hpp"
-#include "sys/memmap.hpp"
-#include "sys/paging.hpp"
+#include "sys/opensbi.hpp"
 #include "sys/panic.hpp"
 #include "sys/print.hpp"
 #include "sys/string.hpp"
-
-// extern "C" void _kernel_start(void *, int argc, const char **argv);
+#include "sys/traphandler/traphandler.hpp"
+#include "sys/virtualmemory/kmalloc.hpp"
+#include "sys/virtualmemory/memmap.hpp"
+#include "sys/virtualmemory/paging.hpp"
 
 namespace hls {
 
@@ -47,42 +48,6 @@ void display_initial_info() {
   // Prints copyright notice, the year and the commit which this build was based
   // at.
   kprintln("Copyright (C) {}. Built from {}.", __DATE__ + 7, GIT_HASH);
-}
-
-void check_system_capabilities() {
-  kprintln("here1");
-  uint64_t misa = read_csr(MCSR::misa).get_value();
-  kprintln("here2");
-  auto calc_shift = [](char c) { return c - 'a'; };
-  auto has_extension = [calc_shift](char extension, uint64_t misa) -> bool {
-    return misa & (0x1u << calc_shift(extension));
-  };
-
-  for (char c = 'A'; c <= 'Z'; ++c) {
-    switch (c) {
-    case 'I':
-    case 'M':
-    case 'A':
-    case 'F':
-    case 'D':
-    case 'C':
-    case 'S':
-    case 'U':
-      if (!has_extension(c, misa)) {
-        kprintln("Extension {} required to run HeliOS.", c);
-        PANIC();
-      }
-      break;
-    case 'X':
-      kprintln("Non standard extension(s) present.");
-      break;
-    default:
-      if (has_extension(c, misa)) {
-        kprintln("Extension {} present.", c);
-        break;
-      }
-    }
-  };
 }
 
 Result<void *> get_fdt(int argc, const char **argv) {
@@ -102,6 +67,8 @@ Result<void *> get_fdt(int argc, const char **argv) {
   return value(fdt);
 }
 
+size_t cpu_id() { return 0; }
+
 /**
  * @brief Main function. Initialize the required kernel subsystems.
  *
@@ -110,37 +77,53 @@ Result<void *> get_fdt(int argc, const char **argv) {
  */
 [[noreturn]] void main(int argc, const char **argv) {
 
-  setup_printing();
+  if (cpu_id() == 0) {
+    setup_printing();
 
-  display_initial_info();
+    display_initial_info();
 
-  // Reading MISA register is not supported anymore, given that now we are
-  // running on top of OpenSBI on S-Mode
-  // strprintln("Checking system capabilities!");
-  // check_system_capabilities();
+    // Reading MISA register is not supported anymore, given that now we are
+    // running on top of OpenSBI on S-Mode
+    // strprintln("Checking system capabilities!");
+    // check_system_capabilities();
 
-  void *device_tree = get_fdt(argc, argv).get_value();
+    void *device_tree = get_fdt(argc, argv).get_value();
 
-  strprintln("Setting up pageframe manager.");
-  setup_page_frame_manager(device_tree);
+    strprintln("Setting up pageframe manager.");
+    setup_page_frame_manager(device_tree);
 
-  strprintln("Mapping kernel memory.");
-  void *kernel_page_table = setup_kernel_memory_mapping();
+    strprintln("Mapping kernel memory.");
+    void *kernel_page_table = setup_kernel_memory_mapping(device_tree);
 
-  // TODO:
-  // Solve TODOs. Refactor whole code. Write documentation.
-  // Initialize scheduler
-  // First userland application (included in the kernel itself). Should be shell
-  // with a simple echo command
-  // Develop file system module
-  // Load first userland application from filesystem
-  // Enable swapping
-  // Improve shell, allow it to issue other commands
-  // Implement libc (probably use newlib)
-  // Have simple commands running simultaneously
-  // Detect devices
-  // Implement drivers
-  // Implement multiple terminals
+    strprintln("Setting up kernel trap handling.");
+    setup_trap_handling();
+
+    asm("add a0, x0, %0;"
+        "srli a0, a0, 12;"
+        "li a1, 0x9000000000000000;"
+        "or a0, a0, a1;"
+        "csrrw a0, satp, a0;"
+        :
+        : "r"(kernel_page_table));
+
+    while (true) {
+      char *z = (char *)to_ptr(0xc0000000);
+      z += 0x8000;
+      char c = *z;
+    };
+
+    // initialize_kmalloc();
+
+    // TODO:
+    // Solve TODOs. Refactor whole code. Write documentation.
+    // Initialize scheduler
+    // First userland application (included in the kernel itself). Should be
+    // shell with a simple echo command Develop file system module Load first
+    // userland application from filesystem Enable swapping Improve shell, allow
+    // it to issue other commands Implement libc (probably use newlib) Have
+    // simple commands running simultaneously Detect devices Implement drivers
+    // Implement multiple terminals
+  }
 }
 
 } // namespace hls

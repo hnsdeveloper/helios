@@ -151,21 +151,21 @@ uint64_t byteswap64(uint64_t v) {
   return 0;
 }
 
-uint16_t endian_uint16_read(uint16_t data) {
+uint16_t uint16_read_be(uint16_t data) {
   if constexpr (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) {
     return byteswap16(data);
   }
   return data;
 }
 
-uint32_t endian_uint32_read(uint32_t data) {
+uint32_t uint32_read_be(uint32_t data) {
   if constexpr (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) {
     return byteswap32(data);
   }
   return data;
 }
 
-uint64_t endian_uint64_read(uint64_t data) {
+uint64_t uint64_read_be(uint64_t data) {
   if constexpr (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) {
     return byteswap64(data);
   }

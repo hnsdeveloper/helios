@@ -23,21 +23,33 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "include/types.h"
+#ifndef _MEMMAP_HPP_
+#define _MEMMAP_HPP_
+
+#include "include/arch/riscv/plat_def.h"
+#include "misc/libfdt/libfdt.h"
 #include "ulib/result.hpp"
 
-#ifndef _OPENSBI_HPP_
-#define _OPENSBI_HPP_
-
 namespace hls {
-void sbi_call(uint64_t extension, uint64_t function_id, uint64_t arg1,
-              uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5,
-              uint64_t arg6, uint64_t &error, uint64_t &value);
 
-void opensbi_putchar(char c);
+Result<PageLevel> walk_table(PageTable **table_ptr, const void *vaddress,
+                             PageLevel current_vpn);
 
-void opensbi_set_timer(uint64_t time);
+Result<void *> get_physical_address(PageTable *start_table,
+                                    const void *vaddress);
 
-}; // namespace hls
+bool is_address_mapped(PageTable *table, void *vaddress);
+
+Result<const void *> kmmap(PageTable *start_table, const void *vaddress,
+                           PageLevel page_level, const void *physical_address,
+                           bool writable = false, bool executable = false);
+
+// TODO: IMPLEMENT
+// void unkmmap(PageTable *start_table, void *vaddress, PageLevel page_level);
+
+bool map_kernel(PageTable *table);
+
+void *setup_kernel_memory_mapping(void *fdt);
+} // namespace hls
 
 #endif

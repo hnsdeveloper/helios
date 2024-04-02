@@ -34,7 +34,7 @@ public:
   Ref(T &value) { m_value = &value; }
   Ref(const Ref &other) { m_value = other.m_value; }
   ~Ref() = default;
-  T &operatorT &() const { return get(); }
+  operator T &() const { return get(); }
   T &get() const { return *m_value; }
 };
 

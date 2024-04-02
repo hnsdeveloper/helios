@@ -23,20 +23,17 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "include/types.h"
-#include "ulib/result.hpp"
+#ifndef _KMALLOC_HPP_
+#define _KMALLOC_HPP_
 
-#ifndef _OPENSBI_HPP_
-#define _OPENSBI_HPP_
+#include "include/types.h"
 
 namespace hls {
-void sbi_call(uint64_t extension, uint64_t function_id, uint64_t arg1,
-              uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5,
-              uint64_t arg6, uint64_t &error, uint64_t &value);
 
-void opensbi_putchar(char c);
+void *kmalloc(size_t n);
+void kfree(void *ptr);
 
-void opensbi_set_timer(uint64_t time);
+void initialize_kmalloc();
 
 }; // namespace hls
 
