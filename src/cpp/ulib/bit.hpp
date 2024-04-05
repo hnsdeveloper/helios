@@ -31,7 +31,7 @@ SOFTWARE.
 #include "sys/mem.hpp"
 #include "ulib/result.hpp"
 
-extern "C" size_t _popcount(size_t data);
+extern "C" size_t _popcount(size_t);
 
 namespace hls {
 

@@ -43,6 +43,16 @@ public:
 
   T first;
   U second;
+
+  Pair &operator=(Pair &other) {
+    first = other.first;
+    second = other.second;
+  }
+
+  Pair &operator=(Pair &&other) {
+    first = hls::move(other.first);
+    second = hls::move(other.second);
+  }
 };
 
 template <typename T, typename U> auto make_pair(T &&first, U &&second) {

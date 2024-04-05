@@ -38,17 +38,19 @@ using uintreg_t = uint64_t;
 Result<uint64_t> read_csr(MCSR csr_address);
 Result<uint64_t> write_csr(MCSR csr_address, uint64_t data);
 
-static const size_t PAGE_LEVELS = 4;
-static const size_t PAGE_FRAME_SIZE = 4096;
-static const size_t PAGE_FRAME_ALIGNMENT = PAGE_FRAME_SIZE;
-static const size_t PAGE_TABLE_SIZE = PAGE_FRAME_SIZE;
-static const size_t PAGE_TABLE_ENTRY_SIZE = 8;
-static const size_t ENTRIES_PER_TABLE = PAGE_FRAME_SIZE / PAGE_TABLE_ENTRY_SIZE;
+const size_t REGISTER_SIZE = 8;
 
-static const size_t VALID_PAGE_BIT = 0;
-static const size_t READ_BIT = 1;
-static const size_t WRITE_BIT = 2;
-static const size_t EXECUTE_BIT = 3;
+// TODO: CHECK WHERE THESE SYMBOLS ARE BEING USED
+const size_t PAGE_LEVELS = 4;
+const size_t PAGE_FRAME_SIZE = 4096;
+const size_t PAGE_FRAME_ALIGNMENT = PAGE_FRAME_SIZE;
+const size_t PAGE_TABLE_SIZE = PAGE_FRAME_SIZE;
+const size_t PAGE_TABLE_ENTRY_SIZE = 8;
+const size_t ENTRIES_PER_TABLE = PAGE_FRAME_SIZE / PAGE_TABLE_ENTRY_SIZE;
+const size_t VALID_PAGE_BIT = 0;
+const size_t READ_BIT = 1;
+const size_t WRITE_BIT = 2;
+const size_t EXECUTE_BIT = 3;
 
 enum class PageLevel : size_t {
   KB_VPN = 0,

@@ -32,6 +32,7 @@ SOFTWARE.
 extern hls::PageTable *kernel_page_table;
 
 namespace hls {
+
 void print_table(PageTable *table);
 void *get_kernel_begin_address();
 void *get_kernel_end_address();

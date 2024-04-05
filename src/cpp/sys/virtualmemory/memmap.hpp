@@ -35,15 +35,14 @@ namespace hls {
 Result<PageLevel> walk_table(PageTable **table_ptr, const void *vaddress,
                              PageLevel current_vpn);
 
-Result<void *> get_physical_address(PageTable *start_table,
-                                    const void *vaddress);
-
 bool is_address_mapped(PageTable *table, void *vaddress);
 
 Result<const void *> kmmap(PageTable *start_table, const void *vaddress,
                            PageLevel page_level, const void *physical_address,
                            bool writable = false, bool executable = false);
 
+Result<const void *> get_physical_address(PageTable *start_table,
+                                          const void *vaddress);
 // TODO: IMPLEMENT
 // void unkmmap(PageTable *start_table, void *vaddress, PageLevel page_level);
 

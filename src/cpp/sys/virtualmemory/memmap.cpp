@@ -72,10 +72,10 @@ Result<PageLevel> walk_table(PageTable **table_ptr, const void *vaddress,
   return value(page_level);
 }
 
-Result<void *> get_physical_address(PageTable *start_table,
-                                    const void *vaddress) {
+Result<const void *> get_physical_address(PageTable *start_table,
+                                          const void *vaddress) {
   if (start_table == nullptr)
-    return error<void *>(Error::INVALID_PAGE_TABLE);
+    return error<const void *>(Error::INVALID_PAGE_TABLE);
 
   for (size_t i = 0; i < static_cast<size_t>(PageLevel::LAST_VPN) + 1; ++i) {
     PageLevel v =
@@ -99,10 +99,10 @@ Result<void *> get_physical_address(PageTable *start_table,
       p |= offset << (12 + 9 * j);
     }
 
-    return value(to_ptr(p));
+    return value(const_cast<const void *>(to_ptr(p)));
   }
 
-  return error<void *>(Error::INVALID_PAGE_ENTRY);
+  return error<const void *>(Error::INVALID_PAGE_ENTRY);
 }
 
 // TODO: IMPLEMENT FLAGS FOR MAPED ADDRESSES

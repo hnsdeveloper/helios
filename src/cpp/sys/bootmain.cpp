@@ -67,6 +67,7 @@ Result<void *> get_fdt(int argc, const char **argv) {
   return value(fdt);
 }
 
+// TODO: IMPLEMENT GETTING CPU ID
 size_t cpu_id() { return 0; }
 
 /**
