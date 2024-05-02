@@ -1,9 +1,33 @@
+/*---------------------------------------------------------------------------------
+MIT License
+
+Copyright (c) 2024 Helio Nunes Santos
+
+        Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"), to
+deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---------------------------------------------------------------------------------*/
+
 #ifndef _RB_TREE_HPP_
 #define _RB_TREE_HPP_
 
-#include "macros.hpp"
-#include "allocator.hpp"
-#include "node.hpp"
+#include "utilities/macros.hpp"
+#include "ulib/node.hpp"
 
 using namespace std;
 
@@ -30,7 +54,7 @@ class RBTreeNode : protected Node<T, 4> {
     public:
 
     RBTreeNode(type data, Color color, node_ptr t_null) : m_color(color) {
-        nd:: set_data(std::move(data));
+        nd:: set_data(hls::move(data));
         nd:: template set_node<0>(t_null);
         nd:: template set_node<1>(t_null);
         nd:: template set_node<2>(t_null);
@@ -102,9 +126,10 @@ class RBTreeNode : protected Node<T, 4> {
 
 template<typename T>
 class LessComparator {
+    SET_USING_CLASS(T, type);
     public:
-    using type = T;
-    bool operator()(const T& a, const T& b) const {
+    
+    bool operator()(type_const_reference a, type_const_reference b) const {
         return a < b;
     }
 };
@@ -237,7 +262,7 @@ class RedBlackTree {
     hsh m_hasher;
     node m_t_null;
     node_ptr m_root;
-    std::size_t m_size;
+    hls::size_t m_size;
     allocator m_allocator;
     comparator m_comparator;
 
@@ -583,7 +608,7 @@ class RedBlackTree {
     }
 
     RedBlackTree(RedBlackTree&& other) : RedBlackTree() {
-        *this = std::move(other);
+        *this = hls::move(other);
     }
 
     void remove(hash_result_const_reference key) {

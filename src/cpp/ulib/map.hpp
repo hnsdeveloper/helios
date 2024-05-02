@@ -1,13 +1,40 @@
+/*---------------------------------------------------------------------------------
+MIT License
+
+Copyright (c) 2024 Helio Nunes Santos
+
+        Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"), to
+deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---------------------------------------------------------------------------------*/
+
 #ifndef _MAP_HPP_
 #define _MAP_HPP_
 
-#include "rb_tree.hpp"
+#include "ulib/rb_tree.hpp"
+#include "ulib/pair.hpp"
+#include "include/utilities.h"
 
 template<typename P>
 class MapHash {
     using T = P::first_type;
     using U = P::second_type;
-    using pair = std::pair<T, U>;
+    using pair = hls::pair<T, U>;
     SET_USING_CLASS(pair, type);
     SET_USING_CLASS(size_t, hash_result);
 
@@ -25,12 +52,12 @@ public:
 };
 
 template<typename Key, typename Value, template <typename> class Allocator>
-class Map : RedBlackTree<std::pair<Key,Value>, MapHash, LessComparator, Allocator> {
+class Map : RedBlackTree<hls::pair<Key,Value>, MapHash, LessComparator, Allocator> {
     SET_USING_CLASS(Key, key);
     SET_USING_CLASS(Value, value);
-    using PR = std::pair<key, value>;
+    using PR = hls::pair<key, value>;
     SET_USING_CLASS(PR, pair);
-    using rb_tree = RedBlackTree<std::pair<Key,Value>, MapHash, LessComparator, Allocator>;
+    using rb_tree = RedBlackTree<hls::pair<Key,Value>, MapHash, LessComparator, Allocator>;
     EXTRACT_SUB_USING_T_CLASS(rb_tree, node, node);
     EXTRACT_SUB_USING_T_CLASS(rb_tree, const_iterator, iterator);
     EXTRACT_SUB_USING_T_CLASS(rb_tree, const_reverse_iterator, reverse_iterator);
@@ -44,7 +71,7 @@ public:
     }
 
     Map(Map&& other) : Map() {
-        *this = std::move(other);
+        *this = hls::move(other);
     }
     
     using rb_tree::empty;
@@ -144,7 +171,7 @@ public:
         if(&other != this) {
             rb_tree* a = this;
             rb_tree* b = &other;
-            *a = std::move(*b);
+            *a = hls::move(*b);
         }
         return *this;
     }
