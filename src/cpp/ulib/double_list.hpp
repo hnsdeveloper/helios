@@ -28,6 +28,8 @@ SOFTWARE.
 
 #include "node.hpp"
 
+namespace hls {
+
 template<typename T>
 class DoubleListNode : protected Node<T, 2> {
     using nd = Node<T, 2>;
@@ -318,5 +320,7 @@ class DoubleList {
     }
 
 };
+
+}
 
 #endif

@@ -23,54 +23,38 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef _ALLOCATOR_HPP_
-#define _ALLOCATOR_HPP_
+#ifndef _HASH_HPP_
+#define _HASH_HPP_
 
-#include "include/types.h"
-#include "include/utilities.h"
-#include "sys/kmalloc.hpp"
 #include "include/macros.hpp"
+#include "include/types.h"
+
+namespace hls {
 
 template<typename T>
-class Allocator {
+class Hash {
     SET_USING_CLASS(T, type);
+    SET_USING_CLASS(size_t, hash_result);
+    
     public:
-
-    Allocator() {
-        m_i = 0;
-    }
-
-    size_t m_i;
-
-    template<typename ...Args>
-    type_ptr create(Args... args) {
-        type_ptr v = allocate();
-        if(v != nullptr) {
-            new(v)type(hls::forward<Args>(args)...);
-        }
-
+    
+    hash_result operator()(type_const_reference v) const {
         return v;
     }
+};
 
-    void destroy(type_const_ptr p) {
-        if(p == nullptr)
-            return;
+template<typename T>
+class Hash<T*> {
+    SET_USING_CLASS(T*, type);
+    SET_USING_CLASS(uintptr_t, hash_result);
 
-        type_ptr p_nc = const_cast<type_ptr>(p);
-        (*p_nc).~type();
-        deallocate(p_nc);
-    }
+    public:
 
-    type_ptr allocate() {
-        return reinterpret_cast<type_ptr>(malloc(sizeof(type)));
-    }
-    
-    void deallocate(type_const_ptr p) {
-        if(p == nullptr)
-            return;
-        type_ptr p_nc = const_cast<type_ptr>(p);
-        free(p_nc);
+    hash_result operator()(type_const_reference v) const {
+        return reinterpret_cast<hash_result>(v);
     }
 };
+
+}
 
 #endif

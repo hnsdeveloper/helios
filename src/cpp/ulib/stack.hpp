@@ -29,6 +29,8 @@ SOFTWARE.
 #include "include/macros.hpp"
 #include "ulib/double_list.hpp"
 
+namespace hls {
+
 template<typename T, template<class, class> class ds = DoubleList, template<class> class Allocator>
 class Stack {
     SET_USING_CLASS(T, type);    
@@ -57,5 +59,7 @@ public:
     }
 
 };
+
+}
 
 #endif

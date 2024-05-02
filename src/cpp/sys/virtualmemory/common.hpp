@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include "include/arch/riscv/plat_def.h"
 #include "include/symbols.h"
+#include "ulib/map.hpp"
 
 extern hls::PageTable *kernel_page_table;
 

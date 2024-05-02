@@ -253,6 +253,10 @@ Result<uint64_t> hls::write_csr(MCSR csr_number, uint64_t data) {
   return read_csr(csr_number);
 }
 
+void PageEntry::erase() {
+  data = 0;
+}
+
 void PageEntry::make_writable(bool v) {
   if (v) {
     make_readable(v);

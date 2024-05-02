@@ -30,34 +30,36 @@ SOFTWARE.
 #include "ulib/pair.hpp"
 #include "include/utilities.h"
 
+namespace hls {
+
 template<typename P>
 class MapHash {
-    using T = P::first_type;
-    using U = P::second_type;
-    using pair = hls::pair<T, U>;
+    using pair = hls::Pair<typename P::first_type, typename P::second_type>;
+    using T = pair::first_type;
+    using U = pair::second_type;
     SET_USING_CLASS(pair, type);
     SET_USING_CLASS(size_t, hash_result);
 
-    Hash<T> m_h;
+    Hash<typename pair::first_type> m_h;
 public:
 
     size_t operator()(type_const_reference v) const {
         return m_h(v.first);
     }
 
-    const Hash<T>& get_T_hasher() {
+    const Hash<typename pair::first_type>& get_T_hasher() const {
         return m_h;
     }
 
 };
 
 template<typename Key, typename Value, template <typename> class Allocator>
-class Map : RedBlackTree<hls::pair<Key,Value>, MapHash, LessComparator, Allocator> {
+class Map : RedBlackTree<hls::Pair<Key,Value>, MapHash, LessComparator, Allocator> {
     SET_USING_CLASS(Key, key);
     SET_USING_CLASS(Value, value);
-    using PR = hls::pair<key, value>;
+    using PR = hls::Pair<key, value>;
     SET_USING_CLASS(PR, pair);
-    using rb_tree = RedBlackTree<hls::pair<Key,Value>, MapHash, LessComparator, Allocator>;
+    using rb_tree = RedBlackTree<hls::Pair<Key,Value>, MapHash, LessComparator, Allocator>;
     EXTRACT_SUB_USING_T_CLASS(rb_tree, node, node);
     EXTRACT_SUB_USING_T_CLASS(rb_tree, const_iterator, iterator);
     EXTRACT_SUB_USING_T_CLASS(rb_tree, const_reverse_iterator, reverse_iterator);
@@ -83,6 +85,16 @@ public:
         return rb_tree::contains(h(k));
     }
 
+   
+    iterator find(key_const_reference k) const {
+        const auto& h = rb_tree::get_hasher().get_T_hasher();
+        if(rb_tree::contains(h(k))) {
+            return rb_tree::template build_iterator<iterator>(rb_tree::get_node(h(k)));
+        }
+
+        return end();
+    }
+
     // TODO: make template of it, so we can pass rvalues
     iterator insert(key_const_reference k, value_const_reference v) {
         auto& h = rb_tree::get_hasher().get_T_hasher();
@@ -96,20 +108,19 @@ public:
 
     void remove(key_const_reference k) {
         auto& h = rb_tree::get_hasher().get_T_hasher();
-        node_ptr n = rb_tree::get_node(h(k));
-        if(n != rb_tree::t_null()) {
-            rb_tree::remove(n);
-        }
+        auto hash = h(k);
+        rb_tree::remove(k);
     }
 
     void erase(iterator_const_reference it) {
-        if(!is_tree_iterator(it)) 
+        if(!rb_tree::is_tree_iterator(it)) 
             return;
         if(it == end())
             return;
         
-        node_ptr n = rb_tree::get_node(*it);
-        rb_tree::remove(n);
+        auto& h = rb_tree::get_hasher().get_T_hasher();
+        auto hash = h(it->first);
+        rb_tree::remove(hash);
     }
 
     value_reference operator[](key_const_reference k) {
@@ -186,5 +197,7 @@ public:
         return *this;
     }
 };
+
+}
 
 #endif

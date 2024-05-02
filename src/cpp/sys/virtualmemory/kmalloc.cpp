@@ -184,8 +184,8 @@ public:
       PANIC("Impossible to initialize KMemoryAllocator. Failed to get a page "
             "frame.");
     }
-    kmmap(kernel_page_table, p_frame.get_value(), PageLevel::KB_VPN,
-          p_frame.get_value(), true, false);
+    kmmap(p_frame.get_value(), p_frame.get_value(), kernel_page_table, PageLevel::KB_VPN,
+          true, false);
     m_manager_head = reinterpret_cast<MemBlockManager *>(p_frame.get_value());
     new (m_manager_head) MemBlockManager();
   }
@@ -209,8 +209,7 @@ public:
         // EXCEPTIONAL CIRCUMSTANCES.
         PANIC("Failed to get page frame for KMemoryAllocator.");
       }
-      kmmap(kernel_page_table, p_frame.get_value(), PageLevel::KB_VPN,
-            p_frame.get_value(), true, false);
+      kmmap(p_frame.get_value(), p_frame.get_value(), kernel_page_table, PageLevel::KB_VPN, true, false);
       auto frame = reinterpret_cast<MemBlockManager *>(p_frame.get_value());
       new (frame) MemBlockManager();
       m_manager_head->link_next(frame);
@@ -240,5 +239,9 @@ public:
 void *kmalloc(size_t n) { return KMemoryAllocator::instance().allocate(n); };
 
 void kfree(void *ptr) { return KMemoryAllocator::instance().free(ptr); }
+
+void initialize_kmalloc() {
+  KMemoryAllocator::instance();
+}
 
 } // namespace hls

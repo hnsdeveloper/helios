@@ -113,7 +113,8 @@ bool PageFrameManager::init(void *base_address, size_t mem_size) {
   return is_initialized;
 }
 
-void PageFrameManager::release_frame(PageKB *frame) {
+void PageFrameManager::release_frame(void *f) {
+  PageKB* frame = reinterpret_cast<PageKB*>(f);
   if (frame < m_frames)
     return;
 

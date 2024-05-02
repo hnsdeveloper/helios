@@ -30,6 +30,9 @@ SOFTWARE.
 #include "include/macros.hpp"
 #include "include/utilities.h"
 
+
+namespace hls {
+
 template<typename Data, size_t N>
 class Node : protected Node<Data, N - 1> {
     using nd = Node<Data, N - 1>;
@@ -138,5 +141,7 @@ class Node<T, 1> {
 
 template<typename T>
 class Node<T, 0>;
+
+}
 
 #endif

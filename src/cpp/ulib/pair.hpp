@@ -33,6 +33,9 @@ namespace hls {
 
 template <typename T, typename U> class Pair {
 
+  SET_USING_CLASS(T, first_type);
+  SET_USING_CLASS(U, second_type);
+
 public:
   Pair() = default;
   Pair(T &&a, U &&b) : first(hls::move(a)), second(hls::move(b)){};
@@ -41,8 +44,8 @@ public:
   Pair(const Pair &p) : first(p.first), second(p.second){};
   ~Pair() = default;
 
-  T first;
-  U second;
+  first_type first;
+  second_type second;
 
   Pair &operator=(Pair &other) {
     first = other.first;

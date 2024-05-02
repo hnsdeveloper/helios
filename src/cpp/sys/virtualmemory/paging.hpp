@@ -116,7 +116,7 @@ public:
    * @remark Thread safety: ST.
    * @param frame Pointer to frame to be released.
    */
-  void release_frame(PageKB *frame);
+  void release_frame(void *frame);
 
   /**
    * @brief Instance to PageFrameManager singleton.

@@ -26,8 +26,10 @@ SOFTWARE.
 #ifndef _LIST_HPP_
 #define _LIST_HPP_
 
-#include "macros.hpp"
-#include "node.hpp"
+#include "include/macros.hpp"
+#include "ulib/node.hpp"
+
+namespace hls {
 
 template<typename T>
 class ListNode : Node<T, 1> {
@@ -83,15 +85,15 @@ class List {
         
         ListIterator(const List* list, node_const_ptr n) : m_list(list), m_n(n) {};
 
-        template<bool c>
+        template<bool c, typename faketype = void>
         struct wrapper {
             node_const_ptr n;
             wrapper(node_const_ptr node) : n(node) {};
             node_const_ptr get_n() { return n; }
         };
 
-        template<>
-        struct wrapper<false> {
+        template<typename faketype>
+        struct wrapper<false, faketype> {
             node_const_ptr n;
             wrapper(node_const_ptr node) : n(node) {};
             node_ptr get_n() { return const_cast<node_ptr>(n); }
@@ -214,6 +216,7 @@ public:
         if(size() == max_size())
             return end();
         node_ptr n = m_allocator.create(v, m_head);
+        n->set_next(m_head);
         m_head = n;
         ++m_size;
         return iterator(this, m_head);
@@ -304,6 +307,6 @@ public:
 };
 
 
-
+}
 
 #endif

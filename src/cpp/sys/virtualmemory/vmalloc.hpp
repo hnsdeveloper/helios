@@ -23,54 +23,19 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
+#ifndef _VMALLOC_HPP_
+#define _VMALLOC_HPP_
+
 #include "include/arch/riscv/plat_def.h"
-#include "sys/memmap.hpp"
 
 namespace hls {
 
-template <typename T> class VirtualPointer {
-  T *m_ptr;
-  const PageTable *m_table;
+void* vmalloc(size_t n, PageTable* table);
+void* vmralloc(void* ptr, size_t n, PageTable* table);
+void vmfree(void* ptr, PageTable* table);
 
-  const T *get_ptr() {
-    auto ptr = get_physical_address(m_table, m_ptr);
-    if (ptr.is_value())
-      return reinterpret_cast<const T *>(ptr.get_value());
+void initialize_vmalloc();
 
-    // TODO: When filesystem is available, handle retrieving from swap if
-    // possible
-
-    PANIC("Virtual pointer pointing to invalid address.");
-  }
-
-public:
-  VirtualPointer(T *ptr, const PageTable *table) : m_ptr(ptr), m_table(table){};
-  VirtualPointer(const VirtualPointer &other)
-      : m_ptr(other.m_ptr), m_table(other.m_table){};
-  ~VirtualPointer() = default;
-
-  T *operator->() {
-    const auto &self = *this;
-    return const_cast<T *>(self.operator->());
-  }
-  const T *operator->() const { return get_ptr(); };
-
-  T &operator*() {
-    const auto &self = *this;
-    return const_cast<T &>(self.operator*());
-  }
-
-  const T &operator*() const { return *get_ptr(); }
-
-  T *get_vaddress_ptr() { return m_ptr; }
-
-  const T *get_vaddress_ptr() const { return m_ptr; }
-};
-
-template <typename T> class VirtualPointer<const T *>;
-
-template <typename T> auto make_vptr(T *ptr, const PageTable *table) {
-  return VirtualPointer<T>(ptr, table);
 }
 
-}; // namespace hls
+#endif 

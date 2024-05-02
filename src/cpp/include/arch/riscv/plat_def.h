@@ -129,6 +129,8 @@ template <PageLevel type> struct PageFrame;
 struct __attribute__((packed)) PageEntry {
   uint64_t data = 0;
 
+  void erase();
+
   void make_writable(bool v);
   void make_readable(bool v);
   void make_executable(bool v);

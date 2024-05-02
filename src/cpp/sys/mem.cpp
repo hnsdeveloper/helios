@@ -148,7 +148,7 @@ uint32_t byteswap32(uint32_t v) {
 
 uint64_t byteswap64(uint64_t v) {
   // TODO: IMPLEMENT
-  return 0;
+  return v;
 }
 
 uint16_t uint16_read_be(uint16_t data) {

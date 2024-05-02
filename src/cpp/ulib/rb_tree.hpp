@@ -26,10 +26,13 @@ SOFTWARE.
 #ifndef _RB_TREE_HPP_
 #define _RB_TREE_HPP_
 
-#include "utilities/macros.hpp"
+#include "include/types.h"
+#include "include/macros.hpp"
+#include "include/limit.h"
 #include "ulib/node.hpp"
+#include "ulib/hash.hpp"
 
-using namespace std;
+namespace hls {
 
 enum Color {
     RED,
@@ -134,17 +137,7 @@ class LessComparator {
     }
 };
 
-template<typename T>
-class Hash {
-    SET_USING_CLASS(T, type);
-    SET_USING_CLASS(size_t, hash_result);
-    
-    public:
-    
-    hash_result operator()(const T& v) const {
-        return v;
-    }
-};
+
 
 template<typename T, template<typename> class Hash, template <typename> class Cmp, template<typename> class Alloc> 
 class RedBlackTree {
@@ -168,15 +161,15 @@ class RedBlackTree {
         
         RBTreeIterator(const RedBlackTree* tree, node_const_ptr n) : m_tree(tree), m_n(n) {};
 
-        template<bool c>
+        template<bool c, typename fake = void>
         struct wrapper {
             node_const_ptr n;
             wrapper(node_const_ptr node) : n(node) {};
             node_const_ptr get_n() { return n; }
         };
 
-        template<>
-        struct wrapper<false> {
+        template<typename fake>
+        struct wrapper<false, fake> {
             node_const_ptr n;
             wrapper(node_const_ptr node) : n(node) {};
             node_ptr get_n() { return const_cast<node_ptr>(n); }
@@ -262,7 +255,7 @@ class RedBlackTree {
     hsh m_hasher;
     node m_t_null;
     node_ptr m_root;
-    hls::size_t m_size;
+    size_t m_size;
     allocator m_allocator;
     comparator m_comparator;
 
@@ -823,12 +816,12 @@ class RedBlackTree {
     }   
 
     size_t max_size() const  {
-        return UINT64_MAX;
+        return hls::limit<size_t>::max;
     }
     
     template<bool a, bool b>
     bool is_tree_iterator(const RBTreeIterator<a,b>& it) {
-        return it->m_tree == this;
+        return it.m_tree == this;
     }
 
     template<typename IteratorType>
@@ -897,5 +890,7 @@ class RedBlackTree {
         return *this;
     }
 };
+
+}
 
 #endif

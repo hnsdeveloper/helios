@@ -27,13 +27,57 @@ SOFTWARE.
 #define _KMALLOC_HPP_
 
 #include "include/types.h"
+#include "include/utilities.h"
+#include "include/macros.hpp"
 
 namespace hls {
+
+void initialize_kmalloc();
 
 void *kmalloc(size_t n);
 void kfree(void *ptr);
 
-void initialize_kmalloc();
+template<typename T>
+class KMAllocator {
+    SET_USING_CLASS(T, type);
+    public:
+
+    KMAllocator() {
+        m_i = 0;
+    }
+
+    size_t m_i;
+
+    template<typename ...Args>
+    type_ptr create(Args... args) {
+        type_ptr v = allocate();
+        if(v != nullptr) {
+            new(v)type(hls::forward<Args>(args)...);
+        }
+
+        return v;
+    }
+
+    void destroy(type_const_ptr p) {
+        if(p == nullptr)
+            return;
+
+        type_ptr p_nc = const_cast<type_ptr>(p);
+        (*p_nc).~type();
+        deallocate(p_nc);
+    }
+
+    type_ptr allocate() {
+        return reinterpret_cast<type_ptr>(kmalloc(sizeof(type)));
+    }
+    
+    void deallocate(type_const_ptr p) {
+        if(p == nullptr)
+            return;
+        type_ptr p_nc = const_cast<type_ptr>(p);
+        kfree(p_nc);
+    }
+};
 
 }; // namespace hls
 

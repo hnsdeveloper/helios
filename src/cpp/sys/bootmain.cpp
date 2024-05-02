@@ -33,6 +33,7 @@ SOFTWARE.
 #include "sys/string.hpp"
 #include "sys/traphandler/traphandler.hpp"
 #include "sys/virtualmemory/kmalloc.hpp"
+#include "sys/virtualmemory/vmalloc.hpp"
 #include "sys/virtualmemory/memmap.hpp"
 #include "sys/virtualmemory/paging.hpp"
 
@@ -83,18 +84,19 @@ size_t cpu_id() { return 0; }
 
     display_initial_info();
 
-    // Reading MISA register is not supported anymore, given that now we are
-    // running on top of OpenSBI on S-Mode
-    // strprintln("Checking system capabilities!");
-    // check_system_capabilities();
-
     void *device_tree = get_fdt(argc, argv).get_value();
 
     strprintln("Setting up pageframe manager.");
     setup_page_frame_manager(device_tree);
 
     strprintln("Mapping kernel memory.");
-    void *kernel_page_table = setup_kernel_memory_mapping(device_tree);
+    void *kernel_page_table = setup_kernel_memory_mapping();
+    
+    strprintln("Initializing kmalloc.");
+    initialize_kmalloc();
+
+    strprintln("Initializing vmalloc.");
+    initialize_vmalloc();
 
     strprintln("Setting up kernel trap handling.");
     setup_trap_handling();
@@ -123,6 +125,8 @@ size_t cpu_id() { return 0; }
     // simple commands running simultaneously Detect devices Implement drivers
     // Implement multiple terminals
   }
+
+  while(true);
 }
 
 } // namespace hls

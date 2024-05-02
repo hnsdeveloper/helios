@@ -72,10 +72,10 @@ Result<PageLevel> walk_table(PageTable **table_ptr, const void *vaddress,
   return value(page_level);
 }
 
-Result<const void *> get_physical_address(PageTable *start_table,
+Result<void *> get_physical_address(PageTable *start_table,
                                           const void *vaddress) {
   if (start_table == nullptr)
-    return error<const void *>(Error::INVALID_PAGE_TABLE);
+    return error<void *>(Error::INVALID_PAGE_TABLE);
 
   for (size_t i = 0; i < static_cast<size_t>(PageLevel::LAST_VPN) + 1; ++i) {
     PageLevel v =
@@ -99,16 +99,15 @@ Result<const void *> get_physical_address(PageTable *start_table,
       p |= offset << (12 + 9 * j);
     }
 
-    return value(const_cast<const void *>(to_ptr(p)));
+    return value(to_ptr(p));
   }
 
-  return error<const void *>(Error::INVALID_PAGE_ENTRY);
+  return error<void *>(Error::INVALID_PAGE_ENTRY);
 }
 
 // TODO: IMPLEMENT FLAGS FOR MAPED ADDRESSES
-Result<const void *> kmmap(PageTable *start_table, const void *vaddress,
-                           PageLevel page_level, const void *physical_address,
-                           bool writable, bool executable) {
+Result<const void *> kmmap(const void* paddress, const void* vaddress, PageTable *start_table,
+                           PageLevel page_level, bool writable, bool executable) {
 
   // First lets check if it is already mapped
   auto address_result = get_physical_address(start_table, vaddress);
@@ -182,7 +181,7 @@ Result<const void *> kmmap(PageTable *start_table, const void *vaddress,
     }
   };
 
-  point_lambda(entry, physical_address, page_level);
+  point_lambda(entry, paddress, page_level);
 
   if (executable) {
     entry.make_executable(true);
@@ -190,8 +189,13 @@ Result<const void *> kmmap(PageTable *start_table, const void *vaddress,
   if (writable) {
     entry.make_writable(true);
   }
+  
 
   return value(vaddress);
+}
+
+void kmunmap(const void* vaddress, PageTable* start_table) {
+
 }
 
 const void *get_kernel_begin_address() { return &_text_start; }
@@ -201,7 +205,7 @@ const void *get_kernel_end_address() { return &_heap_start; }
 bool map_kernel(PageTable *table) {
   for (const char *p = (const char *)get_kernel_begin_address();
        p < get_kernel_end_address(); p += PageKB::s_size) {
-    auto result = kmmap(kernel_page_table, p, PageLevel::KB_VPN, p, true, true);
+    auto result = kmmap(p,p,table, PageLevel::KB_VPN, true, true);
     if (result.is_error())
       return false;
   }
@@ -213,7 +217,7 @@ bool is_address_mapped(PageTable *table, void *vaddress) {
   return !get_physical_address(table, vaddress).is_error();
 }
 
-void *setup_kernel_memory_mapping(void *fdt) {
+PageTable *setup_kernel_memory_mapping() {
 
   PageFrameManager &manager = PageFrameManager::instance();
   kernel_page_table =
