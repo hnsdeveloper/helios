@@ -112,9 +112,7 @@ size_t cpu_id() { return 0; }
       z += 0x8000;
       char c = *z;
     };
-
-    // initialize_kmalloc();
-
+    
     // TODO:
     // Solve TODOs. Refactor whole code. Write documentation.
     // Initialize scheduler
