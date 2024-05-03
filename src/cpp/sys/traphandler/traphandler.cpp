@@ -23,7 +23,7 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "include/arch/riscv/plat_def.h"
+#include "include/arch/riscv/plat_def.hpp"
 #include "sys/print.hpp"
 
 using namespace hls;
@@ -39,7 +39,7 @@ void setup_trap_handling() {
 
 } // namespace hls
 
-extern "C" void traphandler(hart *h) {
+extern "C" void traphandler(hart*) {
 
   uintreg_t scause = 0;
   asm volatile("csrrw %1, scause, %0" : "=r"(scause) : "r"(scause));

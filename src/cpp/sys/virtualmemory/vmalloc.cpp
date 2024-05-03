@@ -23,7 +23,7 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "include/arch/riscv/plat_def.h"
+#include "include/arch/riscv/plat_def.hpp"
 #include "sys/virtualmemory/paging.hpp"
 #include "sys/virtualmemory/vmalloc.hpp"
 #include "sys/virtualmemory/kmalloc.hpp"
@@ -44,12 +44,22 @@ class VirtualMemoryAllocator {
     address_map m_reserved_addresses;
     map<PageTable*, address_map> m_used_addresses_map;
     
-
     void* determine_vaddress(size_t b, PageTable* p) {
-        return nullptr;
+        
+
     }
 
+    static VirtualMemoryAllocator& __internal_instance(address_map* reserved_addresses) {
+        static VirtualMemoryAllocator vma {hls::move(*reserved_addresses)};
+        return vma;
+    }
+
+    VirtualMemoryAllocator(address_map&& reserved_addresses) : m_reserved_addresses(hls::move(reserved_addresses)) {};
+
 public:
+    VirtualMemoryAllocator(const VirtualMemoryAllocator&) = delete;
+    VirtualMemoryAllocator(VirtualMemoryAllocator&&) = delete;
+    ~VirtualMemoryAllocator() = default;
 
     void* allocate(size_t b, PageTable* p) {
         using list = List<void*, KMAllocator>;
@@ -154,8 +164,27 @@ public:
         }
     }
 
+    static bool init(address_map reserved_addresses = {}) {
+        static bool is_initialized = false;
+        if (!is_initialized) {
+            if (reserved_addresses.size() == 0)
+                return is_initialized;
+            else
+                __internal_instance(&reserved_addresses);
+            is_initialized = true;
+        }
 
+        return is_initialized;
+    }
+
+    static VirtualMemoryAllocator& instance() {
+        if(init() == false)
+            PANIC("VirtualMemoryAllocator must be initialized before use.");
+        return __internal_instance(nullptr);
+    }
 };
+
+
 
 
 void initialize_vmalloc() {

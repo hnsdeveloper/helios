@@ -27,7 +27,7 @@ SOFTWARE.
 #define _HASH_HPP_
 
 #include "include/macros.hpp"
-#include "include/types.h"
+#include "include/types.hpp"
 
 namespace hls {
 

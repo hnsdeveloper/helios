@@ -26,9 +26,7 @@ SOFTWARE.
 #ifndef _MEM_HPP_
 #define _MEM_HPP_
 
-#include "include/types.h"
-
-#define NULL nullptr
+#include "include/types.hpp"
 
 namespace hls {
 

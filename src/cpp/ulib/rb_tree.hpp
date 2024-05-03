@@ -26,9 +26,9 @@ SOFTWARE.
 #ifndef _RB_TREE_HPP_
 #define _RB_TREE_HPP_
 
-#include "include/types.h"
+#include "include/types.hpp"
 #include "include/macros.hpp"
-#include "include/limit.h"
+#include "include/limits.hpp"
 #include "ulib/node.hpp"
 #include "ulib/hash.hpp"
 

@@ -23,29 +23,23 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef _TYPES_HPP_
-#define _TYPES_HPP_
+#ifndef __SYMBOLS_HPP_
+#define __SYMBOLS_HPP_
 
-static_assert(sizeof(char) == 1);
-static_assert(sizeof(short int) == 2);
-static_assert(sizeof(int) == 4);
-static_assert(sizeof(unsigned long int) == 8);
+#include "include/types.hpp"
 
-using int8_t = char;
-using uint8_t = unsigned char;
-using byte = uint8_t;
-using int16_t = short int;
-using uint16_t = unsigned short int;
-using int32_t = int;
-using uint32_t = unsigned int;
-using int64_t = long int;
-using uint64_t = unsigned long int;
-using size_t = uint64_t;
-using uintptr_t = size_t;
-using ptrdiff_t = size_t;
-
-static_assert(sizeof(uintptr_t) == sizeof(void *));
-
-using putchar_func_ptr = void (*)(char);
+extern "C" byte _text_start;
+extern "C" byte _text_end;
+extern "C" byte _global_pointer;
+extern "C" byte _rodata_start;
+extern "C" byte _rodata_end;
+extern "C" byte _data_start;
+extern "C" byte _data_end;
+extern "C" byte _bss_start;
+extern "C" byte _bss_end;
+extern "C" byte _stack_start;
+extern "C" byte _stack_end;
+extern "C" byte _heap_start;
+extern "C" uint64_t _heap_size;
 
 #endif

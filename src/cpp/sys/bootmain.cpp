@@ -23,7 +23,7 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "include/arch/riscv/plat_def.h"
+#include "include/arch/riscv/plat_def.hpp"
 #include "misc/githash.hpp"
 #include "misc/libfdt/libfdt.h"
 #include "misc/splash.hpp"
@@ -53,14 +53,16 @@ void display_initial_info() {
 
 Result<void *> get_fdt(int argc, const char **argv) {
   // TODO: FOR NOW WE USING THE SECOND ARGUMENT AS THE ADDRESS OF THE FDT
+  if(argc == 0)
+    return error<void*>(Error::INVALID_ARGUMENT);
 
-  kdebug(argv[1]);
+  kspit(argv[1]);
 
   void *fdt = to_ptr(hex_to_uint(argv[1]).get_value());
-  kdebug(fdt);
+  kspit(fdt);
   int fdt_check_result = fdt_check_header(fdt);
 
-  kdebug(fdt_check_result);
+  kspit(fdt_check_result);
 
   if (fdt_check_result != 0)
     return error<void *>(Error::CORRUPTED_DATA_STRUCTURE);
@@ -89,12 +91,11 @@ size_t cpu_id() { return 0; }
     strprintln("Setting up pageframe manager.");
     setup_page_frame_manager(device_tree);
 
+    // From now on we can use kmalloc
+
     strprintln("Mapping kernel memory.");
     void *kernel_page_table = setup_kernel_memory_mapping();
     
-    strprintln("Initializing kmalloc.");
-    initialize_kmalloc();
-
     strprintln("Initializing vmalloc.");
     initialize_vmalloc();
 
@@ -109,11 +110,7 @@ size_t cpu_id() { return 0; }
         :
         : "r"(kernel_page_table));
 
-    while (true) {
-      char *z = (char *)to_ptr(0xc0000000);
-      z += 0x8000;
-      char c = *z;
-    };
+    while (true);
     
     // TODO:
     // Solve TODOs. Refactor whole code. Write documentation.

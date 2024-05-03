@@ -23,49 +23,21 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef _MMIO_HPP_
-#define _MMIO_HPP_
+#ifndef _CONCEPTS_H_
+#define _CONCEPTS_H_
 
-#include "include/types.h"
-#include "include/utilities.h"
-#include "sys/mem.hpp"
-#include "ulib/result.hpp"
-
-// TODO: implement
-bool is_mmio_address(volatile void *address) {
-  if (address)
-    return true;
-  return false;
-}
+#include "include/typetraits.hpp"
 
 namespace hls {
+template <typename T>
+concept Integral = is_integral_v<T>;
 
-// Writes val to a MMIO address + offset (in bytes).
-template <typename IntegerType>
-Result<IntegerType> mmio_write(volatile void *address, size_t offset,
-                               IntegerType val) {
-  if (is_mmio_address(address)) {
-    volatile IntegerType *addr = reinterpret_cast<volatile IntegerType *>(
-        reinterpret_cast<volatile char *>(address) + offset);
-    *addr = val;
-    return Result<IntegerType>::value(val);
-  }
+template <typename T>
+concept SignedIntegral = is_integral_v<T> && is_signed_v<T>;
 
-  return Result<IntegerType>::error(Error{});
-}
+template <typename T>
+concept UnsignedIntegral = is_integral_v<T> && !is_signed_v<T>;
 
-// Reads a IntegerType value from device_address + offset (in bytes).
-template <typename IntegerType>
-Result<IntegerType> mmio_read(volatile void *address, size_t offset) {
-  if (is_mmio_address) {
-    volatile IntegerType *addr = reinterpret_cast<volatile IntegerType *>(
-        reinterpret_cast<volatile char *>(address) + offset);
-    return value(*addr);
-  }
-
-  return error<IntegerType>(Error{});
-}
-
-} // namespace hls
+}; // namespace hls
 
 #endif

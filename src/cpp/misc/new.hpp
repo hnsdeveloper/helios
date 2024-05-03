@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef _NEW_HPP_
 #define _NEW_HPP_
 
-#include "include/types.h"
+#include "include/types.hpp"
 
 // Taken from stack overflow. GCC requires these functions to initialize local
 // static variables. Note that this offers no race protection, thus it is only

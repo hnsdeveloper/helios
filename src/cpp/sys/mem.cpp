@@ -22,7 +22,8 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
-#include "include/types.h"
+
+#include "sys/mem.hpp"
 
 namespace hls {
 

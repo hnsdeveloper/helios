@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef _STRING_FUNCTIONS_HPP_
 #define _STRING_FUNCTIONS_HPP_
 
-#include "include/types.h"
+#include "include/types.hpp"
 #include "ulib/result.hpp"
 
 namespace hls {

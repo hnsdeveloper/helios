@@ -26,8 +26,8 @@ SOFTWARE.
 #ifndef _BIT_HPP_
 #define _BIT_HPP_
 
-#include "include/types.h"
-#include "include/typetraits.h"
+#include "include/types.hpp"
+#include "include/typetraits.hpp"
 #include "sys/mem.hpp"
 #include "ulib/result.hpp"
 

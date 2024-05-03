@@ -26,8 +26,8 @@ SOFTWARE.
 #ifndef _MEMMAP_HPP_
 #define _MEMMAP_HPP_
 
-#include "include/types.h"
-#include "include/arch/riscv/plat_def.h"
+#include "include/types.hpp"
+#include "include/arch/riscv/plat_def.hpp"
 #include "misc/libfdt/libfdt.h"
 #include "ulib/result.hpp"
 #include "ulib/map.hpp"
@@ -71,7 +71,12 @@ bool is_address_mapped(PageTable *table, void *vaddress);
 Result<const void *> kmmap(const void* paddress, const void* vaddress, PageTable *table, PageLevel page_level,
                            bool writable = false, bool executable = false);
 
-
+/**
+ * @brief Undo the mapping of a given virtual address on a specific page table.
+ * 
+ * @param vaddress The virtual address to be unmaped.
+ * @param table The page table which will have the address unmaped.
+ */
 void kmunmap(const void* vaddress, PageTable* table);
 
 /**
@@ -83,9 +88,6 @@ void kmunmap(const void* vaddress, PageTable* table);
  */
 Result<void *> get_physical_address(PageTable *start_table,
                                           const void *vaddress);
-
-// TODO: IMPLEMENT
-// void unkmmap(PageTable *start_table, void *vaddress, PageLevel page_level);
 
 /**
  * @brief Maps the kernel to a page table.

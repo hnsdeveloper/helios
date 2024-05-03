@@ -25,8 +25,8 @@ SOFTWARE.
 #ifndef _PRINT_HPP_
 #define _PRINT_HPP_
 
-#include "include/types.h"
-#include "include/typetraits.h"
+#include "include/types.hpp"
+#include "include/typetraits.hpp"
 
 extern "C" putchar_func_ptr putchar;
 
@@ -174,11 +174,12 @@ template <typename... Args> void kprintln(const char *str, Args... args) {
   strprint("\r\n");
 }
 
+#ifdef DEBUG
 /**
  * @brief Macro to debug expressions/values.
  * @todo Make it so that it is only enabled when some debug macro is defined.
  */
-#define kdebug(expr)                                                           \
+#define kspit(expr)                                                            \
   if constexpr (true) {                                                        \
     if constexpr (is_integral_v<decltype(expr)>) {                             \
       const void *p = reinterpret_cast<const void *>(expr);                    \
@@ -188,7 +189,14 @@ template <typename... Args> void kprintln(const char *str, Args... args) {
       kprintln(#expr ": {}", expr);                                            \
     }                                                                          \
   }
+#define kdebug(...)                                                            \
+  kprint("kdebug: ");                                                          \
+  kprintln(__VA_ARGS__)
+#else
+#define kspit(expr)
+#define kdebug(expr)
+#endif 
+}
 
-} // namespace hls
 
 #endif

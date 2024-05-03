@@ -24,7 +24,7 @@ SOFTWARE.
 ---------------------------------------------------------------------------------*/
 
 #include "sys/virtualmemory/memmap.hpp"
-#include "include/symbols.h"
+#include "include/symbols.hpp"
 #include "sys/mem.hpp"
 #include "sys/print.hpp"
 #include "sys/virtualmemory/paging.hpp"
@@ -195,7 +195,29 @@ Result<const void *> kmmap(const void* paddress, const void* vaddress, PageTable
 }
 
 void kmunmap(const void* vaddress, PageTable* start_table) {
+    if(vaddress != nullptr || start_table != nullptr) {      
+        PageTable *table = start_table;
+        PageLevel current_page_level = PageLevel::LAST_VPN;   
+        
+        while (current_page_level != PageLevel::KB_VPN) {
+          auto result = walk_table(&table, vaddress, current_page_level);
+          if(result.is_error()) {
+            auto& entry = table->get_entry(get_page_entry_index(current_page_level, vaddress));
+            if(entry.is_leaf())
+                break;
+            else 
+                PANIC("Invalid page table.");
+          }
 
+          current_page_level = result.get_value();
+        }   
+        
+        auto &entry =
+            table->get_entry(get_page_entry_index(current_page_level, vaddress));
+        
+        entry.erase();
+    }
+    
 }
 
 const void *get_kernel_begin_address() { return &_text_start; }

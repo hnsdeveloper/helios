@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef _UTILITIES_HPP_
 #define _UTILITIES_HPP_
 
-#include "typetraits.h"
+#include "typetraits.hpp"
 
 namespace hls {
 

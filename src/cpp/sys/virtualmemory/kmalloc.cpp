@@ -1,247 +1,838 @@
-/*---------------------------------------------------------------------------------
-MIT License
-
-Copyright (c) 2024 Helio Nunes Santos
-
-        Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"), to
-deal in the Software without restriction, including without limitation the
-rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-        copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-        copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
----------------------------------------------------------------------------------*/
 #include "sys/virtualmemory/kmalloc.hpp"
-#include "include/arch/riscv/plat_def.h"
-#include "sys/virtualmemory/common.hpp"
-#include "sys/virtualmemory/memmap.hpp"
 #include "sys/virtualmemory/paging.hpp"
+#include "include/arch/riscv/plat_def.hpp"
+#include "sys/print.hpp"
 
-namespace hls {
+using namespace hls;
 
-const uint64_t FRAME_SIZE = hls::PageFrame<PageLevel::KB_VPN>::s_size;
+/**  Durand's Amazing Super Duper Memory functions.  */
 
-const byte FREE = 0b00;
-const byte ALLOCATED = 0b01;
-const byte ALLOCATED_CONTIGUOUS = 0b10;
-const byte CONTIGUOUS_PART = 0b11;
+#define VERSION 	"1.1"
+#define ALIGNMENT	16ul//4ul				///< This is the byte alignment that memory must be allocated on. IMPORTANT for GTK and other stuff.
 
-const size_t MEMINFO_SIZE =
-    4 * REGISTER_SIZE + 1; // 4 * 8 bytes + 1 byte for "accounting"
+#define ALIGN_TYPE		char ///unsigned char[16] /// unsigned short
+#define ALIGN_INFO		sizeof(ALIGN_TYPE)*16	///< Alignment information is stored right before the pointer. This is the number of bytes of information stored there.
 
-class MemBlockManager {
-  byte *m_accounting_bits = nullptr;
-  MemBlockManager *m_next = nullptr;
-  void *m_mem = nullptr;
-  size_t m_allocatable;
 
-  bool in_range(void *p) {
-    char *a = reinterpret_cast<char *>(p);
-    char *b = reinterpret_cast<char *>(m_mem);
-    char *c = reinterpret_cast<char *>(this) + FRAME_SIZE;
+#define USE_CASE1
+#define USE_CASE2
+#define USE_CASE3
+#define USE_CASE4
+#define USE_CASE5
 
-    return a >= b && a < c;
-  }
 
-  byte get_index(size_t i) {
-    byte &b = m_accounting_bits[i / 4];
-    return ((b >> ((i % 4) * 2))) & 0b11;
-  };
+/** This macro will conveniently align our pointer upwards */
+#define ALIGN( ptr )													\
+		if ( ALIGNMENT > 1 )											\
+		{																\
+			uintptr_t diff;												\
+			ptr = (void*)((uintptr_t)ptr + ALIGN_INFO);					\
+			diff = (uintptr_t)ptr & (ALIGNMENT-1);						\
+			if ( diff != 0 )											\
+			{															\
+				diff = ALIGNMENT - diff;								\
+				ptr = (void*)((uintptr_t)ptr + diff);					\
+			}															\
+			*((ALIGN_TYPE*)((uintptr_t)ptr - ALIGN_INFO)) = 			\
+				diff + ALIGN_INFO;										\
+		}															
 
-  void set_index(size_t i, byte data) {
-    byte &b = m_accounting_bits[i / 4];
-    b = b | ((0b11) << ((i % 4) * 2));
-    b = b ^ ((0b11) << ((i % 4) * 2));
-    b = b | (((data & 0b11)) << ((i % 4) * 2));
-  };
 
-public:
-  MemBlockManager() {
-    size_t accounting_bits_count =
-        (FRAME_SIZE - sizeof(MemBlockManager)) / MEMINFO_SIZE;
-    m_allocatable = accounting_bits_count * 4;
-    m_accounting_bits = reinterpret_cast<byte *>(this + 1);
-    m_mem = align_forward(m_accounting_bits + accounting_bits_count, 8);
-  }
+#define UNALIGN( ptr )													\
+		if ( ALIGNMENT > 1 )											\
+		{																\
+			uintptr_t diff = *((ALIGN_TYPE*)((uintptr_t)ptr - ALIGN_INFO));	\
+			if ( diff < (ALIGNMENT + ALIGN_INFO) )						\
+			{															\
+				ptr = (void*)((uintptr_t)ptr - diff);					\
+			}															\
+		}
+				
 
-  ~MemBlockManager() = default;
 
-  void *allocate(const size_t size) {
+#define LIBALLOC_MAGIC	0xc001c0de
+#define LIBALLOC_DEAD	0xdeaddead
 
-    const size_t needed_slots = ((size / 8)) + (size % 8 ? 1 : 0);
-    // We can skip checking for contiguous blocks if we know we don't
-    // have enough
-    if (free_blocks() >= needed_slots && size <= max_allocatable_size()) {
-      size_t contiguous_available = 0;
-      size_t idx_available = 0;
-
-      size_t i = 0;
-      do {
-        byte state = get_index(i);
-        if (state != FREE) {
-          idx_available = 0;
-          contiguous_available = 0;
-          continue;
-        }
-
-        idx_available = contiguous_available ? idx_available : i;
-        ++contiguous_available;
-
-      } while (++i < max_allocatable_blocks() &&
-               contiguous_available < needed_slots);
-
-      if (contiguous_available == needed_slots) {
-        for (size_t j = 0; j < needed_slots; ++j) {
-          if (j == 0)
-            set_index(idx_available, ALLOCATED);
-          else
-            set_index(j + idx_available, CONTIGUOUS_PART);
-          --m_allocatable;
-        }
-        return reinterpret_cast<uint64_t *>(m_mem) + idx_available;
-      }
-    }
-
-    // If we got here, it means we don't have enough (contiguous) blocks
-    if (m_next) {
-      return m_next->allocate(size);
-    }
-
-    return nullptr;
-  }
-
-  MemBlockManager *free(void *mem, MemBlockManager *before) {
-    if (in_range(mem)) {
-      size_t idx = reinterpret_cast<uint64_t *>(mem) -
-                   reinterpret_cast<uint64_t *>(m_mem);
-
-      set_index(
-          idx,
-          CONTIGUOUS_PART); // Lets handle the first (edge) case like this :p
-
-      do {
-        byte state = get_index(idx);
-        if (state == CONTIGUOUS_PART) {
-          set_index(idx, FREE);
-        } else {
-          break;
-        }
-        ++idx;
-        ++m_allocatable;
-      } while (idx < max_allocatable_blocks());
-
-      if (max_allocatable_blocks() == free_blocks()) {
-        if (before) {
-          before->m_next = m_next;
-        }
-        return this;
-      }
-    } else if (m_next) {
-      return m_next->free(mem, this);
-    }
-
-    return nullptr;
-  }
-
-  void link_next(MemBlockManager *m) {
-    if (m_next)
-      m_next->link_next(m);
-    else
-      m_next = m;
-  }
-
-  MemBlockManager *get_next() { return m_next; }
-
-  size_t max_allocatable_size() {
-    return max_allocatable_blocks() * REGISTER_SIZE;
-  }
-
-  size_t max_allocatable_blocks() {
-    return ((FRAME_SIZE - sizeof(MemBlockManager)) / MEMINFO_SIZE) * 4;
-  }
-
-  size_t free_blocks() { return m_allocatable; }
-} __attribute__((aligned(8)));
-
-class KMemoryAllocator {
-  MemBlockManager *m_manager_head;
-
-public:
-  KMemoryAllocator() {
-    auto p_frame = PageFrameManager::instance().get_frame();
-    if (p_frame.is_error()) {
-      PANIC("Impossible to initialize KMemoryAllocator. Failed to get a page "
-            "frame.");
-    }
-    kmmap(p_frame.get_value(), p_frame.get_value(), kernel_page_table, PageLevel::KB_VPN,
-          true, false);
-    m_manager_head = reinterpret_cast<MemBlockManager *>(p_frame.get_value());
-    new (m_manager_head) MemBlockManager();
-  }
-
-  static KMemoryAllocator &instance() {
-    static KMemoryAllocator allocator;
-    return allocator;
-  }
-
-  void *allocate(size_t n) {
-    if (n > m_manager_head->max_allocatable_size())
-      return nullptr;
-
-    void *p = nullptr;
-    p = m_manager_head->allocate(n);
-
-    if (p == nullptr) {
-      auto p_frame = PageFrameManager::instance().get_frame();
-      if (p_frame.is_error()) {
-        // TODO: HANDLE IF ALL PAGES ARE USED. THIS SHOULD ONLY FAIL ON
-        // EXCEPTIONAL CIRCUMSTANCES.
-        PANIC("Failed to get page frame for KMemoryAllocator.");
-      }
-      kmmap(p_frame.get_value(), p_frame.get_value(), kernel_page_table, PageLevel::KB_VPN, true, false);
-      auto frame = reinterpret_cast<MemBlockManager *>(p_frame.get_value());
-      new (frame) MemBlockManager();
-      m_manager_head->link_next(frame);
-      p = m_manager_head->allocate(n);
-    }
-
-    return p;
-  }
-
-  void free(void *ptr) {
-    if (ptr == nullptr)
-      return;
-
-    auto p = m_manager_head->free(ptr, nullptr);
-
-    if (p == nullptr)
-      return;
-
-    // The first frame is always available.
-    if (p != m_manager_head) {
-      PageFrameManager::instance().release_frame(
-          reinterpret_cast<hls::PageKB *>(p));
-    }
-  }
+/** A structure found at the top of all system allocated 
+ * memory blocks. It details the usage of the memory block.
+ */
+struct liballoc_major
+{
+	struct liballoc_major *prev;		///< Linked list information.
+	struct liballoc_major *next;		///< Linked list information.
+	unsigned int pages;					///< The number of pages in the block.
+	unsigned int size;					///< The number of pages in the block.
+	unsigned int usage;					///< The number of bytes used in the block.
+	struct liballoc_minor *first;		///< A pointer to the first allocated memory in the block.	
 };
 
-void *kmalloc(size_t n) { return KMemoryAllocator::instance().allocate(n); };
 
-void kfree(void *ptr) { return KMemoryAllocator::instance().free(ptr); }
+/** This is a structure found at the beginning of all
+ * sections in a major block which were allocated by a
+ * malloc, calloc, realloc call.
+ */
+struct	liballoc_minor
+{
+	struct liballoc_minor *prev;		///< Linked list information.
+	struct liballoc_minor *next;		///< Linked list information.
+	struct liballoc_major *block;		///< The owning block. A pointer to the major structure.
+	unsigned int magic;					///< A magic number to idenfity correctness.
+	unsigned int size; 					///< The size of the memory allocated. Could be 1 byte or more.
+	unsigned int req_size;				///< The size of memory requested.
+};
 
-void initialize_kmalloc() {
-  KMemoryAllocator::instance();
+
+static struct liballoc_major *l_memRoot = NULL;	///< The root memory block acquired from the system.
+static struct liballoc_major *l_bestBet = NULL; ///< The major with the most free memory.
+
+static unsigned int l_pageSize  = PAGE_FRAME_SIZE;			///< The size of an individual page. Set up in liballoc_init.
+static unsigned int l_pageCount = 16;						///< The number of pages to request per chunk. Set up in liballoc_init.
+static unsigned long long l_allocated = 0;					///< Running total of allocated memory.
+static unsigned long long l_inuse	 = 0;					///< Running total of used memory.
+
+
+static long long l_warningCount = 0;		///< Number of warnings encountered
+static long long l_errorCount = 0;			///< Number of actual errors
+static long long l_possibleOverruns = 0;	///< Number of possible overruns
+
+
+
+
+
+// ***********   HELPER FUNCTIONS  *******************************
+
+static void *liballoc_memset(void* s, int c, size_t n)
+{
+	unsigned int i;
+	for ( i = 0; i < n ; i++)
+		((char*)s)[i] = c;
+	
+	return s;
+}
+static void* liballoc_memcpy(void* s1, const void* s2, size_t n)
+{
+  char *cdest;
+  char *csrc;
+  unsigned int *ldest = (unsigned int*)s1;
+  unsigned int *lsrc  = (unsigned int*)s2;
+
+  while ( n >= sizeof(unsigned int) )
+  {
+      *ldest++ = *lsrc++;
+	  n -= sizeof(unsigned int);
+  }
+
+  cdest = (char*)ldest;
+  csrc  = (char*)lsrc;
+  
+  while ( n > 0 )
+  {
+      *cdest++ = *csrc++;
+	  n -= 1;
+  }
+  
+  return s1;
+}
+ 
+
+#if defined DEBUG || defined INFO
+static void liballoc_dump()
+{
+#ifdef DEBUG
+	struct liballoc_major *maj = l_memRoot;
+	struct liballoc_minor *min = NULL;
+#endif
+	
+	kdebug( "liballoc: ------ Memory data ---------------");
+	kdebug( "liballoc: System memory allocated: {} bytes", l_allocated );
+	kdebug( "liballoc: Memory in used (malloc'ed): {} bytes\n", l_inuse );
+	kdebug( "liballoc: Warning count: {}", l_warningCount );
+	kdebug( "liballoc: Error count: {}", l_errorCount );
+	kdebug( "liballoc: Possible overruns: {}", l_possibleOverruns );
+
+#ifdef DEBUG
+		while ( maj != NULL )
+		{
+			kdebug( "liballoc: {}: total = {}, used = {}",
+						maj, 
+						maj->size,
+						maj->usage );
+
+			min = maj->first;
+			while ( min != NULL )
+			{
+				kdebug( "liballoc:    {}: {} bytes",
+							min, 
+							min->size );
+				min = min->next;
+			}
+
+			maj = maj->next;
+		}
+#endif
+
+}
+#endif
+
+
+
+// ***************************************************************
+
+static struct liballoc_major *allocate_new_page( unsigned int size )
+{
+	unsigned int st;
+	struct liballoc_major *maj;
+
+		// This is how much space is required.
+		st  = size + sizeof(struct liballoc_major);
+		st += sizeof(struct liballoc_minor);
+
+				// Perfect amount of space?
+		if ( (st % l_pageSize) == 0 )
+			st  = st / (l_pageSize);
+		else
+			st  = st / (l_pageSize) + 1;
+							// No, add the buffer. 
+
+		
+		// Make sure it's >= the minimum size.
+		if ( st < l_pageCount ) st = l_pageCount;
+		
+		maj = (struct liballoc_major*)liballoc_alloc( st );
+
+		if ( maj == NULL ) 
+		{
+			l_warningCount += 1;
+			#if defined DEBUG || defined INFO
+			kdebug( "liballoc: WARNING: liballoc_alloc( {} ) return NULL", st );
+			;
+			#endif
+			return NULL;	// uh oh, we ran out of memory.
+		}
+		
+		maj->prev 	= NULL;
+		maj->next 	= NULL;
+		maj->pages 	= st;
+		maj->size 	= st * l_pageSize;
+		maj->usage 	= sizeof(struct liballoc_major);
+		maj->first 	= NULL;
+
+		l_allocated += maj->size;
+
+		#ifdef DEBUG
+		kdebug( "liballoc: Resource allocated {} of {} pages ({} bytes) for {} size.", maj, st, maj->size, size );
+
+		kdebug( "liballoc: Total memory usage = {} KB\n",  (int)((l_allocated / (1024))) );
+		;
+		#endif
+	
+		
+      return maj;
 }
 
-} // namespace hls
+
+	
+
+
+void *PREFIX(malloc)(size_t req_size)
+{
+	int startedBet = 0;
+	unsigned long long bestSize = 0;
+	void *p = NULL;
+	uintptr_t diff;
+	struct liballoc_major *maj;
+	struct liballoc_minor *min;
+	struct liballoc_minor *new_min;
+	unsigned long size = req_size;
+
+	// For alignment, we adjust size so there's enough space to align.
+	if ( ALIGNMENT > 1 )
+	{
+		size += ALIGNMENT + ALIGN_INFO;
+	}
+				// So, ideally, we really want an alignment of 0 or 1 in order
+				// to save space.
+	
+	liballoc_lock();
+
+	if ( size == 0 )
+	{
+		l_warningCount += 1;
+		#if defined DEBUG || defined INFO
+		kdebug( "liballoc: WARNING: alloc( 0 ) called from {}",
+							__builtin_return_address(0) );
+		;
+		#endif
+		liballoc_unlock();
+		return PREFIX(malloc)(1);
+	}
+	
+
+	if ( l_memRoot == NULL )
+	{
+		#if defined DEBUG || defined INFO
+		#ifdef DEBUG
+		kdebug( "liballoc: initialization of liballoc " VERSION);
+		#endif
+		;
+		#endif
+			
+		// This is the first time we are being used.
+		l_memRoot = allocate_new_page( size );
+		if ( l_memRoot == NULL )
+		{
+		  liballoc_unlock();
+		  #ifdef DEBUG
+		  kdebug( "liballoc: initial l_memRoot initialization failed", p); 
+		  ;
+		  #endif
+		  return NULL;
+		}
+
+		#ifdef DEBUG
+		kdebug( "liballoc: set up first memory major {}", l_memRoot );
+		;
+		#endif
+	}
+
+
+	#ifdef DEBUG
+	kdebug( "liballoc: {} PREFIX(malloc)( {} ): ", 
+					__builtin_return_address(0),
+					size );
+	;
+	#endif
+
+	// Now we need to bounce through every major and find enough space....
+
+	maj = l_memRoot;
+	startedBet = 0;
+	
+	// Start at the best bet....
+	if ( l_bestBet != NULL )
+	{
+		bestSize = l_bestBet->size - l_bestBet->usage;
+
+		if ( bestSize > (size + sizeof(struct liballoc_minor)))
+		{
+			maj = l_bestBet;
+			startedBet = 1;
+		}
+	}
+	
+	while ( maj != NULL )
+	{
+		diff  = maj->size - maj->usage;	
+										// free memory in the block
+
+		if ( bestSize < diff )
+		{
+			// Hmm.. this one has more memory then our bestBet. Remember!
+			l_bestBet = maj;
+			bestSize = diff;
+		}
+		
+		
+#ifdef USE_CASE1
+			
+		// CASE 1:  There is not enough space in this major block.
+		if ( diff < (size + sizeof( struct liballoc_minor )) )
+		{
+			#ifdef DEBUG
+			kdebug( "CASE 1: Insufficient space in block {}", maj);
+			;
+			#endif
+				
+				// Another major block next to this one?
+			if ( maj->next != NULL ) 
+			{
+				maj = maj->next;		// Hop to that one.
+				continue;
+			}
+
+			if ( startedBet == 1 )		// If we started at the best bet,
+			{							// let's start all over again.
+				maj = l_memRoot;
+				startedBet = 0;
+				continue;
+			}
+
+			// Create a new major block next to this one and...
+			maj->next = allocate_new_page( size );	// next one will be okay.
+			if ( maj->next == NULL ) break;			// no more memory.
+			maj->next->prev = maj;
+			maj = maj->next;
+
+			// .. fall through to CASE 2 ..
+		}
+
+#endif
+
+#ifdef USE_CASE2
+		
+		// CASE 2: It's a brand new block.
+		if ( maj->first == NULL )
+		{
+			maj->first = (struct liballoc_minor*)((uintptr_t)maj + sizeof(struct liballoc_major) );
+
+			
+			maj->first->magic 		= LIBALLOC_MAGIC;
+			maj->first->prev 		= NULL;
+			maj->first->next 		= NULL;
+			maj->first->block 		= maj;
+			maj->first->size 		= size;
+			maj->first->req_size 	= req_size;
+			maj->usage 	+= size + sizeof( struct liballoc_minor );
+
+
+			l_inuse += size;
+			
+			
+			p = (void*)((uintptr_t)(maj->first) + sizeof( struct liballoc_minor ));
+
+			ALIGN( p );
+			
+			#ifdef DEBUG
+			kdebug( "CASE 2: returning {}", p); 
+			;
+			#endif
+			liballoc_unlock();		// release the lock
+			return p;
+		}
+
+#endif
+				
+#ifdef USE_CASE3
+
+		// CASE 3: Block in use and enough space at the start of the block.
+		diff =  (uintptr_t)(maj->first);
+		diff -= (uintptr_t)maj;
+		diff -= sizeof(struct liballoc_major);
+
+		if ( diff >= (size + sizeof(struct liballoc_minor)) )
+		{
+			// Yes, space in front. Squeeze in.
+			maj->first->prev = (struct liballoc_minor*)((uintptr_t)maj + sizeof(struct liballoc_major) );
+			maj->first->prev->next = maj->first;
+			maj->first = maj->first->prev;
+				
+			maj->first->magic 	= LIBALLOC_MAGIC;
+			maj->first->prev 	= NULL;
+			maj->first->block 	= maj;
+			maj->first->size 	= size;
+			maj->first->req_size 	= req_size;
+			maj->usage 			+= size + sizeof( struct liballoc_minor );
+
+			l_inuse += size;
+
+			p = (void*)((uintptr_t)(maj->first) + sizeof( struct liballoc_minor ));
+			ALIGN( p );
+
+			#ifdef DEBUG
+			kdebug( "CASE 3: returning {}", p); 
+			;
+			#endif
+			liballoc_unlock();		// release the lock
+			return p;
+		}
+		
+#endif
+
+
+#ifdef USE_CASE4
+
+		// CASE 4: There is enough space in this block. But is it contiguous?
+		min = maj->first;
+		
+			// Looping within the block now...
+		while ( min != NULL )
+		{
+				// CASE 4.1: End of minors in a block. Space from last and end?
+				if ( min->next == NULL )
+				{
+					// the rest of this block is free...  is it big enough?
+					diff = (uintptr_t)(maj) + maj->size;
+					diff -= (uintptr_t)min;
+					diff -= sizeof( struct liballoc_minor );
+					diff -= min->size; 
+						// minus already existing usage..
+
+					if ( diff >= (size + sizeof( struct liballoc_minor )) )
+					{
+						// yay....
+						min->next = (struct liballoc_minor*)((uintptr_t)min + sizeof( struct liballoc_minor ) + min->size);
+						min->next->prev = min;
+						min = min->next;
+						min->next = NULL;
+						min->magic = LIBALLOC_MAGIC;
+						min->block = maj;
+						min->size = size;
+						min->req_size = req_size;
+						maj->usage += size + sizeof( struct liballoc_minor );
+
+						l_inuse += size;
+						
+						p = (void*)((uintptr_t)min + sizeof( struct liballoc_minor ));
+						ALIGN( p );
+
+						#ifdef DEBUG
+						kdebug( "CASE 4.1: returning {}", p); 
+						;
+						#endif
+						liballoc_unlock();		// release the lock
+						return p;
+					}
+				}
+
+
+
+				// CASE 4.2: Is there space between two minors?
+				if ( min->next != NULL )
+				{
+					// is the difference between here and next big enough?
+					diff  = (uintptr_t)(min->next);
+					diff -= (uintptr_t)min;
+					diff -= sizeof( struct liballoc_minor );
+					diff -= min->size;
+										// minus our existing usage.
+
+					if ( diff >= (size + sizeof( struct liballoc_minor )) )
+					{
+						// yay......
+						new_min = (struct liballoc_minor*)((uintptr_t)min + sizeof( struct liballoc_minor ) + min->size);
+
+						new_min->magic = LIBALLOC_MAGIC;
+						new_min->next = min->next;
+						new_min->prev = min;
+						new_min->size = size;
+						new_min->req_size = req_size;
+						new_min->block = maj;
+						min->next->prev = new_min;
+						min->next = new_min;
+						maj->usage += size + sizeof( struct liballoc_minor );
+						
+						l_inuse += size;
+						
+						p = (void*)((uintptr_t)new_min + sizeof( struct liballoc_minor ));
+						ALIGN( p );
+
+
+						#ifdef DEBUG
+						kdebug( "CASE 4.2: returning {}", p); 
+						;
+						#endif
+						
+						liballoc_unlock();		// release the lock
+						return p;
+					}
+				}	// min->next != NULL
+
+				min = min->next;
+		} // while min != NULL ...
+
+
+#endif
+
+#ifdef USE_CASE5
+
+		// CASE 5: Block full! Ensure next block and loop.
+		if ( maj->next == NULL ) 
+		{
+			#ifdef DEBUG
+			kdebug( "CASE 5: block full");
+			;
+			#endif
+
+			if ( startedBet == 1 )
+			{
+				maj = l_memRoot;
+				startedBet = 0;
+				continue;
+			}
+				
+			// we've run out. we need more...
+			maj->next = allocate_new_page( size );		// next one guaranteed to be okay
+			if ( maj->next == NULL ) break;			//  uh oh,  no more memory.....
+			maj->next->prev = maj;
+
+		}
+
+#endif
+
+		maj = maj->next;
+	} // while (maj != NULL)
+
+
+	
+	liballoc_unlock();		// release the lock
+
+	#ifdef DEBUG
+	kdebug( "All cases exhausted. No memory available.");
+	;
+	#endif
+	#if defined DEBUG || defined INFO
+	kdebug( "liballoc: WARNING: PREFIX(malloc)( {} ) returning NULL.", size);
+	liballoc_dump();
+	;
+	#endif
+	return NULL;
+}
+
+void PREFIX(free)(void *ptr)
+{
+	struct liballoc_minor *min;
+	struct liballoc_major *maj;
+
+	if ( ptr == NULL ) 
+	{
+		l_warningCount += 1;
+		#if defined DEBUG || defined INFO
+		kdebug( "liballoc: WARNING: PREFIX(free)( NULL ) called from {}",
+							__builtin_return_address(0) );
+		;
+		#endif
+		return;
+	}
+
+	UNALIGN( ptr );
+
+	liballoc_lock();		// lockit
+
+
+	min = (struct liballoc_minor*)((uintptr_t)ptr - sizeof( struct liballoc_minor ));
+
+	
+	if ( min->magic != LIBALLOC_MAGIC ) 
+	{
+		l_errorCount += 1;
+
+		// Check for overrun errors. For all bytes of LIBALLOC_MAGIC 
+		if ( 
+			((min->magic & 0xFFFFFF) == (LIBALLOC_MAGIC & 0xFFFFFF)) || 
+			((min->magic & 0xFFFF) == (LIBALLOC_MAGIC & 0xFFFF)) || 
+			((min->magic & 0xFF) == (LIBALLOC_MAGIC & 0xFF)) 
+		   )
+		{
+			l_possibleOverruns += 1;
+			#if defined DEBUG || defined INFO
+			kdebug( "liballoc: ERROR: Possible 1-3 byte overrun for magic {} != {}",
+								min->magic,
+								LIBALLOC_MAGIC );
+			;
+			#endif
+		}
+						
+						
+		if ( min->magic == LIBALLOC_DEAD )
+		{
+			#if defined DEBUG || defined INFO
+			kdebug( "liballoc: ERROR: multiple PREFIX(free)() attempt on {} from {}.\n", 
+									ptr,
+									__builtin_return_address(0) );
+			;
+			#endif
+		}
+		else
+		{
+			#if defined DEBUG || defined INFO
+			kdebug( "liballoc: ERROR: Bad PREFIX(free)( {} ) called from {}",
+								ptr,
+								__builtin_return_address(0) );
+			;
+			#endif
+		}
+			
+		// being lied to...
+		liballoc_unlock();		// release the lock
+		return;
+	}
+
+	#ifdef DEBUG
+	kdebug( "liballoc: {} PREFIX(free)( {} ): ", 
+				__builtin_return_address( 0 ),
+				ptr );
+	;
+	#endif
+	
+
+		maj = min->block;
+
+		l_inuse -= min->size;
+
+		maj->usage -= (min->size + sizeof( struct liballoc_minor ));
+		min->magic  = LIBALLOC_DEAD;		// No mojo.
+
+		if ( min->next != NULL ) min->next->prev = min->prev;
+		if ( min->prev != NULL ) min->prev->next = min->next;
+
+		if ( min->prev == NULL ) maj->first = min->next;	
+							// Might empty the block. This was the first
+							// minor.
+
+
+	// We need to clean up after the majors now....
+
+	if ( maj->first == NULL )	// Block completely unused.
+	{
+		if ( l_memRoot == maj ) l_memRoot = maj->next;
+		if ( l_bestBet == maj ) l_bestBet = NULL;
+		if ( maj->prev != NULL ) maj->prev->next = maj->next;
+		if ( maj->next != NULL ) maj->next->prev = maj->prev;
+		l_allocated -= maj->size;
+
+		liballoc_free( maj, maj->pages );
+	}
+	else
+	{
+		if ( l_bestBet != NULL )
+		{
+			int bestSize = l_bestBet->size  - l_bestBet->usage;
+			int majSize = maj->size - maj->usage;
+
+			if ( majSize > bestSize ) l_bestBet = maj;
+		}
+
+	}
+	
+
+	#ifdef DEBUG
+	kdebug( "OK");
+	;
+	#endif
+	
+	liballoc_unlock();		// release the lock
+}
+
+void* PREFIX(calloc)(size_t nobj, size_t size)
+{
+       int real_size;
+       void *p;
+
+       real_size = nobj * size;
+       
+       p = PREFIX(malloc)( real_size );
+
+       liballoc_memset( p, 0, real_size );
+
+       return p;
+}
+
+
+
+void*   PREFIX(realloc)(void *p, size_t size)
+{
+	void *ptr;
+	struct liballoc_minor *min;
+	unsigned int real_size;
+	
+	// Honour the case of size == 0 => free old and return NULL
+	if ( size == 0 )
+	{
+		PREFIX(free)( p );
+		return NULL;
+	}
+
+	// In the case of a NULL pointer, return a simple malloc.
+	if ( p == NULL ) return PREFIX(malloc)( size );
+
+	// Unalign the pointer if required.
+	ptr = p;
+	UNALIGN(ptr);
+
+	liballoc_lock();		// lockit
+
+		min = (struct liballoc_minor*)((uintptr_t)ptr - sizeof( struct liballoc_minor ));
+
+		// Ensure it is a valid structure.
+		if ( min->magic != LIBALLOC_MAGIC ) 
+		{
+			l_errorCount += 1;
+	
+			// Check for overrun errors. For all bytes of LIBALLOC_MAGIC 
+			if ( 
+				((min->magic & 0xFFFFFF) == (LIBALLOC_MAGIC & 0xFFFFFF)) || 
+				((min->magic & 0xFFFF) == (LIBALLOC_MAGIC & 0xFFFF)) || 
+				((min->magic & 0xFF) == (LIBALLOC_MAGIC & 0xFF)) 
+			   )
+			{
+				l_possibleOverruns += 1;
+				#if defined DEBUG || defined INFO
+				kdebug( "liballoc: ERROR: Possible 1-3 byte overrun for magic {} != {}",
+									min->magic,
+									LIBALLOC_MAGIC );
+				;
+				#endif
+			}
+							
+							
+			if ( min->magic == LIBALLOC_DEAD )
+			{
+				#if defined DEBUG || defined INFO
+				kdebug( "liballoc: ERROR: multiple PREFIX(free)() attempt on {} from {}.", 
+										ptr,
+										__builtin_return_address(0) );
+				;
+				#endif
+			}
+			else
+			{
+				#if defined DEBUG || defined INFO
+				kdebug( "liballoc: ERROR: Bad PREFIX(free)( {} ) called from {}.",
+									ptr,
+									__builtin_return_address(0) );
+				;
+				#endif
+			}
+			
+			// being lied to...
+			liballoc_unlock();		// release the lock
+			return NULL;
+		}	
+		
+		// Definitely a memory block.
+		
+		real_size = min->req_size;
+
+		if ( real_size >= size ) 
+		{
+			min->req_size = size;
+			liballoc_unlock();
+			return p;
+		}
+
+	liballoc_unlock();
+
+	// If we got here then we're reallocating to a block bigger than us.
+	ptr = PREFIX(malloc)( size );					// We need to allocate new memory
+	liballoc_memcpy( ptr, p, real_size );
+	PREFIX(free)( p );
+
+	return ptr;
+}
+
+int liballoc_lock() {
+    return 0;
+}
+
+int liballoc_unlock() {
+    return 0;
+}
+
+void* liballoc_alloc(size_t frames) {
+    auto& f_manager = PageFrameManager::instance();
+	auto result = f_manager.get_frames(frames);
+	if(result.is_error()) {
+		// TODO: HANDLE ERROR
+	}
+	return result.get_value();
+}
+
+int liballoc_free(void* p, size_t frames) {
+    auto& f_manager = PageFrameManager::instance();
+	f_manager.release_frames(p, frames);
+	return 0;
+}
+
+
+
+

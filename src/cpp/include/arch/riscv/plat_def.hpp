@@ -26,17 +26,13 @@ SOFTWARE.
 #ifndef _PLAT_DEF_H_
 #define _PLAT_DEF_H_
 
-#include "include/arch/riscv/registers.h"
-#include "include/types.h"
+#include "include/types.hpp"
 #include "sys/mem.hpp"
 #include "ulib/result.hpp"
 
 namespace hls {
 
 using uintreg_t = uint64_t;
-
-Result<uint64_t> read_csr(MCSR csr_address);
-Result<uint64_t> write_csr(MCSR csr_address, uint64_t data);
 
 const size_t REGISTER_SIZE = 8;
 

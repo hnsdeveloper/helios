@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef _VMALLOC_HPP_
 #define _VMALLOC_HPP_
 
-#include "include/arch/riscv/plat_def.h"
+#include "include/arch/riscv/plat_def.hpp"
 
 namespace hls {
 

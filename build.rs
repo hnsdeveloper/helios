@@ -37,6 +37,11 @@ fn main() {
         println!("{}", path.to_str().expect("msg"));
     }
 
+    let d_string = match std::env::var("PROFILE").unwrap().as_str() {
+        "debug" => "-DDEBUG",
+        _ => ""
+    };
+
     println!("Building cpp");
     // Builds cpp files
     cc::Build::new()
@@ -50,6 +55,7 @@ fn main() {
         .flag("-mabi=lp64d")
         .flag("-mcmodel=medany")
         .flag("-fno-use-cxa-atexit")
+        .flag(&d_string)
         .std("c++20")
         .shared_flag(true)
         .include("./src/cpp/")

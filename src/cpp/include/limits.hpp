@@ -23,20 +23,25 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef _CONCEPTS_H_
-#define _CONCEPTS_H_
+#ifndef _LIMITS_H_
+#define _LIMITS_H_
 
-#include "include/typetraits.h"
+#include "include/concepts.hpp"
+#include "include/types.hpp"
 
 namespace hls {
-template <typename T>
-concept Integral = is_integral_v<T>;
 
-template <typename T>
-concept SignedIntegral = is_integral_v<T> && is_signed_v<T>;
+template <typename T> struct limit;
 
-template <typename T>
-concept UnsignedIntegral = is_integral_v<T> && !is_signed_v<T>;
+template <SignedIntegral T> struct limit<T> {
+  static constexpr T max = (((T(1) << (sizeof(T) * 8 - 2)) - 1) * 2) + 1;
+  static constexpr T min = -max - 1;
+};
+
+template <UnsignedIntegral T> struct limit<T> {
+  static constexpr T max = T(0) - T(1);
+  static constexpr T min = T(0);
+};
 
 }; // namespace hls
 

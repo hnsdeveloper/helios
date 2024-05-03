@@ -29,6 +29,9 @@ SOFTWARE.
 #include "sys/mem.hpp"
 #include "sys/print.hpp"
 
+#define USED true
+#define FREE false
+
 namespace hls {
 
 Result<size_t> PageFrameManager::find_free_frame() {
@@ -43,11 +46,40 @@ Result<size_t> PageFrameManager::find_free_frame() {
       size_t idx = i * BMap::size() + j;
 
       if (b != true && idx < m_frame_count)
-        return value(i * BMap::size() + j);
+        return value(idx);
     }
   }
 
   return error<size_t>(Error::OUT_OF_MEMORY);
+}
+
+Result<size_t> PageFrameManager::find_free_frames(size_t pages) {
+  bool has_free_memory = false;
+  
+  for (size_t i = 0; i < m_bitmap_count; ++i) {
+    auto &bmap = m_bitmap[i];
+    if (bmap.popcount() == bmap.size())
+      continue;
+
+    size_t free_count = 0;
+    for (size_t j = 0; j < BMap::size(); ++j) {
+      bool b = bmap.get_bit(j).get_value();
+      size_t idx = i * BMap::size() + j;
+
+      if (b != USED && idx < m_frame_count) 
+        has_free_memory = ++free_count;
+      else 
+        free_count = 0;
+      
+      if(free_count == pages)
+        return value(idx - (pages - 1));
+    }
+  }
+
+  if(!has_free_memory)
+    return error<size_t>(Error::OUT_OF_MEMORY);
+
+  return error<size_t>(Error::NOT_ENOUGH_CONTIGUOUS_MEMORY);
 }
 
 void PageFrameManager::set_bit(size_t idx, bool value) {
@@ -78,15 +110,17 @@ PageFrameManager::PageFrameManager(void *base_address, size_t mem_size) {
 
   m_frame_count = mem_end - m_frames;
 
-  kdebug(base_address);
-  kdebug(m_frames);
-  kdebug(mem_end);
-  kdebug(temp_frame_count);
-  kdebug(m_bitmap_count);
+  kspit(base_address);
+  kspit(m_frames);
+  kspit(mem_end);
+  kspit(temp_frame_count);
+  kspit(m_bitmap_count);
 
   for (size_t i = 0; i < m_bitmap_count; ++i) {
     new (m_bitmap + i) BMap();
   }
+
+  m_free_frames = m_frame_count;
 }
 
 PageFrameManager &PageFrameManager::instance() {
@@ -119,7 +153,21 @@ void PageFrameManager::release_frame(void *f) {
     return;
 
   size_t idx = frame - m_frames;
-  set_bit(idx, false);
+  set_bit(idx, FREE);
+  ++m_free_frames;
+}
+
+void PageFrameManager::release_frames(void* f, size_t frames) {
+  PageKB* frame = reinterpret_cast<PageKB*>(f);
+  if(frame < m_frames)
+    return;
+
+  size_t idx = frame - m_frames;
+
+  for(size_t i = 0; i < frames; ++i) {
+    set_bit(idx + i, FREE);
+  }
+  m_free_frames += frames;
 }
 
 Result<PageKB *> PageFrameManager::get_frame() {
@@ -129,12 +177,36 @@ Result<PageKB *> PageFrameManager::get_frame() {
 
   size_t idx = result.get_value();
 
-  set_bit(idx, true);
+  set_bit(idx, USED);
 
+  --m_free_frames;
+  return value(m_frames + idx);
+}
+
+Result<PageKB*> PageFrameManager::get_frames(size_t frames) {
+  auto result = find_free_frames(frames);
+  if(result.is_error()) 
+    return error<PageKB*>(result.get_error());
+
+  size_t idx = result.get_value();
+
+  for(size_t i = 0; i < frames; ++i) {
+    set_bit(idx, USED);
+  }
+
+  m_free_frames -= frames;
   return value(m_frames + idx);
 }
 
 size_t PageFrameManager::frame_count() const { return m_frame_count; }
+
+size_t PageFrameManager::free_frames() const {
+  return m_free_frames;
+}
+
+size_t PageFrameManager::used_frames() const {
+  return m_frame_count - m_free_frames;
+}
 
 // TODO: Refactor.
 bool is_memory_node(void *fdt, int node) {
@@ -150,7 +222,7 @@ bool is_memory_node(void *fdt, int node) {
 }
 
 void get_memory_region(void *fdt, int node, void **p_ptr, size_t *size) {
-  kdebug(fdt_get_name(fdt, node, nullptr));
+  kspit(fdt_get_name(fdt, node, nullptr));
 
   // memory has as its parent the root node, which should define
   // address_cells and size_cells
@@ -160,11 +232,11 @@ void get_memory_region(void *fdt, int node, void **p_ptr, size_t *size) {
   int len = 0;
   const struct fdt_property *prop = fdt_get_property(fdt, node, "reg", &len);
 
-  kdebug(address_cells);
-  kdebug(size_cells);
+  kspit(address_cells);
+  kspit(size_cells);
 
-  kdebug(prop);
-  kdebug(len);
+  kspit(prop);
+  kspit(len);
 
   if (len < 0) {
     PANIC("Corrupted FDT.");
@@ -200,8 +272,8 @@ void get_memory_region(void *fdt, int node, void **p_ptr, size_t *size) {
     return p;
   };
 
-  kdebug(get_address(0));
-  kdebug(get_size(0));
+  kspit(get_address(0));
+  kspit(get_size(0));
 
   *p_ptr = get_address(0);
   *size = get_size(0);
@@ -227,8 +299,8 @@ void setup_page_frame_manager(void *fdt) {
       PANIC("No memory available for PageFrameManager.");
     }
 
-    kdebug(mem);
-    kdebug(size);
+    kspit(mem);
+    kspit(size);
 
     ptrdiff_t commited = &_heap_start - (reinterpret_cast<const byte *>(mem));
     size -= commited;

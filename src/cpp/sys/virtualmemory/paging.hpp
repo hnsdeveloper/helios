@@ -26,8 +26,8 @@ SOFTWARE.
 #ifndef _PAGING_HPP_
 #define _PAGING_HPP_
 
-#include "include/arch/riscv/plat_def.h"
-#include "include/symbols.h"
+#include "include/arch/riscv/plat_def.hpp"
+#include "include/symbols.hpp"
 #include "misc/libfdt/libfdt.h"
 #include "ulib/bit.hpp"
 #include "ulib/reference.hpp"
@@ -54,6 +54,8 @@ class PageFrameManager {
   size_t m_frame_count = 0;  // Total frame count.
   size_t m_bitmap_count = 0; // Count of BITSET_SIZE bitmaps.
 
+  size_t m_free_frames = 0;  // Total free frames.
+
   /**
    * @brief Finds the first free frame index.
    * @remark Thread safety: ST.
@@ -61,6 +63,14 @@ class PageFrameManager {
    * If no free frame is found, it returns Error::OUT_OF_MEMORY.
    */
   Result<size_t> find_free_frame();
+
+  /**
+   * @brief Finds the first free frame index.
+   * @remark Thread safety: ST.
+   * @return Result<size_t> Contains index on success or error on fail.
+   * If no free frame is found, it returns Error::OUT_OF_MEMORY.
+   */
+  Result<size_t> find_free_frames(size_t frames);
 
   /**
    * @brief Set bit found at index idx to value (true or false).
@@ -102,6 +112,21 @@ public:
    */
   size_t frame_count() const;
 
+
+  /**
+   * @brief How many frames are still free.
+   * @remark Thread safety: MT.
+   * @return size_t Count of free frames.
+   */
+  size_t free_frames() const;
+
+  /**
+   * @brief How many frames are in use.
+   * @remark Thread safety: MT.
+   * @return size_t Count of used frames.
+   */
+  size_t used_frames() const;
+
   /**
    * @brief Get a free 4096KB page frame at a random address and marks it as
    * used.
@@ -112,11 +137,22 @@ public:
   Result<PageKB *> get_frame();
 
   /**
+   * @brief Get a free 4096KB page frame at a random address and marks it as
+   * used.
+   * @remark Thread safety: ST.
+   * @return Result<PageKB *> Contains a pointer to a page frame on success or
+   * an error value on fail.
+   */
+  Result<PageKB *> get_frames(size_t frames);
+
+  /**
    * @brief Release a page frame.
    * @remark Thread safety: ST.
    * @param frame Pointer to frame to be released.
    */
   void release_frame(void *frame);
+
+  void release_frames(void* f, size_t frames);
 
   /**
    * @brief Instance to PageFrameManager singleton.

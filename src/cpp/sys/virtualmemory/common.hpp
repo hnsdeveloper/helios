@@ -26,8 +26,8 @@ SOFTWARE.
 #ifndef _COMMON_HPP_
 #define _COMMON_HPP_
 
-#include "include/arch/riscv/plat_def.h"
-#include "include/symbols.h"
+#include "include/arch/riscv/plat_def.hpp"
+#include "include/symbols.hpp"
 #include "ulib/map.hpp"
 
 extern hls::PageTable *kernel_page_table;

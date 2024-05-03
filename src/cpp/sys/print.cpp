@@ -24,9 +24,8 @@ SOFTWARE.
 ---------------------------------------------------------------------------------*/
 
 #include "sys/print.hpp"
-#include "dev/uart/uart.hpp"
-#include "include/limit.h"
-#include "include/types.h"
+#include "include/limits.hpp"
+#include "include/types.hpp"
 #include "sys/mem.hpp"
 #include "sys/opensbi.hpp"
 

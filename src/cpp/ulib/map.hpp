@@ -28,7 +28,7 @@ SOFTWARE.
 
 #include "ulib/rb_tree.hpp"
 #include "ulib/pair.hpp"
-#include "include/utilities.h"
+#include "include/utilities.hpp"
 
 namespace hls {
 

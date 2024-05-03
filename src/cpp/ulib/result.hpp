@@ -26,9 +26,9 @@ SOFTWARE.
 #ifndef _EXPECTED_HPP_
 #define _EXPECTED_HPP_
 
-#include "include/types.h"
-#include "include/typetraits.h"
-#include "include/utilities.h"
+#include "include/types.hpp"
+#include "include/typetraits.hpp"
+#include "include/utilities.hpp"
 #include "misc/new.hpp"
 #include "sys/panic.hpp"
 #include "include/macros.hpp"
@@ -44,6 +44,7 @@ enum class Error : uint64_t {
   INVALID_PAGE_ENTRY,
   PAGE_ALREADY_MAPPED,
   ADDRESS_ALREADY_MAPPED,
+  NOT_ENOUGH_CONTIGUOUS_MEMORY,
   OUT_OF_MEMORY,
   OUT_OF_BOUNDS,
   VALUE_LIMIT_REACHED,
