@@ -108,12 +108,8 @@ extern "C" void stack_trace() {
  */
 extern "C" void die() {
 
-  bool is_system_loaded = false;
-  if (is_system_loaded) {
-  } else {
-    while (true)
-      ;
-  }
+  kprintln("Please, manually reboot the machine.");
+  while(true);
 }
 
 extern "C" void panic_message_print(const char *msg) { kprintln("{}", msg); }

@@ -1,5 +1,7 @@
 #include "sys/virtualmemory/kmalloc.hpp"
 #include "sys/virtualmemory/paging.hpp"
+#include "sys/virtualmemory/memmap.hpp"
+#include "sys/virtualmemory/common.hpp"
 #include "include/arch/riscv/plat_def.hpp"
 #include "sys/print.hpp"
 
@@ -824,11 +826,22 @@ void* liballoc_alloc(size_t frames) {
 	if(result.is_error()) {
 		// TODO: HANDLE ERROR
 	}
+
+	for(size_t i = 0; i < frames; ++i) {
+		void* x = result.get_value();
+		kmmap(apply_offset(x, i * PAGE_FRAME_SIZE), apply_offset(x, i * PAGE_FRAME_SIZE), kernel_page_table, PageLevel::KB_VPN, false);
+	}
+
 	return result.get_value();
 }
 
 int liballoc_free(void* p, size_t frames) {
     auto& f_manager = PageFrameManager::instance();
+	
+	for(size_t i = 0; i < frames; ++i) {
+		kmunmap(apply_offset(p, i * PAGE_FRAME_SIZE), kernel_page_table);
+	}
+
 	f_manager.release_frames(p, frames);
 	return 0;
 }

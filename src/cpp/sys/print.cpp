@@ -60,6 +60,12 @@ void strprintln(const char *str) {
   strprint("\r\n");
 }
 
+void strcprint(const char* str, size_t n) {
+  for(size_t i = 0; i < n; ++i) {
+    ::putchar(*(str + i));
+  }
+}
+
 void ptrprint(const void *ptr) {
   auto v = to_uintptr_t(ptr);
   constexpr size_t buffer_size = sizeof(v) * 8 / 4;

@@ -239,16 +239,13 @@ bool is_address_mapped(PageTable *table, void *vaddress) {
   return !get_physical_address(table, vaddress).is_error();
 }
 
-PageTable *setup_kernel_memory_mapping() {
-
+void setup_kernel_memory_mapping() {
   PageFrameManager &manager = PageFrameManager::instance();
   kernel_page_table =
       reinterpret_cast<PageTable *>(manager.get_frame().get_value());
 
   memset(kernel_page_table, 0, sizeof(PageTable));
   map_kernel(kernel_page_table);
-
-  return kernel_page_table;
 }
 
 } // namespace hls

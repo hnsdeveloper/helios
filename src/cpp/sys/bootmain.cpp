@@ -31,9 +31,10 @@ SOFTWARE.
 #include "sys/panic.hpp"
 #include "sys/print.hpp"
 #include "sys/string.hpp"
+#include "sys/bootoptions.hpp"
 #include "sys/traphandler/traphandler.hpp"
+#include "sys/virtualmemory/common.hpp"
 #include "sys/virtualmemory/kmalloc.hpp"
-#include "sys/virtualmemory/vmalloc.hpp"
 #include "sys/virtualmemory/memmap.hpp"
 #include "sys/virtualmemory/paging.hpp"
 
@@ -51,25 +52,6 @@ void display_initial_info() {
   kprintln("Copyright (C) {}. Built from {}.", __DATE__ + 7, GIT_HASH);
 }
 
-Result<void *> get_fdt(int argc, const char **argv) {
-  // TODO: FOR NOW WE USING THE SECOND ARGUMENT AS THE ADDRESS OF THE FDT
-  if(argc == 0)
-    return error<void*>(Error::INVALID_ARGUMENT);
-
-  kspit(argv[1]);
-
-  void *fdt = to_ptr(hex_to_uint(argv[1]).get_value());
-  kspit(fdt);
-  int fdt_check_result = fdt_check_header(fdt);
-
-  kspit(fdt_check_result);
-
-  if (fdt_check_result != 0)
-    return error<void *>(Error::CORRUPTED_DATA_STRUCTURE);
-
-  return value(fdt);
-}
-
 // TODO: IMPLEMENT GETTING CPU ID
 size_t cpu_id() { return 0; }
 
@@ -80,35 +62,58 @@ size_t cpu_id() { return 0; }
  * @param argv Array of string arguments
  */
 [[noreturn]] void main(int argc, const char **argv) {
-
   if (cpu_id() == 0) {
     setup_printing();
-
     display_initial_info();
 
-    void *device_tree = get_fdt(argc, argv).get_value();
+    option::Stats stats(usage, argc-1, argv+1);
+    option::Option options[stats.options_max];
+    option::Option buffer[stats.buffer_max];
+    option::Parser parse(usage, argc, argv, options, buffer);
+
+    if(parse.error()) {
+      kprintln("Failed to parse boot options.");
+      die();
+    }
+
+    if(argc == 1 || options[OptionIndex::HELP]) {
+      option::printUsage(&strcprint, usage);
+      die();
+    }
+
+    void* device_tree;
+
+    if(options[OptionIndex::FDT].count() == 1) {
+      char* p = nullptr;
+      uintptr_t addr = strtoul(options[OptionIndex::FDT].arg, &p, 16);
+
+      if(addr == 0 && p == nullptr) {
+        kprintln("Invalid FDT address. Please reboot and provide a valid one.");
+        die();
+      } 
+      device_tree = to_ptr(addr);
+    }
 
     strprintln("Setting up pageframe manager.");
     setup_page_frame_manager(device_tree);
 
+    strprintln("Mapping kernel memory.");
+    setup_kernel_memory_mapping();
+
+    strprintln("Setting up kmalloc.");
+    //setup_kmalloc();
+
     // From now on we can use kmalloc
 
-    strprintln("Mapping kernel memory.");
-    void *kernel_page_table = setup_kernel_memory_mapping();
-    
     strprintln("Initializing vmalloc.");
-    initialize_vmalloc();
+    //initialize_vmalloc();
 
     strprintln("Setting up kernel trap handling.");
     setup_trap_handling();
 
-    asm("add a0, x0, %0;"
-        "srli a0, a0, 12;"
-        "li a1, 0x9000000000000000;"
-        "or a0, a0, a1;"
-        "csrrw a0, satp, a0;"
-        :
-        : "r"(kernel_page_table));
+    enable_address_translation(kernel_page_table);
+
+    
 
     while (true);
     

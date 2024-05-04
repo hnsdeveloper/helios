@@ -39,6 +39,15 @@ namespace hls {
 void setup_printing();
 
 /**
+ * @brief Prints up to n characters from string str
+ * 
+ * @param str The string to be printed.
+ * @param n Amount of characters.
+ */
+void strcprint(const char* str, size_t n);
+
+
+/**
  * @brief Prints string **str** to default console without formatting.
  * @remark Thread safety: ST.
  * @param str String to be printed.

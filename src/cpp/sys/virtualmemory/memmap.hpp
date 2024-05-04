@@ -35,18 +35,6 @@ SOFTWARE.
 namespace hls {
 
 /**
- * @brief Walks a page table till it can't walk it anymore (either because it is not mapped or because it is currently mapped to a bigger level)
- * 
- * @param table_ptr The page table
- * @param vaddress The virtual address we are trying to reach
- * @param current_vpn Page level corresponding to table_ptr
- * @return Result<PageLevel> Returns an error or the next page level, while modifying table_ptr to point to the next table. If it reachs a leaf, subsequent calls will not have any effect.
- */
-Result<PageLevel> walk_table(PageTable **table_ptr, const void *vaddress,
-                             PageLevel current_vpn);
-
-
-/**
  * @brief Checks if a given virtual address is mapped
  * 
  * @param table The page table where to check if the address is mapped
@@ -56,6 +44,26 @@ Result<PageLevel> walk_table(PageTable **table_ptr, const void *vaddress,
  */
 bool is_address_mapped(PageTable *table, void *vaddress);
 
+/**
+ * @brief Get the physical address corresponding to a virtual address
+ * 
+ * @param start_table The table which we wish to walk to get the physical address
+ * @param vaddress The virtual address which we are trying to find 
+ * @return Result<const void *> Returns the physical address or error.
+ */
+Result<void *> get_physical_address(PageTable *start_table,
+                                          const void *vaddress);
+
+/**
+ * @brief Walks a page table till it can't walk it anymore (either because it is not mapped or because it is currently mapped to a bigger level)
+ * 
+ * @param table_ptr The page table
+ * @param vaddress The virtual address we are trying to reach
+ * @param current_vpn Page level corresponding to table_ptr
+ * @return Result<PageLevel> Returns an error or the next page level, while modifying table_ptr to point to the next table. If it reachs a leaf, subsequent calls will not have any effect.
+ */
+Result<PageLevel> walk_table(PageTable **table_ptr, const void *vaddress,
+                             PageLevel current_vpn);
 
 /**
  * @brief Maps a virtual address to a virtual address.
@@ -80,16 +88,6 @@ Result<const void *> kmmap(const void* paddress, const void* vaddress, PageTable
 void kmunmap(const void* vaddress, PageTable* table);
 
 /**
- * @brief Get the physical address corresponding to a virtual address
- * 
- * @param start_table The table which we wish to walk to get the physical address
- * @param vaddress The virtual address which we are trying to find 
- * @return Result<const void *> Returns the physical address or error.
- */
-Result<void *> get_physical_address(PageTable *start_table,
-                                          const void *vaddress);
-
-/**
  * @brief Maps the kernel to a page table.
  * 
  * @param table The table which the kernel is being mapped to.
@@ -103,7 +101,7 @@ bool map_kernel(PageTable *table);
  * 
  * @return PageTable* Pointer to the kernel page table
  */
-PageTable *setup_kernel_memory_mapping();
+void setup_kernel_memory_mapping();
 
 } // namespace hls
 

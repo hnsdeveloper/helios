@@ -38,6 +38,10 @@ void print_table(PageTable *table);
 void *get_kernel_begin_address();
 void *get_kernel_end_address();
 
+void enable_address_translation(const PageTable* table);
+const PageTable* disable_address_translation();
+const PageTable* get_current_page_table();
+
 }; // namespace hls
 
 #endif

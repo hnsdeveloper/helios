@@ -53,4 +53,50 @@ void *get_kernel_begin_address() { return &_text_start; }
 
 void *get_kernel_end_address() { return &_heap_start; }
 
+void enable_address_translation(const PageTable* table) {
+  if(table == nullptr)
+    return;
+
+  asm volatile(
+        "add a0, x0, %0;"
+        "srli a0, a0, 12;"
+        "li a1, 0x9000000000000000;"
+        "or a0, a0, a1;"
+        "csrrw a0, satp, a0;"
+        :
+        : "r"(table));
+}
+
+const PageTable* disable_address_transaltion() {
+  const PageTable* table;
+  
+  asm volatile(
+      "add a0, x0, x0;"
+      "csrrw a0, satp, a0;"
+      "add %0, x0, a0;"
+      "slli %0, %0, 12;"
+      : "=r"(table)
+      :
+      );
+
+  return table;
+}
+
+const PageTable* get_current_page_table() {
+  const PageTable* table;
+
+  asm volatile(
+    "add a0, x0, x0;"
+    "csrrw a0, satp, a0;"
+    "add a1, a0, x0;"
+    "cssrw a0, satp, a0;"
+    "add %0, a1, x0;"
+    "slli %0, %0, 12;"
+    : "=r"(table)
+    :
+  );
+
+  return table;
+}
+
 }; // namespace hls
