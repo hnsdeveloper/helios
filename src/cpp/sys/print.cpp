@@ -35,7 +35,8 @@ const bool UART_PRINTING = true;
  * @brief Used as placeholder.
  *
  */
-void empty_putchar(char) {}
+void empty_putchar(char) {
+}
 
 /**
  * @brief Function pointer to a putchar like function. Should put char to
@@ -46,91 +47,93 @@ putchar_func_ptr putchar = &empty_putchar;
 
 namespace hls {
 
-void setup_printing() { putchar = &hls::opensbi_putchar; }
+void setup_printing() {
+    putchar = &hls::opensbi_putchar;
+}
 
 void strprint(const char *str) {
-  while (*str) {
-    ::putchar(*str);
-    ++str;
-  }
+    while (*str) {
+        ::putchar(*str);
+        ++str;
+    }
 }
 
 void strprintln(const char *str) {
-  strprint(str);
-  strprint("\r\n");
+    strprint(str);
+    strprint("\r\n");
 }
 
-void strcprint(const char* str, size_t n) {
-  for(size_t i = 0; i < n; ++i) {
-    ::putchar(*(str + i));
-  }
+void strcprint(const char *str, size_t n) {
+    for (size_t i = 0; i < n; ++i) {
+        ::putchar(*(str + i));
+    }
 }
 
 void ptrprint(const void *ptr) {
-  auto v = to_uintptr_t(ptr);
-  constexpr size_t buffer_size = sizeof(v) * 8 / 4;
-  char buffer[buffer_size];
+    auto v = to_uintptr_t(ptr);
+    constexpr size_t buffer_size = sizeof(v) * 8 / 4;
+    char buffer[buffer_size];
 
-  for (size_t i = 0; i < buffer_size; ++i) {
-    char c = v & 0xF;
+    for (size_t i = 0; i < buffer_size; ++i) {
+        char c = v & 0xF;
 
-    if (c <= 9) {
-      c += '0';
-    } else {
-      c += 'A' - 10;
+        if (c <= 9) {
+            c += '0';
+        } else {
+            c += 'A' - 10;
+        }
+
+        buffer[i] = c;
+
+        v = v >> 4;
     }
 
-    buffer[i] = c;
-
-    v = v >> 4;
-  }
-
-  putchar('0');
-  putchar('x');
-  for (size_t i = 0; i < buffer_size; ++i) {
-    char &c = buffer[buffer_size - i - 1];
-    putchar(c);
-  }
+    putchar('0');
+    putchar('x');
+    for (size_t i = 0; i < buffer_size; ++i) {
+        char &c = buffer[buffer_size - i - 1];
+        putchar(c);
+    }
 }
 
 void intprint(int64_t v) {
-  if (v >= 0)
-    uintprint(0 + v);
-  else {
-    strprint("-");
-    // Check if v is equal to INT_MIN
-    if (v == hls::limit<int64_t>::min) {
-      v += 1;
-      v = -v;
-      uintprint((uint64_t(0) + v) + 1);
-    } else {
-      v = -v;
-      uintprint(v);
+    if (v >= 0)
+        uintprint(0 + v);
+    else {
+        strprint("-");
+        // Check if v is equal to INT_MIN
+        if (v == hls::limit<int64_t>::min) {
+            v += 1;
+            v = -v;
+            uintprint((uint64_t(0) + v) + 1);
+        } else {
+            v = -v;
+            uintprint(v);
+        }
     }
-  }
 }
 
 void uintprint(uint64_t v) {
-  if (v == 0) {
-    putchar('0');
-    return;
-  }
+    if (v == 0) {
+        putchar('0');
+        return;
+    }
 
-  char buffer[256];
-  size_t buffer_used = 0;
+    char buffer[256];
+    size_t buffer_used = 0;
 
-  for (size_t i = 0; v; ++i, v /= 10, ++buffer_used) {
-    buffer[i] = v % 10 + '0';
-  }
+    for (size_t i = 0; v; ++i, v /= 10, ++buffer_used) {
+        buffer[i] = v % 10 + '0';
+    }
 
-  for (size_t i = 0; i < buffer_used; ++i) {
-    char &c = buffer[buffer_used - i - 1];
-    putchar(c);
-  }
+    for (size_t i = 0; i < buffer_used; ++i) {
+        char &c = buffer[buffer_used - i - 1];
+        putchar(c);
+    }
 }
 
 void floatprint(double) {
-  strprint("Floating point values printing not supported yet!");
+    strprint("Floating point values printing not supported yet!");
 }
 
 } // namespace hls

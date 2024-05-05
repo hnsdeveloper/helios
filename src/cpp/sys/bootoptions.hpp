@@ -26,45 +26,44 @@ SOFTWARE.
 #ifndef _BOOT_OPTIONS_HPP_
 #define _BOOT_OPTIONS_HPP_
 
+#include "include/types.hpp"
 #include "misc/leanmeanparser/optionparser.hpp"
 #include "sys/print.hpp"
 #include "sys/string.hpp"
-#include "include/types.hpp"
 
 namespace hls {
 
 struct ArgVal : public option::Arg {
-    static option::ArgStatus NumericHex(const option::Option& option, bool) {
-        if(option.arg == nullptr) {
-            return option::ARG_ILLEGAL;    
+    static option::ArgStatus NumericHex(const option::Option &option, bool) {
+        if (option.arg == nullptr) {
+            return option::ARG_ILLEGAL;
         }
 
-        char* p = nullptr;
+        char *p = nullptr;
         size_t val = strtoul(option.arg, &p, 16);
-        if(val == 0 && p == nullptr) {
-            
-            return option::ARG_ILLEGAL;
-        }
-        
-        return option::ARG_OK;
-    }
+        if (val == 0 && p == nullptr) {
 
-    static option::ArgStatus Unique(const option::Option& option, bool) {
-        
-        if(option.count() != 1) {
             return option::ARG_ILLEGAL;
         }
 
         return option::ARG_OK;
     }
 
-    static option::ArgStatus NumericHexUnique(const option::Option& option, bool msg) {
-        if(Unique(option, msg) == option::ARG_OK && NumericHex(option, msg) == option::ARG_OK)
+    static option::ArgStatus Unique(const option::Option &option, bool) {
+
+        if (option.count() != 1) {
+            return option::ARG_ILLEGAL;
+        }
+
+        return option::ARG_OK;
+    }
+
+    static option::ArgStatus NumericHexUnique(const option::Option &option, bool msg) {
+        if (Unique(option, msg) == option::ARG_OK && NumericHex(option, msg) == option::ARG_OK)
             return option::ARG_OK;
-        
+
         return option::ARG_ILLEGAL;
     }
-
 };
 
 enum OptionIndex {
@@ -73,12 +72,12 @@ enum OptionIndex {
     FDT
 };
 
-const option::Descriptor usage[] = {
-    {UNKNOWN, 0,""     , ""  , ArgVal::None,             "USAGE: example [options]\n\nOptions:" },
-    {HELP,    0, "h" , "help", ArgVal::None,             "  --help    \tPrint usage and exit." },
-    {FDT,     0, "f" , "fdt" , ArgVal::NumericHexUnique, "  --fdt, -f \t Flattened device tree address as hex value (e.g. FFFFFFFF or 0xFFFFFFF)."}
-};
+const option::Descriptor usage[] = {{UNKNOWN, 0, "", "", ArgVal::None, "USAGE: example [options]\n\nOptions:"},
+                                    {HELP, 0, "h", "help", ArgVal::None, "  --help    \tPrint usage and exit."},
+                                    {FDT, 0, "f", "fdt", ArgVal::NumericHexUnique,
+                                     "  --fdt, -f \t Flattened device tree address as hex value (e.g. FFFFFFFF "
+                                     "or 0xFFFFFFF)."}};
 
-}
+} // namespace hls
 
 #endif

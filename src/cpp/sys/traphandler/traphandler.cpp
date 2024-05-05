@@ -30,34 +30,34 @@ using namespace hls;
 namespace hls {
 
 void setup_trap_handling() {
-  asm volatile("la t0, _s_trap;"
-               "csrrw t0, stvec, t0;"
-               "li t0, 0x222;"
-               "csrrw t0, sie, t0;"
-               "csrsi sstatus, 2");
+    asm volatile("la t0, _s_trap;"
+                 "csrrw t0, stvec, t0;"
+                 "li t0, 0x222;"
+                 "csrrw t0, sie, t0;"
+                 "csrsi sstatus, 2");
 }
 
 } // namespace hls
 
-extern "C" void traphandler(hart*) {
+extern "C" void traphandler(hart *) {
 
-  uintreg_t scause = 0;
-  asm volatile("csrrw %1, scause, %0" : "=r"(scause) : "r"(scause));
+    uintreg_t scause = 0;
+    asm volatile("csrrw %1, scause, %0" : "=r"(scause) : "r"(scause));
 
-  const bool is_sync = (scause >> 63);
-  const uintreg_t cause = (scause << 1) >> 1; // Discards the MSB
+    const bool is_sync = (scause >> 63);
+    const uintreg_t cause = (scause << 1) >> 1; // Discards the MSB
 
-  if (is_sync) {
-    switch (cause) {
+    if (is_sync) {
+        switch (cause) {
 
-    default:
-      PANIC("Unhandled synchronous trap cause.");
+        default:
+            PANIC("Unhandled synchronous trap cause.");
+        }
+    } else {
+        switch (cause) {
+
+        default:
+            PANIC("Unhandled asynchronous trap cause.");
+        }
     }
-  } else {
-    switch (cause) {
-
-    default:
-      PANIC("Unhandled asynchronous trap cause.");
-    }
-  }
 }

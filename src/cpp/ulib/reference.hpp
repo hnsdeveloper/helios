@@ -28,17 +28,27 @@ SOFTWARE.
 
 namespace hls {
 template <typename T> class Ref {
-  T *m_value;
+    T *m_value;
 
-public:
-  Ref(T &value) { m_value = &value; }
-  Ref(const Ref &other) { m_value = other.m_value; }
-  ~Ref() = default;
-  operator T &() const { return get(); }
-  T &get() const { return *m_value; }
+  public:
+    Ref(T &value) {
+        m_value = &value;
+    }
+    Ref(const Ref &other) {
+        m_value = other.m_value;
+    }
+    ~Ref() = default;
+    operator T &() const {
+        return get();
+    }
+    T &get() const {
+        return *m_value;
+    }
 };
 
-template <typename T> Ref<T> make_ref(T &v) { return Ref<T>(v); }
+template <typename T> Ref<T> make_ref(T &v) {
+    return Ref<T>(v);
+}
 
 }; // namespace hls
 

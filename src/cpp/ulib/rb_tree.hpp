@@ -26,11 +26,11 @@ SOFTWARE.
 #ifndef _RB_TREE_HPP_
 #define _RB_TREE_HPP_
 
-#include "include/types.hpp"
-#include "include/macros.hpp"
 #include "include/limits.hpp"
-#include "ulib/node.hpp"
+#include "include/macros.hpp"
+#include "include/types.hpp"
 #include "ulib/hash.hpp"
+#include "ulib/node.hpp"
 
 namespace hls {
 
@@ -39,10 +39,9 @@ enum Color {
     BLACK
 };
 
-template<typename T>
-class RBTreeNode : protected Node<T, 4> {
+template <typename T> class RBTreeNode : protected Node<T, 4> {
     using rbtn = RBTreeNode;
-    using nd = Node<T,4>;
+    using nd = Node<T, 4>;
     SET_USING_CLASS(rbtn, node);
     EXTRACT_SUB_USING_T_CLASS(nd, type, type);
 
@@ -54,64 +53,63 @@ class RBTreeNode : protected Node<T, 4> {
     // 2 = right
     // 3 = t_null
 
-    public:
-
+  public:
     RBTreeNode(type data, Color color, node_ptr t_null) : m_color(color) {
-        nd:: set_data(hls::move(data));
-        nd:: template set_node<0>(t_null);
-        nd:: template set_node<1>(t_null);
-        nd:: template set_node<2>(t_null);
-        nd:: template set_node<3>(t_null);
+        nd::set_data(hls::move(data));
+        nd::template set_node<0>(t_null);
+        nd::template set_node<1>(t_null);
+        nd::template set_node<2>(t_null);
+        nd::template set_node<3>(t_null);
     };
 
     RBTreeNode() {
-        nd:: template set_node<3>(this);
+        nd::template set_node<3>(this);
         set_color(Color::BLACK);
     }
 
-    RBTreeNode(const RBTreeNode&) = delete;
-    RBTreeNode(RBTreeNode&&) = delete;
+    RBTreeNode(const RBTreeNode &) = delete;
+    RBTreeNode(RBTreeNode &&) = delete;
 
     using nd::get_data;
     using nd::set_data;
-    
+
     void set_parent(node_ptr n) {
-        nd:: template set_node<0>(n);
+        nd::template set_node<0>(n);
     }
 
     void set_left(node_ptr n) {
-        nd:: template set_node<1>(n);
+        nd::template set_node<1>(n);
     }
 
     void set_right(node_ptr n) {
-        nd:: template set_node<2>(n);
+        nd::template set_node<2>(n);
     }
 
     node_ptr get_parent() {
-        const auto& t = *this;
+        const auto &t = *this;
         return const_cast<node_ptr>(t.get_parent());
     }
 
     node_ptr get_left() {
-        const auto& t = *this;
+        const auto &t = *this;
         return const_cast<node_ptr>(t.get_left());
     }
 
     node_ptr get_right() {
-        const auto& t = *this;
+        const auto &t = *this;
         return const_cast<node_ptr>(t.get_right());
     }
 
     node_const_ptr get_parent() const {
-        return reinterpret_cast<node_const_ptr>(nd:: template get_node<0>());
+        return reinterpret_cast<node_const_ptr>(nd::template get_node<0>());
     }
 
     node_const_ptr get_left() const {
-        return reinterpret_cast<node_const_ptr>(nd:: template get_node<1>());
+        return reinterpret_cast<node_const_ptr>(nd::template get_node<1>());
     }
 
     node_const_ptr get_right() const {
-        return reinterpret_cast<node_const_ptr>(nd:: template get_node<2>());
+        return reinterpret_cast<node_const_ptr>(nd::template get_node<2>());
     }
 
     void set_color(Color n) {
@@ -123,23 +121,20 @@ class RBTreeNode : protected Node<T, 4> {
     }
 
     node_const_ptr t_null() const {
-        return reinterpret_cast<node_const_ptr>(nd:: template get_node<3>());
+        return reinterpret_cast<node_const_ptr>(nd::template get_node<3>());
     }
 };
 
-template<typename T>
-class LessComparator {
+template <typename T> class LessComparator {
     SET_USING_CLASS(T, type);
-    public:
-    
+
+  public:
     bool operator()(type_const_reference a, type_const_reference b) const {
         return a < b;
     }
 };
 
-
-
-template<typename T, template<typename> class Hash, template <typename> class Cmp, template<typename> class Alloc> 
+template <typename T, template <typename> class Hash, template <typename> class Cmp, template <typename> class Alloc>
 class RedBlackTree {
     EXTRACT_SUB_USING_T_CLASS(RBTreeNode<T>, node, node);
     EXTRACT_SUB_USING_T_CLASS(node, type, type);
@@ -147,38 +142,39 @@ class RedBlackTree {
     SET_USING_CLASS(_hs, hsh);
     EXTRACT_SUB_USING_T_CLASS(hsh, type, hashed);
     EXTRACT_SUB_USING_T_CLASS(hsh, hash_result, hash_result);
-    
+
     using _cmp = Cmp<hash_result>;
     SET_USING_CLASS(_cmp, comparator);
-    
+
     using _alloc = Alloc<node>;
     SET_USING_CLASS(_alloc, allocator);
-    
-    template<bool reverse, bool cnst = false>
-    class RBTreeIterator {
-        const RedBlackTree* m_tree;
+
+    template <bool reverse, bool cnst = false> class RBTreeIterator {
+        const RedBlackTree *m_tree;
         node_const_ptr m_n;
-        
-        RBTreeIterator(const RedBlackTree* tree, node_const_ptr n) : m_tree(tree), m_n(n) {};
 
-        template<bool c, typename fake = void>
-        struct wrapper {
+        RBTreeIterator(const RedBlackTree *tree, node_const_ptr n) : m_tree(tree), m_n(n) {};
+
+        template <bool c, typename fake = void> struct wrapper {
             node_const_ptr n;
             wrapper(node_const_ptr node) : n(node) {};
-            node_const_ptr get_n() { return n; }
+            node_const_ptr get_n() {
+                return n;
+            }
         };
 
-        template<typename fake>
-        struct wrapper<false, fake> {
+        template <typename fake> struct wrapper<false, fake> {
             node_const_ptr n;
             wrapper(node_const_ptr node) : n(node) {};
-            node_ptr get_n() { return const_cast<node_ptr>(n); }
+            node_ptr get_n() {
+                return const_cast<node_ptr>(n);
+            }
         };
-        public:
 
-        RBTreeIterator(const RBTreeIterator& other) : m_tree(other.m_tree), m_n(other.m_n) {};
+      public:
+        RBTreeIterator(const RBTreeIterator &other) : m_tree(other.m_tree), m_n(other.m_n) {};
 
-        auto& operator*() const {
+        auto &operator*() const {
             auto n = wrapper<cnst>(m_n).get_n();
             return n->get_data();
         }
@@ -188,8 +184,8 @@ class RedBlackTree {
             return &(n->get_data());
         }
 
-        RBTreeIterator& operator++() {
-            if constexpr(reverse == false) {
+        RBTreeIterator &operator++() {
+            if constexpr (reverse == false) {
                 m_n = m_tree->get_in_order_successor(m_n);
             }
             if constexpr (reverse == true) {
@@ -204,8 +200,8 @@ class RedBlackTree {
             return other;
         }
 
-        RBTreeIterator& operator--() {
-             if constexpr(reverse == false) {
+        RBTreeIterator &operator--() {
+            if constexpr (reverse == false) {
                 m_n = m_tree->get_in_order_predecessor(m_n);
             }
             if constexpr (reverse == true) {
@@ -220,18 +216,18 @@ class RedBlackTree {
             return other;
         }
 
-        RBTreeIterator& operator=(const RBTreeIterator& other) {
+        RBTreeIterator &operator=(const RBTreeIterator &other) {
             m_tree = other.m_tree;
             m_n = other.m_n;
 
             return *this;
         }
 
-        bool operator==(const RBTreeIterator& other) const {
+        bool operator==(const RBTreeIterator &other) const {
             return m_n == other.m_n && m_tree == other.m_tree;
         }
 
-        bool operator!=(const RBTreeIterator& other) const {
+        bool operator!=(const RBTreeIterator &other) const {
             return !(*(this) == other);
         }
 
@@ -245,7 +241,7 @@ class RedBlackTree {
     using it = RBTreeIterator<false>;
     using rit = RBTreeIterator<true>;
     using cit = RBTreeIterator<false, true>;
-    using crit = RBTreeIterator<true,true>;
+    using crit = RBTreeIterator<true, true>;
 
     SET_USING_CLASS(it, iterator);
     SET_USING_CLASS(rit, reverse_iterator);
@@ -259,37 +255,37 @@ class RedBlackTree {
     allocator m_allocator;
     comparator m_comparator;
 
-    void move_helper(RedBlackTree& other, node_ptr n) {
-        if(n->get_left() == other.t_null()) 
+    void move_helper(RedBlackTree &other, node_ptr n) {
+        if (n->get_left() == other.t_null())
             n->set_left(t_null());
-        else 
+        else
             move_helper(other, n->get_left());
 
-        if(n->get_right() == other.t_null()) 
+        if (n->get_right() == other.t_null())
             n->set_right(t_null());
-        else 
+        else
             move_helper(other, n->get_right());
 
-        if(n == m_root) {
-            if(n == other.t_null())
+        if (n == m_root) {
+            if (n == other.t_null())
                 m_root = t_null();
             else
                 n->set_parent(nullptr);
-        }  
+        }
     }
 
-    node_const_ptr find_helper(hash_result_const_reference key, node_const_ptr* parent_save) const {
+    node_const_ptr find_helper(hash_result_const_reference key, node_const_ptr *parent_save) const {
         comparator_const c = get_comparator();
         hsh_const h = get_hasher();
         node_ptr current = m_root;
         *parent_save = t_null();
-        while(current != t_null()) {
-            if(c(key, h(current->get_data()))) {
+        while (current != t_null()) {
+            if (c(key, h(current->get_data()))) {
                 *parent_save = current;
                 current = current->get_left();
                 continue;
             }
-            if(c(h(current->get_data()), key)) {
+            if (c(h(current->get_data()), key)) {
                 *parent_save = current;
                 current = current->get_right();
                 continue;
@@ -300,8 +296,8 @@ class RedBlackTree {
         return current;
     }
 
-    node_ptr find_helper(hash_result_const_reference key, node_ptr* p) {
-        const auto& c = *this;
+    node_ptr find_helper(hash_result_const_reference key, node_ptr *p) {
+        const auto &c = *this;
         node_const_ptr r = nullptr;
         node_const_ptr p2 = nullptr;
 
@@ -315,46 +311,45 @@ class RedBlackTree {
         node_ptr u = nullptr;
         node_ptr gp = nullptr;
 
-        if(n == m_root) {
+        if (n == m_root) {
             n->set_color(Color::BLACK);
             return;
         }
 
         p = n->get_parent();
 
-        if(!is_red(n) || !is_red(p))
+        if (!is_red(n) || !is_red(p))
             return;
 
-        if(p)
+        if (p)
             gp = p->get_parent();
-        if(gp)
+        if (gp)
             u = gp->get_left() == p ? gp->get_right() : gp->get_left();
 
-        if(is_red(u)) {
+        if (is_red(u)) {
             gp->set_color(Color::RED);
             u->set_color(Color::BLACK);
             p->set_color(Color::BLACK);
-            insert_fix(gp);  
-        } else if(is_black(u)) {
-            if(is_right_child(p)) {
-                if(is_right_child(n)) {
+            insert_fix(gp);
+        } else if (is_black(u)) {
+            if (is_right_child(p)) {
+                if (is_right_child(n)) {
                     rotate_left(gp);
                     p->set_color(Color::BLACK);
                     gp->set_color(Color::RED);
-                }
-                else if(is_left_child(n)) {
+                } else if (is_left_child(n)) {
                     n->set_color(Color::BLACK);
                     p->set_color(Color::RED);
                     gp->set_color(Color::RED);
                     rotate_right(n);
                     rotate_left(p);
                 }
-            } else if(is_left_child(p)) {
-                if(is_left_child(n)){
+            } else if (is_left_child(p)) {
+                if (is_left_child(n)) {
                     rotate_right(gp);
                     p->set_color(Color::BLACK);
                     gp->set_color(Color::RED);
-                }else if(is_right_child(n)) {
+                } else if (is_right_child(n)) {
                     n->set_color(Color::BLACK);
                     p->set_color(Color::RED);
                     gp->set_color(Color::RED);
@@ -362,14 +357,14 @@ class RedBlackTree {
                     rotate_right(p);
                 }
             }
-        }        
+        }
     }
 
-    void remove_fix(node_ptr n) { 
+    void remove_fix(node_ptr n) {
         while (n != m_root && is_black(n)) {
             node_ptr p = n->get_parent();
             node_ptr s;
-            if(is_left_child(n,p)) {
+            if (is_left_child(n, p)) {
                 s = p->get_right();
                 if (is_red(s)) {
                     s->set_color(Color::BLACK);
@@ -393,7 +388,7 @@ class RedBlackTree {
                     s->get_right()->set_color(Color::BLACK);
                     rotate_left(p);
                     n = m_root;
-            }
+                }
             } else {
                 s = p->get_left();
                 if (is_red(s)) {
@@ -402,12 +397,12 @@ class RedBlackTree {
                     rotate_right(p);
                     s = p->get_left();
                 }
-                if(is_black(s->get_right()) && is_black(s->get_left())) {
+                if (is_black(s->get_right()) && is_black(s->get_left())) {
                     s->set_color(Color::RED);
                     n = p;
                     p = p->get_parent();
                 } else {
-                    if(is_black(s->get_left())) {
+                    if (is_black(s->get_left())) {
                         s->get_right()->set_color(Color::BLACK);
                         s->set_color(Color::RED);
                         rotate_left(s);
@@ -421,55 +416,55 @@ class RedBlackTree {
                 }
             }
         }
-        if(n)
+        if (n)
             n->set_color(Color::BLACK);
     }
 
     bool is_left_child(node_const_ptr n, node_const_ptr p = nullptr) const {
-        if(n != nullptr) {
-            if(n->get_parent() != nullptr) {
+        if (n != nullptr) {
+            if (n->get_parent() != nullptr) {
                 return n->get_parent()->get_left() == n;
             }
         }
-        if(p != nullptr) {
-            if(p->get_left() == n)
+        if (p != nullptr) {
+            if (p->get_left() == n)
                 return true;
         }
         return false;
     }
 
     bool is_right_child(node_const_ptr n, node_const_ptr p = nullptr) const {
-        if(n){ 
-            if(n->get_parent()) {
+        if (n) {
+            if (n->get_parent()) {
                 return n->get_parent()->get_right() == n;
             }
         }
-        if(p) {
-            if(n == p->get_right())
+        if (p) {
+            if (n == p->get_right())
                 return true;
         }
         return false;
     }
 
     void rotate_left(node_ptr n) {
-        if(n == nullptr || n == t_null())
+        if (n == nullptr || n == t_null())
             return;
 
         node_ptr nr = n->get_right();
 
-        if(nr) {
+        if (nr) {
             n->set_right(nr->get_left());
 
-            if(n->get_right())
+            if (n->get_right())
                 n->get_right()->set_parent(n);
 
             nr->set_left(n);
             nr->set_parent(n->get_parent());
-            if(is_left_child(n))
+            if (is_left_child(n))
                 n->get_parent()->set_left(nr);
-            else if(is_right_child(n))
+            else if (is_right_child(n))
                 n->get_parent()->set_right(nr);
-            else 
+            else
                 m_root = nr;
 
             n->set_parent(nr);
@@ -477,24 +472,24 @@ class RedBlackTree {
     }
 
     void rotate_right(node_ptr n) {
-        if(n == nullptr || n == t_null())
+        if (n == nullptr || n == t_null())
             return;
 
         node_ptr nl = n->get_left();
 
-        if(nl) {
+        if (nl) {
             n->set_left(nl->get_right());
-            if(n->get_left())
+            if (n->get_left())
                 n->get_left()->set_parent(n);
-            
+
             nl->set_right(n);
             nl->set_parent(n->get_parent());
 
-            if(is_left_child(n))
+            if (is_left_child(n))
                 n->get_parent()->set_left(nl);
-            else if(is_right_child(n))
+            else if (is_right_child(n))
                 n->get_parent()->set_right(nl);
-            else 
+            else
                 m_root = nl;
 
             n->set_parent(nl);
@@ -502,7 +497,7 @@ class RedBlackTree {
     }
 
     inline bool is_red(node_ptr p) {
-        if(p)
+        if (p)
             return p->get_color() == Color::RED;
         return false;
     }
@@ -512,13 +507,13 @@ class RedBlackTree {
     }
 
     node_ptr find_minimum(node_ptr n) {
-        const auto& c = *this;
+        const auto &c = *this;
         return const_cast<node_ptr>(c.find_minimum(n));
     }
 
     node_const_ptr find_minimum(node_const_ptr n) const {
         node_const_ptr ret_val = n;
-        while(n != t_null()) {
+        while (n != t_null()) {
             ret_val = n;
             n = n->get_left();
         }
@@ -526,13 +521,13 @@ class RedBlackTree {
     }
 
     node_ptr find_maximum(node_ptr n) {
-        const auto& c = *this;
+        const auto &c = *this;
         return const_cast<node_ptr>(c.find_maximum(n));
     }
 
     node_const_ptr find_maximum(node_const_ptr n) const {
         node_const_ptr ret_val = n;
-        while(n != t_null()) {
+        while (n != t_null()) {
             ret_val = n;
             n = n->get_right();
         }
@@ -540,67 +535,65 @@ class RedBlackTree {
     }
 
     void transplant(node_ptr n, node_ptr sn) {
-        if(n == t_null())
+        if (n == t_null())
             return;
 
         node_ptr p = n->get_parent();
-        if(p != t_null()) {
-            if(p->get_left() == n)
+        if (p != t_null()) {
+            if (p->get_left() == n)
                 p->set_left(sn);
-            if(p->get_right() == n)
+            if (p->get_right() == n)
                 p->set_right(sn);
-        }
-        else {
+        } else {
             m_root = sn;
         }
 
-        if(sn) {
-            if(sn != n->get_left())
+        if (sn) {
+            if (sn != n->get_left())
                 sn->set_left(n->get_left());
-            if(sn != n->get_right())
+            if (sn != n->get_right())
                 sn->set_right(n->get_right());
-            if(sn->get_left())
+            if (sn->get_left())
                 sn->get_left()->set_parent(sn);
-            if(sn->get_right())
+            if (sn->get_right())
                 sn->get_right()->set_parent(sn);
             sn->set_parent(n->get_parent());
         }
     }
 
     void destructor_helper(node_ptr n) {
-        if(n == t_null())
+        if (n == t_null())
             return;
 
-        if(n->get_left() != t_null()) {
+        if (n->get_left() != t_null()) {
             destructor_helper(n->get_left());
             m_allocator.destroy(n->get_left());
         }
-        if(n->get_right() != t_null()) {
+        if (n->get_right() != t_null()) {
             destructor_helper(n->get_right());
             m_allocator.destroy(n->get_right());
         }
 
-        if(n == m_root)
+        if (n == m_root)
             m_allocator.destroy(n);
     }
 
-    public:
-
+  public:
     RedBlackTree() {
         m_root = t_null();
         m_size = 0;
     }
 
     ~RedBlackTree() {
-        if(m_root != t_null())
+        if (m_root != t_null())
             destructor_helper(m_root);
     }
 
-    RedBlackTree(const RedBlackTree& other) : RedBlackTree() {
+    RedBlackTree(const RedBlackTree &other) : RedBlackTree() {
         *this = other;
     }
 
-    RedBlackTree(RedBlackTree&& other) : RedBlackTree() {
+    RedBlackTree(RedBlackTree &&other) : RedBlackTree() {
         *this = hls::move(other);
     }
 
@@ -608,28 +601,25 @@ class RedBlackTree {
         node_ptr p = nullptr;
         node_ptr n = find_helper(key, &p);
         node_ptr x = t_null();
-        if(n == t_null())
+        if (n == t_null())
             return;
 
         p = n->get_parent();
         Color original_color = n->get_color();
 
-        if(n->get_left() == t_null()) {
+        if (n->get_left() == t_null()) {
             x = n->get_right();
-            transplant(n,x);
-        }
-        else if(n->get_right() == t_null()) {
+            transplant(n, x);
+        } else if (n->get_right() == t_null()) {
             x = n->get_left();
-            transplant(n,x);
-        }
-        else {
+            transplant(n, x);
+        } else {
             node_ptr y = find_minimum(n->get_right());
             original_color = y->get_color();
             x = y->get_right();
-            if(y == n->get_right()) {
+            if (y == n->get_right()) {
                 x->set_parent(y);
-            }
-            else {
+            } else {
                 transplant(y, x);
                 x->set_parent(y->get_parent());
             }
@@ -637,7 +627,7 @@ class RedBlackTree {
             y->set_color(original_color);
         }
 
-        if(original_color == Color::BLACK)
+        if (original_color == Color::BLACK)
             remove_fix(x);
 
         m_root->set_parent(nullptr);
@@ -647,16 +637,16 @@ class RedBlackTree {
     }
 
     node_ptr insert(type_const_reference key) {
-        if(size() == max_size())
+        if (size() == max_size())
             return t_null();
-        
-        auto& c = get_comparator();
-        auto& h = get_hasher();
+
+        auto &c = get_comparator();
+        auto &h = get_hasher();
 
         node_ptr n = m_allocator.create(key, Color::RED, t_null());
 
         // Handle edge case when we don't have a root node
-        if(m_root == t_null()) {
+        if (m_root == t_null()) {
             m_root = n;
             n->set_color(Color::BLACK);
             return n;
@@ -664,12 +654,11 @@ class RedBlackTree {
 
         // Find to which node we are going to insert node n
         node_ptr p;
-        find_helper(h(n->get_data()), &p);        
+        find_helper(h(n->get_data()), &p);
 
-        if(c(h(key), h(p->get_data()))) {
+        if (c(h(key), h(p->get_data()))) {
             p->set_left(n);
-        }
-        else {
+        } else {
             p->set_right(n);
         }
 
@@ -688,7 +677,7 @@ class RedBlackTree {
     }
 
     node_ptr get_node(hash_result_const_reference key) {
-        const auto& c = *this;
+        const auto &c = *this;
         return const_cast<node_ptr>(c.get_node(key));
     }
 
@@ -696,29 +685,28 @@ class RedBlackTree {
         node_const_ptr p = nullptr;
         return find_helper(key, &p);
     }
-    
+
     node_ptr get_in_order_successor(node_ptr n) {
-        const auto& c = *this;
+        const auto &c = *this;
         return const_cast<node_ptr>(c.get_in_order_successor(n));
     }
 
     node_const_ptr get_in_order_successor(node_const_ptr n) const {
-        if(m_root == t_null())
+        if (m_root == t_null())
             return t_null();
-        
-        if(n == nullptr) {
+
+        if (n == nullptr) {
             return find_minimum(m_root);
         }
 
-        if(n != t_null()){
-            if(n->get_right() != t_null()) {
+        if (n != t_null()) {
+            if (n->get_right() != t_null()) {
                 return find_minimum(n->get_right());
-            }
-            else {
-                while(n != nullptr && !is_left_child(n)) {
+            } else {
+                while (n != nullptr && !is_left_child(n)) {
                     n = n->get_parent();
                 }
-                if(n != nullptr)
+                if (n != nullptr)
                     return n->get_parent();
             }
         }
@@ -727,41 +715,41 @@ class RedBlackTree {
     }
 
     node_ptr get_in_order_predecessor(node_ptr n) {
-        const auto& c = *this;
+        const auto &c = *this;
         return const_cast<node_ptr>(c.get_in_order_predecessor(n));
     }
 
     node_const_ptr get_in_order_predecessor(node_const_ptr n) const {
-        if(m_root == t_null())
+        if (m_root == t_null())
             return t_null();
 
-        if(n != nullptr) {    
-            if(n == t_null())
+        if (n != nullptr) {
+            if (n == t_null())
                 return find_maximum(m_root);
 
-            if(n->get_left() != t_null()) 
+            if (n->get_left() != t_null())
                 return find_maximum(n->get_left());
 
-            if(is_right_child(n))
+            if (is_right_child(n))
                 return n->get_parent();
 
-            while(n != nullptr && !is_right_child(n)) {
+            while (n != nullptr && !is_right_child(n)) {
                 n = n->get_parent();
             }
 
-            if(n != t_null())
+            if (n != t_null())
                 return n->get_parent();
         }
 
         return nullptr;
     }
-    
+
     node_const_ptr get_root() const {
         return m_root;
     }
 
     node_ptr t_null() {
-        const auto& c = *this;
+        const auto &c = *this;
         return const_cast<node_ptr>(c.t_null());
     }
 
@@ -813,21 +801,19 @@ class RedBlackTree {
 
     size_t size() const {
         return m_size;
-    }   
+    }
 
-    size_t max_size() const  {
+    size_t max_size() const {
         return hls::limit<size_t>::max;
     }
-    
-    template<bool a, bool b>
-    bool is_tree_iterator(const RBTreeIterator<a,b>& it) {
+
+    template <bool a, bool b> bool is_tree_iterator(const RBTreeIterator<a, b> &it) {
         return it.m_tree == this;
     }
 
-    template<typename IteratorType>
-    IteratorType build_iterator(node_const_ptr n) const {
-        if(n) {
-            if(n->t_null() == t_null())
+    template <typename IteratorType> IteratorType build_iterator(node_const_ptr n) const {
+        if (n) {
+            if (n->t_null() == t_null())
                 return IteratorType(this, n);
         }
 
@@ -835,7 +821,7 @@ class RedBlackTree {
     }
 
     hsh_reference get_hasher() {
-        const auto& t = *this;
+        const auto &t = *this;
         return const_cast<hsh_reference>(t.get_hasher());
     }
 
@@ -844,7 +830,7 @@ class RedBlackTree {
     }
 
     allocator_reference get_allocator() {
-        const auto& t = *this;
+        const auto &t = *this;
         return const_cast<allocator_reference>(t.get_allocator());
     }
 
@@ -853,7 +839,7 @@ class RedBlackTree {
     }
 
     comparator_reference get_comparator() {
-        const auto& t = *this;
+        const auto &t = *this;
         return const_cast<comparator_reference>(t.get_comparator());
     }
 
@@ -866,10 +852,10 @@ class RedBlackTree {
         m_size = 0;
     }
 
-    RedBlackTree& operator=(const RedBlackTree& other) {
-        if(&other != this) {
+    RedBlackTree &operator=(const RedBlackTree &other) {
+        if (&other != this) {
             this->clear();
-            for(auto& i : other) {
+            for (auto &i : other) {
                 this->insert(i);
             }
             this->m_allocator = other.m_allocator;
@@ -877,8 +863,8 @@ class RedBlackTree {
         return *this;
     }
 
-    RedBlackTree& operator=(RedBlackTree&& other) {
-        if(&other != this) {
+    RedBlackTree &operator=(RedBlackTree &&other) {
+        if (&other != this) {
             this->clear();
             this->m_root = other.m_root;
             other.m_root = other.t_null();
@@ -891,6 +877,6 @@ class RedBlackTree {
     }
 };
 
-}
+} // namespace hls
 
 #endif

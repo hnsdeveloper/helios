@@ -40,12 +40,11 @@ void setup_printing();
 
 /**
  * @brief Prints up to n characters from string str
- * 
+ *
  * @param str The string to be printed.
  * @param n Amount of characters.
  */
-void strcprint(const char* str, size_t n);
-
+void strcprint(const char *str, size_t n);
 
 /**
  * @brief Prints string **str** to default console without formatting.
@@ -105,50 +104,49 @@ void floatprint(double d);
  * @param p The argument to be formatted into the string.
  * @param args The remaining arguments to be formated into the string.
  */
-template <typename T, typename... Args>
-void print_v(const char *str, T p, Args... args) {
-  if (str == nullptr) {
-    strprint("Can't print nullptr string.");
-  }
-
-  while (*str) {
-    auto c = *str;
-    if (c == '{') {
-      if (*(str + 1) != '}') {
-        strprint("{");
-        print_v(str + 1, p, args...);
-        break;
-      }
-      using type = decltype(p);
-      if constexpr (is_same_v<type, const char *>) {
-        strprint(p);
-      } else if constexpr (is_same_v<remove_cvref_t<type>, char>) {
-        putchar(p);
-      } else if constexpr (is_pointer_v<type>) {
-        ptrprint(p);
-      } else if constexpr (is_integral_v<type>) {
-        if (is_signed<type>::value) {
-          intprint(p);
-        } else if constexpr (!is_signed<type>::value) {
-          uintprint(p);
-        }
-      } else if constexpr (is_floating_point_v<type>) {
-        floatprint(p);
-      } else {
-        strprint("Type printing not supported!");
-      }
-      if constexpr (sizeof...(args)) {
-        print_v(str + 2, args...);
-      } else {
-        if (*(str + 2))
-          strprint(str + 2);
-      }
-      break;
+template <typename T, typename... Args> void print_v(const char *str, T p, Args... args) {
+    if (str == nullptr) {
+        strprint("Can't print nullptr string.");
     }
 
-    putchar(c);
-    ++str;
-  }
+    while (*str) {
+        auto c = *str;
+        if (c == '{') {
+            if (*(str + 1) != '}') {
+                strprint("{");
+                print_v(str + 1, p, args...);
+                break;
+            }
+            using type = decltype(p);
+            if constexpr (is_same_v<type, const char *>) {
+                strprint(p);
+            } else if constexpr (is_same_v<remove_cvref_t<type>, char>) {
+                putchar(p);
+            } else if constexpr (is_pointer_v<type>) {
+                ptrprint(p);
+            } else if constexpr (is_integral_v<type>) {
+                if (is_signed<type>::value) {
+                    intprint(p);
+                } else if constexpr (!is_signed<type>::value) {
+                    uintprint(p);
+                }
+            } else if constexpr (is_floating_point_v<type>) {
+                floatprint(p);
+            } else {
+                strprint("Type printing not supported!");
+            }
+            if constexpr (sizeof...(args)) {
+                print_v(str + 2, args...);
+            } else {
+                if (*(str + 2))
+                    strprint(str + 2);
+            }
+            break;
+        }
+
+        putchar(c);
+        ++str;
+    }
 }
 
 /**
@@ -159,11 +157,11 @@ void print_v(const char *str, T p, Args... args) {
  * @param args Arguments to be formatted into string.
  */
 template <typename... Args> void kprint(const char *str, Args... args) {
-  if constexpr (sizeof...(args) == 0) {
-    strprint(str);
-  } else {
-    print_v(str, args...);
-  }
+    if constexpr (sizeof...(args) == 0) {
+        strprint(str);
+    } else {
+        print_v(str, args...);
+    }
 }
 
 /**
@@ -174,13 +172,13 @@ template <typename... Args> void kprint(const char *str, Args... args) {
  * @param args Arguments to be formatted into string.
  */
 template <typename... Args> void kprintln(const char *str, Args... args) {
-  if constexpr (sizeof...(args) == 0) {
-    strprint(str);
-  } else {
-    print_v(str, args...);
-  }
+    if constexpr (sizeof...(args) == 0) {
+        strprint(str);
+    } else {
+        print_v(str, args...);
+    }
 
-  strprint("\r\n");
+    strprint("\r\n");
 }
 
 #ifdef DEBUG
@@ -188,24 +186,23 @@ template <typename... Args> void kprintln(const char *str, Args... args) {
  * @brief Macro to debug expressions/values.
  * @todo Make it so that it is only enabled when some debug macro is defined.
  */
-#define kspit(expr)                                                            \
-  if constexpr (true) {                                                        \
-    if constexpr (is_integral_v<decltype(expr)>) {                             \
-      const void *p = reinterpret_cast<const void *>(expr);                    \
-      auto p2 = expr;                                                          \
-      kprintln(#expr " : {} " #expr " hex: {}", p2, p);                        \
-    } else {                                                                   \
-      kprintln(#expr ": {}", expr);                                            \
-    }                                                                          \
-  }
-#define kdebug(...)                                                            \
-  kprint("kdebug: ");                                                          \
-  kprintln(__VA_ARGS__)
+#define kspit(expr)                                                                                                    \
+    if constexpr (true) {                                                                                              \
+        if constexpr (is_integral_v<decltype(expr)>) {                                                                 \
+            const void *p = reinterpret_cast<const void *>(expr);                                                      \
+            auto p2 = expr;                                                                                            \
+            kprintln(#expr " : {} " #expr " hex: {}", p2, p);                                                          \
+        } else {                                                                                                       \
+            kprintln(#expr ": {}", expr);                                                                              \
+        }                                                                                                              \
+    }
+#define kdebug(...)                                                                                                    \
+    kprint("kdebug: ");                                                                                                \
+    kprintln(__VA_ARGS__)
 #else
 #define kspit(expr)
 #define kdebug(expr)
-#endif 
-}
-
+#endif
+} // namespace hls
 
 #endif

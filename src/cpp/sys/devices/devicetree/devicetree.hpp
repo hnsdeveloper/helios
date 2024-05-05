@@ -26,7 +26,4 @@ SOFTWARE.
 #ifndef _DEVICE_TREE_HPP_
 #define _DEVICE_TREE_HPP_
 
-
-
-
 #endif

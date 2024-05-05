@@ -5,9 +5,3 @@ rustflags = ['-Clink-arg=-Tsrc/lds/virt.lds']
 [target.riscv64gc-unknown-none-elf]
 linker = "riscv64-unknown-elf-ld"
 runner = "/Users/helionunessantos/Developer/helios/script.sh"
-#runner = "qemu-system-riscv64 -machine virt -cpu rv64 -smp 4 -m 1G -machine virt -bios u-boot-spl-dtb.bin -device loader,file=u-boot.itb,addr=0x80200000 -device ich9-ahci,id=ahci -drive if=none,file=hdd.dsk,format=raw,id=mydisk -device ide-hd,drive=mydisk,bus=ahci.0"
-
-
- #-device ich9-ahci,id=ahci -drive format=raw,file=hdd.dsk,id=myhdd -device ide-hd, drive=myhdd, bus=ahci.0 -bios u-boot-spl.bin -device loader,file=u-boot.itb,addr=-0x80200000 -device virtio-rng-device -device virtio-gpu-device -device virtio-net-device -device virtio-keyboard-device -serial stdio -s"	
-
-# -monitor stdio

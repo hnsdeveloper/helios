@@ -49,11 +49,11 @@ const size_t WRITE_BIT = 2;
 const size_t EXECUTE_BIT = 3;
 
 enum class PageLevel : size_t {
-  KB_VPN = 0,
-  MB_VPN = 1,
-  GB_VPN = 2,
-  TB_VPN = 3,
-  LAST_VPN = TB_VPN
+    KB_VPN = 0,
+    MB_VPN = 1,
+    GB_VPN = 2,
+    TB_VPN = 3,
+    LAST_VPN = TB_VPN
 };
 
 PageLevel next_vpn(PageLevel v);
@@ -61,61 +61,61 @@ PageLevel next_vpn(PageLevel v);
 template <PageLevel...> struct FrameInfo;
 
 template <> struct FrameInfo<PageLevel::KB_VPN> {
-  static constexpr size_t size = 4096;
-  static constexpr PageLevel page_type = PageLevel::KB_VPN;
-  static constexpr size_t alignment = size;
+    static constexpr size_t size = 4096;
+    static constexpr PageLevel page_type = PageLevel::KB_VPN;
+    static constexpr size_t alignment = size;
 };
 
 template <> struct FrameInfo<PageLevel::MB_VPN> {
-  static constexpr size_t size = 512ul * FrameInfo<PageLevel::KB_VPN>::size;
-  static constexpr PageLevel page_type = PageLevel::MB_VPN;
-  static constexpr size_t alignment = size;
+    static constexpr size_t size = 512ul * FrameInfo<PageLevel::KB_VPN>::size;
+    static constexpr PageLevel page_type = PageLevel::MB_VPN;
+    static constexpr size_t alignment = size;
 };
 
 template <> struct FrameInfo<PageLevel::GB_VPN> {
-  static constexpr size_t size = 512ul * FrameInfo<PageLevel::MB_VPN>::size;
-  static constexpr PageLevel page_type = PageLevel::GB_VPN;
-  static constexpr size_t alignment = size;
+    static constexpr size_t size = 512ul * FrameInfo<PageLevel::MB_VPN>::size;
+    static constexpr PageLevel page_type = PageLevel::GB_VPN;
+    static constexpr size_t alignment = size;
 };
 
 template <> struct FrameInfo<PageLevel::TB_VPN> {
-  static constexpr size_t size = 512ul * FrameInfo<PageLevel::GB_VPN>::size;
-  static constexpr PageLevel page_type = PageLevel::TB_VPN;
-  static constexpr size_t alignment = size;
+    static constexpr size_t size = 512ul * FrameInfo<PageLevel::GB_VPN>::size;
+    static constexpr PageLevel page_type = PageLevel::TB_VPN;
+    static constexpr size_t alignment = size;
 };
 
 template <> struct FrameInfo<> {
-  static constexpr size_t size_query(PageLevel v) {
-    switch (v) {
-    case PageLevel::KB_VPN:
-      return FrameInfo<PageLevel::KB_VPN>::size;
-    case PageLevel::MB_VPN:
-      return FrameInfo<PageLevel::MB_VPN>::size;
-    case PageLevel::GB_VPN:
-      return FrameInfo<PageLevel::GB_VPN>::size;
-    case PageLevel::TB_VPN:
-      return FrameInfo<PageLevel::TB_VPN>::size;
-    default: {
-      PANIC("Invalid page level.");
-    }
-    }
-  };
+    static constexpr size_t size_query(PageLevel v) {
+        switch (v) {
+        case PageLevel::KB_VPN:
+            return FrameInfo<PageLevel::KB_VPN>::size;
+        case PageLevel::MB_VPN:
+            return FrameInfo<PageLevel::MB_VPN>::size;
+        case PageLevel::GB_VPN:
+            return FrameInfo<PageLevel::GB_VPN>::size;
+        case PageLevel::TB_VPN:
+            return FrameInfo<PageLevel::TB_VPN>::size;
+        default: {
+            PANIC("Invalid page level.");
+        }
+        }
+    };
 
-  static constexpr size_t alignment_query(PageLevel v) {
-    switch (v) {
-    case PageLevel::KB_VPN:
-      return FrameInfo<PageLevel::KB_VPN>::alignment;
-    case PageLevel::MB_VPN:
-      return FrameInfo<PageLevel::MB_VPN>::alignment;
-    case PageLevel::GB_VPN:
-      return FrameInfo<PageLevel::GB_VPN>::alignment;
-    case PageLevel::TB_VPN:
-      return FrameInfo<PageLevel::TB_VPN>::alignment;
-    default: {
-      PANIC("Invalid page level.");
+    static constexpr size_t alignment_query(PageLevel v) {
+        switch (v) {
+        case PageLevel::KB_VPN:
+            return FrameInfo<PageLevel::KB_VPN>::alignment;
+        case PageLevel::MB_VPN:
+            return FrameInfo<PageLevel::MB_VPN>::alignment;
+        case PageLevel::GB_VPN:
+            return FrameInfo<PageLevel::GB_VPN>::alignment;
+        case PageLevel::TB_VPN:
+            return FrameInfo<PageLevel::TB_VPN>::alignment;
+        default: {
+            PANIC("Invalid page level.");
+        }
+        }
     }
-    }
-  }
 };
 
 struct PageEntry;
@@ -123,64 +123,64 @@ struct PageTable;
 template <PageLevel type> struct PageFrame;
 
 struct __attribute__((packed)) PageEntry {
-  uint64_t data = 0;
+    uint64_t data = 0;
 
-  void erase();
+    void erase();
 
-  void make_writable(bool v);
-  void make_readable(bool v);
-  void make_executable(bool v);
+    void make_writable(bool v);
+    void make_readable(bool v);
+    void make_executable(bool v);
 
-  bool is_valid();
+    bool is_valid();
 
-  bool is_leaf();
-  bool is_table_pointer();
+    bool is_leaf();
+    bool is_table_pointer();
 
-  bool is_writable();
-  bool is_readable();
-  bool is_executable();
+    bool is_writable();
+    bool is_readable();
+    bool is_executable();
 
-  void *as_pointer();
+    void *as_pointer();
 
-  PageTable *as_table_pointer();
+    PageTable *as_table_pointer();
 
-  void point_to_table(PageTable *table);
+    void point_to_table(PageTable *table);
 
-  template <PageLevel v> void point_to_frame(const PageFrame<v> *frame) {
-    using frame_t = PageFrame<v>;
-    if (is_aligned(frame, alignof(frame_t))) {
-      data = to_uintptr_t(frame) >> 2;
-      data |= 0x1;
-      make_readable(true);
+    template <PageLevel v> void point_to_frame(const PageFrame<v> *frame) {
+        using frame_t = PageFrame<v>;
+        if (is_aligned(frame, alignof(frame_t))) {
+            data = to_uintptr_t(frame) >> 2;
+            data |= 0x1;
+            make_readable(true);
+        }
     }
-  }
 
-  template <PageLevel v> PageFrame<v> *as_frame_pointer() {
-    return reinterpret_cast<PageFrame<v> *>(as_pointer());
-  };
+    template <PageLevel v> PageFrame<v> *as_frame_pointer() {
+        return reinterpret_cast<PageFrame<v> *>(as_pointer());
+    };
 };
 
 struct __attribute__((packed)) PageTable {
-  PageEntry entries[ENTRIES_PER_TABLE];
+    PageEntry entries[ENTRIES_PER_TABLE];
 
-  PageEntry &get_entry(size_t entry_index);
+    PageEntry &get_entry(size_t entry_index);
 
-  void print_entries();
+    void print_entries();
 };
 
 template <PageLevel v> struct __attribute__((packed)) PageFrame {
-  static constexpr size_t s_size = FrameInfo<v>::size;
-  static constexpr PageLevel s_type = FrameInfo<v>::page_type;
-  static constexpr size_t alignment = FrameInfo<v>::size;
+    static constexpr size_t s_size = FrameInfo<v>::size;
+    static constexpr PageLevel s_type = FrameInfo<v>::page_type;
+    static constexpr size_t alignment = FrameInfo<v>::size;
 
-  char data[FrameInfo<v>::size];
+    char data[FrameInfo<v>::size];
 
-  PageTable *as_table() {
-    if constexpr (FrameInfo<v>::page_type == PageLevel::KB_VPN)
-      return reinterpret_cast<PageTable *>(this);
+    PageTable *as_table() {
+        if constexpr (FrameInfo<v>::page_type == PageLevel::KB_VPN)
+            return reinterpret_cast<PageTable *>(this);
 
-    return nullptr;
-  }
+        return nullptr;
+    }
 };
 
 using PageKB = PageFrame<PageLevel::KB_VPN>;

@@ -27,15 +27,15 @@ SOFTWARE.
 #include "include/symbols.hpp"
 
 namespace hls {
-    
-void initialize_driver_framework() {
-    device_drivers = reinterpret_cast<driver_list*>(kmalloc(sizeof(driver_list)));
-    driver_info* begin = reinterpret_cast<driver_info*>(&_devinfo_start);
-    driver_info* end = reinterpret_cast<driver_info*>(&_devinfo_end);
 
-    for(auto it = begin; it < end; ++it) {
+void initialize_driver_framework() {
+    device_drivers = reinterpret_cast<driver_list *>(kmalloc(sizeof(driver_list)));
+    driver_info *begin = reinterpret_cast<driver_info *>(&_devinfo_start);
+    driver_info *end = reinterpret_cast<driver_info *>(&_devinfo_end);
+
+    for (auto it = begin; it < end; ++it) {
         device_drivers->push_back(it);
     }
 }
 
-}
+} // namespace hls

@@ -26,77 +26,52 @@ SOFTWARE.
 #include "sys/virtualmemory/common.hpp"
 #include "sys/print.hpp"
 
-
+extern "C" void _enable_address_translation(const void *);
+extern "C" void *_disable_address_translation();
+extern "C" void *_get_current_page_table();
 
 namespace hls {
 
 PageTable *kernel_page_table = nullptr;
 
 void print_table(PageTable *t) {
-  kprintln("Pagetable address {}.", t);
+    kprintln("Pagetable address {}.", t);
 
-  for (size_t i = 0; i < 512; ++i) {
-    auto &entry = t->get_entry(i);
+    for (size_t i = 0; i < 512; ++i) {
+        auto &entry = t->get_entry(i);
 
-    if (entry.is_valid()) {
-      kprintln(
-          "Entry {}. Is leaf?  {}, Pointed address: {}. Permissions: {}{}{}", i,
-          entry.is_leaf(), entry.as_pointer(),
-          entry.is_executable() ? 'x' : '-', entry.is_writable() ? 'w' : '-',
-          entry.is_readable() ? 'r' : '-');
+        if (entry.is_valid()) {
+            kprintln("Entry {}. Is leaf?  {}, Pointed address: {}. Permissions: {}{}{}", i, entry.is_leaf(),
+                     entry.as_pointer(), entry.is_executable() ? 'x' : '-', entry.is_writable() ? 'w' : '-',
+                     entry.is_readable() ? 'r' : '-');
 
-      if (!entry.is_leaf()) {
-        print_table(entry.as_table_pointer());
-      }
+            if (!entry.is_leaf()) {
+                print_table(entry.as_table_pointer());
+            }
+        }
     }
-  }
 }
 
-void *get_kernel_begin_address() { return &_text_start; }
-
-void *get_kernel_end_address() { return &_heap_start; }
-
-void enable_address_translation(const PageTable* table) {
-  asm volatile(
-        "add a0, x0, %0;"
-        "srli a0, a0, 12;"
-        "li a1, 0x9000000000000000;"
-        "or a0, a0, a1;"
-        "csrrw a0, satp, a0;"
-        :
-        : "r"(table));
+void *get_kernel_begin_address() {
+    return &_text_start;
 }
 
-const PageTable* disable_address_transaltion() {
-  const PageTable* table;
-  
-  asm volatile(
-      "add a0, x0, x0;"
-      "csrrw a0, satp, a0;"
-      "add %0, x0, a0;"
-      "slli %0, %0, 12;"
-      : "=r"(table)
-      :
-      );
-
-  return table;
+void *get_kernel_end_address() {
+    return &_heap_start;
 }
 
-const PageTable* get_current_page_table() {
-  const PageTable* table;
+void enable_address_translation(const PageTable *table) {
+    _enable_address_translation(table);
+}
 
-  asm volatile(
-    "add a0, x0, x0;"
-    "csrrw a0, satp, a0;"
-    "add a1, a0, x0;"
-    "csrrw a0, satp, a0;"
-    "add %0, a1, x0;"
-    "slli %0, %0, 12;"
-    : "=r"(table)
-    :
-  );
+const PageTable *disable_address_transaltion() {
+    void *p = _disable_address_translation();
+    return reinterpret_cast<const PageTable *>(p);
+}
 
-  return table;
+const PageTable *get_current_page_table() {
+    void *p = _get_current_page_table();
+    return reinterpret_cast<const PageTable *>(p);
 }
 
 }; // namespace hls

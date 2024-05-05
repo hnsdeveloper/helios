@@ -26,27 +26,26 @@ SOFTWARE.
 #ifndef _DRIVER_FRAMEWORK_HPP_
 #define _DRIVER_FRAMEWORK_HPP_
 
+#include "include/types.hpp"
 #include "sys/virtualmemory/kmalloc.hpp"
 #include "ulib/double_list.hpp"
 
-
 namespace hls {
-    using driver_load_point = void (*)(void*);
-    using driver_exit_point = void (*)(void*);
-    
-    struct driver_info {
-        const char* driver_name;
-        const char* compatible_devices;
-        
-        driver_load_point on_load;
-        driver_exit_point on_exit;
-    };
+using driver_load_point = void (*)(void *);
+using driver_exit_point = void (*)(void *);
 
-    using driver_list = DoubleList<driver_info*, KMAllocator>;
-    extern driver_list* device_drivers;
-    
-    void initialize_driver_framework();
-}
+struct driver_info {
+    const char *driver_name;
+    const char *compatible_devices;
 
+    driver_load_point on_load;
+    driver_exit_point on_exit;
+};
+
+using driver_list = DoubleList<driver_info *, KMAllocator>;
+extern driver_list *device_drivers;
+
+void initialize_driver_framework();
+} // namespace hls
 
 #endif

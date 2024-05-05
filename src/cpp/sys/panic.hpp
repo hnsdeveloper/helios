@@ -48,27 +48,27 @@ extern "C" void die();
  * @brief Macro used to print current registers values.
  *
  */
-#define PRINT_REGISTERS()                                                      \
-  {                                                                            \
-    asm volatile("1:"                                                          \
-                 "addi sp, sp, -288;"                                          \
-                 "sd   x10, 0(sp);"                                            \
-                 "la   x10, 1b;"                                               \
-                 "add  x10, x10, -4;"                                          \
-                 "sd   x10, 8(sp);"                                            \
-                 "jal  x10, _print_registers;");                               \
-  }
+#define PRINT_REGISTERS()                                                                                              \
+    {                                                                                                                  \
+        asm volatile("1:"                                                                                              \
+                     "addi sp, sp, -288;"                                                                              \
+                     "sd   x10, 0(sp);"                                                                                \
+                     "la   x10, 1b;"                                                                                   \
+                     "add  x10, x10, -4;"                                                                              \
+                     "sd   x10, 8(sp);"                                                                                \
+                     "jal  x10, _print_registers;");                                                                   \
+    }
 
 /**
  * @brief Macro used for kernel panics. Prints registers values, shows a panic
  * message, calling location and stack trace.
  *
  */
-#define PANIC(msg)                                                             \
-  PRINT_REGISTERS();                                                           \
-  kprintln("Panic message: {}", #msg);                                         \
-  kprintln("At {} {} line: {}", __FILE__, __PRETTY_FUNCTION__, __LINE__);      \
-  stack_trace();                                                               \
-  die();
+#define PANIC(msg)                                                                                                     \
+    PRINT_REGISTERS();                                                                                                 \
+    kprintln("Panic message: {}", #msg);                                                                               \
+    kprintln("At {} {} line: {}", __FILE__, __PRETTY_FUNCTION__, __LINE__);                                            \
+    stack_trace();                                                                                                     \
+    die();
 
 #endif
