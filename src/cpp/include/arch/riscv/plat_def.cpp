@@ -97,6 +97,16 @@ void PageEntry::point_to_table(PageTable *table) {
     }
 }
 
+bool PageTable::is_empty() {
+    for (size_t i = 0; i < ENTRIES_PER_TABLE; ++i) {
+        auto &entry = get_entry(i);
+        if (entry.data != 0)
+            return false;
+    }
+
+    return true;
+}
+
 PageEntry &PageTable::get_entry(size_t entry_index) {
     return entries[entry_index];
 }
@@ -111,6 +121,8 @@ size_t get_page_entry_index(void *v_address, PageLevel vpn) {
 }
 
 PageLevel hls::next_vpn(PageLevel v) {
+    if (v == PageLevel::FIRST_VPN)
+        return v;
     return static_cast<PageLevel>(static_cast<size_t>(v) - 1);
 }
 

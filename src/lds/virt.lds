@@ -172,11 +172,11 @@ SECTIONS
    */
   .rodata : {
 	. = ALIGN(4096);
-    PROVIDE(_rodata_start = .);
+    PROVIDE(_driverinfo_start = .);
+	*(.driverinfo .driverinfo.*)
+	PROVIDE(_driverinfo_end = .);
+	PROVIDE(_rodata_start = .);
     *(.rodata .rodata.*)
-	PROVIDE(_devinfo_start = .);
-	*(.devinfo .devinfo.*)
-	PROVIDE(_devinfo_end = .);
     . = ALIGN(4096);
 	PROVIDE(_rodata_end = .);
 	/*
@@ -220,7 +220,7 @@ SECTIONS
 
   /*
      The following will be helpful when we allocate the kernel stack (_stack) and
-	 determine where the heap begnis and ends (_heap_start and _heap_start + _heap_size)/
+	 determine where the heap begins and ends (_heap_start and _heap_start + _heap_size)/
 	 When we do memory allocation, we can use these symbols.
 
 	 We use the symbols instead of hard-coding an address because this is a floating target.
@@ -233,7 +233,7 @@ SECTIONS
   PROVIDE(_memory_start = ORIGIN(ram));
   /*
      Our kernel stack starts at the end of the bss segment (_bss_end). However, we're allocating
-	 0x80000 bytes (524 KiB) to our kernel stack. This should be PLENTY of space. The reason
+	 0x80000 bytes (512 KiB) to our kernel stack. This should be PLENTY of space. The reason
 	 we add the memory is because the stack grows from higher memory to lower memory (bottom to top).
 	 Therefore we set the stack at the very bottom of its allocated slot.
 	 When we go to allocate from the stack, we'll subtract the number of bytes we need.

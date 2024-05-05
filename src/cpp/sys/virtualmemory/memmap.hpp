@@ -85,10 +85,11 @@ Result<const void *> kmmap(const void *paddress, const void *vaddress, PageTable
                            bool writable = false, bool executable = false);
 
 /**
- * @brief Undo the mapping of a given virtual address on a specific page table.
+ * @brief Undo the mapping of a given virtual address on a specific page table. It releases the page frame used for the
+ * table if the table is empty, except for the root table.
  *
  * @param vaddress The virtual address to be unmaped.
- * @param table The page table which will have the address unmaped.
+ * @param table The root table which will have the address unmaped.
  */
 void kmunmap(const void *vaddress, PageTable *table);
 
@@ -107,6 +108,9 @@ bool map_kernel(PageTable *table);
  * @return PageTable* Pointer to the kernel page table
  */
 void setup_kernel_memory_mapping();
+
+void identity_map_kernel(PageTable *table);
+void identity_unmap_kernel(PageTable *table);
 
 } // namespace hls
 

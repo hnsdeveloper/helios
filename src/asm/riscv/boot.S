@@ -13,7 +13,7 @@ _start:
 	la		gp, _global_pointer
 .option pop
 	# No address translation for now
-	csrw		satp, zero
+	csrw		satp, x0
 		
 	# Zeroes the BSS section
 	la 			t0, _bss_start

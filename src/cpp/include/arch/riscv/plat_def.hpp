@@ -49,6 +49,7 @@ const size_t WRITE_BIT = 2;
 const size_t EXECUTE_BIT = 3;
 
 enum class PageLevel : size_t {
+    FIRST_VPN = 0,
     KB_VPN = 0,
     MB_VPN = 1,
     GB_VPN = 2,
@@ -164,6 +165,7 @@ struct __attribute__((packed)) PageTable {
     PageEntry entries[ENTRIES_PER_TABLE];
 
     PageEntry &get_entry(size_t entry_index);
+    bool is_empty();
 
     void print_entries();
 };

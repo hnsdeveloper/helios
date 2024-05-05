@@ -54,4 +54,7 @@ SOFTWARE.
     EXTRACT_SUB_USING_T(t, u, v)                                                                                       \
   private:
 
+#define STRINGFY_VAL(s) STRINGFY(s)
+#define STRINGFY(s) #s
+
 #endif

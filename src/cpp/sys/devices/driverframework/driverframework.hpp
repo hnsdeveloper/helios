@@ -26,6 +26,7 @@ SOFTWARE.
 #ifndef _DRIVER_FRAMEWORK_HPP_
 #define _DRIVER_FRAMEWORK_HPP_
 
+#include "include/macros.hpp"
 #include "include/types.hpp"
 #include "sys/virtualmemory/kmalloc.hpp"
 #include "ulib/double_list.hpp"
@@ -47,5 +48,10 @@ extern driver_list *device_drivers;
 
 void initialize_driver_framework();
 } // namespace hls
+
+#define REGISTER_DRIVER(driver_name, c_devices, on_load, on_exit)                                                      \
+    __attribute__((section(.driverinfo))) const driver_info driver_name {                                              \
+        .driver_name = STRINGFY(driver_name), .compatible_devices = c_devices, .on_load = on_load.on_exit = on_exit    \
+    }
 
 #endif

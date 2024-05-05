@@ -134,7 +134,7 @@ Result<const void *> kmmap(const void *paddress, const void *vaddress, PageTable
                 }
 
                 PageTable *new_table = reinterpret_cast<PageTable *>(frame_result.get_value());
-
+                memset(new_table, 0, PAGE_FRAME_SIZE);
                 entry.point_to_table(new_table);
                 table = new_table;
                 current_page_level = next_vpn(current_page_level);
@@ -182,11 +182,16 @@ Result<const void *> kmmap(const void *paddress, const void *vaddress, PageTable
 }
 
 void kmunmap(const void *vaddress, PageTable *start_table) {
+    kdebug("Unmapping {} on {}.", vaddress, start_table);
+
     if (vaddress != nullptr || start_table != nullptr) {
         PageTable *table = start_table;
         PageLevel current_page_level = PageLevel::LAST_VPN;
 
-        while (current_page_level != PageLevel::KB_VPN) {
+        // Stores all pages used to reach the address
+        PageTable *table_path[(size_t)(PageLevel::LAST_VPN) + 1];
+
+        while ((table_path[(size_t)(current_page_level)] = table) && current_page_level != PageLevel::FIRST_VPN) {
             auto result = walk_table(&table, vaddress, current_page_level);
             if (result.is_error()) {
                 auto &entry = table->get_entry(get_page_entry_index(current_page_level, vaddress));
@@ -200,37 +205,115 @@ void kmunmap(const void *vaddress, PageTable *start_table) {
         }
 
         auto &entry = table->get_entry(get_page_entry_index(current_page_level, vaddress));
-
         entry.erase();
+
+        // Releases a frame if the table is empty
+        bool freed_last = false;
+
+        for (size_t i = (size_t)(current_page_level); i < sizeof(table_path) / sizeof(PageTable *); ++i) {
+            auto checked_table = table_path[i];
+            if (freed_last) {
+                size_t j = get_page_entry_index((PageLevel)(i), vaddress);
+                auto &entry = checked_table->get_entry(get_page_entry_index((PageLevel)(i), vaddress));
+                entry.erase();
+            }
+
+            // The root table should always be handled differently.
+            if (checked_table->is_empty() && checked_table != start_table) {
+                PageFrameManager::instance().release_frame(checked_table);
+                freed_last = true;
+            } else {
+                break;
+            }
+        }
     }
 }
 
-bool map_kernel(PageTable *table) {
+void identity_map_kernel(PageTable *table) {
     // Mapping text section
     // Non writable but executable
     const byte *text_begin = reinterpret_cast<const byte *>(&_text_start);
     const byte *text_end = reinterpret_cast<const byte *>(&_text_end);
-
     for (auto p = text_begin; p < text_end; p += PAGE_FRAME_SIZE) {
         kmmap(p, p, table, PageLevel::KB_VPN, false, true);
     }
 
-    // Mapping read only section
+    // Mapping read only data section
     // Non writable nor executable
     const byte *rodata_begin = reinterpret_cast<const byte *>(&_rodata_start);
     const byte *rodata_end = reinterpret_cast<const byte *>(&_rodata_end);
-
     for (auto p = rodata_begin; p < rodata_end; p += PAGE_FRAME_SIZE) {
         kmmap(p, p, table, PageLevel::KB_VPN, false, false);
     }
 
-    for (const char *p = (const char *)get_kernel_begin_address(); p < get_kernel_end_address(); p += PageKB::s_size) {
-        auto result = kmmap(p, p, table, PageLevel::KB_VPN, true, true);
-        if (result.is_error())
-            return false;
+    // Mapping data section
+    // Only readable/writable
+    const byte *data_begin = reinterpret_cast<const byte *>(&_data_start);
+    const byte *data_end = reinterpret_cast<const byte *>(&_data_end);
+    for (auto p = data_begin; p < data_end; p += PAGE_FRAME_SIZE) {
+        kmmap(p, p, table, PageLevel::KB_VPN, true, false);
     }
 
-    return true;
+    // Mapping bss section
+    // Only readable/writable
+    const byte *bss_begin = reinterpret_cast<const byte *>(&_bss_start);
+    const byte *bss_end = reinterpret_cast<const byte *>(&_bss_end);
+    for (auto p = bss_begin; p < bss_end; p += PAGE_FRAME_SIZE) {
+        kmmap(p, p, table, PageLevel::KB_VPN, true, false);
+    }
+
+    // Mapping stack section
+    // Only readable/writable
+    const byte *stack_start = reinterpret_cast<const byte *>(&_stack_start);
+    const byte *stack_end = reinterpret_cast<const byte *>(&_stack_end);
+    for (auto p = stack_start; p < stack_end; p += PAGE_FRAME_SIZE) {
+        kmmap(p, p, table, PageLevel::KB_VPN, true, false);
+    }
+}
+
+void identity_unmap_kernel(PageTable *table) {
+    // Mapping text section
+    // Non writable but executable
+    const byte *text_begin = reinterpret_cast<const byte *>(&_text_start);
+    const byte *text_end = reinterpret_cast<const byte *>(&_text_end);
+    for (auto p = text_begin; p < text_end; p += PAGE_FRAME_SIZE) {
+        kmunmap(p, table);
+    }
+
+    // Mapping read only data section
+    // Non writable nor executable
+    const byte *rodata_begin = reinterpret_cast<const byte *>(&_rodata_start);
+    const byte *rodata_end = reinterpret_cast<const byte *>(&_rodata_end);
+    for (auto p = rodata_begin; p < rodata_end; p += PAGE_FRAME_SIZE) {
+        kmunmap(p, table);
+    }
+
+    // Mapping data section
+    // Only readable/writable
+    const byte *data_begin = reinterpret_cast<const byte *>(&_data_start);
+    const byte *data_end = reinterpret_cast<const byte *>(&_data_end);
+    for (auto p = data_begin; p < data_end; p += PAGE_FRAME_SIZE) {
+        kmunmap(p, table);
+    }
+
+    // Mapping bss section
+    // Only readable/writable
+    const byte *bss_begin = reinterpret_cast<const byte *>(&_bss_start);
+    const byte *bss_end = reinterpret_cast<const byte *>(&_bss_end);
+    for (auto p = bss_begin; p < bss_end; p += PAGE_FRAME_SIZE) {
+        kmunmap(p, table);
+    }
+
+    // Mapping stack section
+    // Only readable/writable
+    const byte *stack_start = reinterpret_cast<const byte *>(&_stack_start);
+    const byte *stack_end = reinterpret_cast<const byte *>(&_stack_end);
+    for (auto p = stack_start; p < stack_end; p += PAGE_FRAME_SIZE) {
+        kmunmap(p, table);
+    }
+}
+
+void end_map_kernel(PageTable *table) {
 }
 
 bool is_address_mapped(PageTable *table, void *vaddress) {
@@ -242,7 +325,8 @@ void setup_kernel_memory_mapping() {
     kernel_page_table = reinterpret_cast<PageTable *>(manager.get_frame().get_value());
 
     memset(kernel_page_table, 0, sizeof(PageTable));
-    map_kernel(kernel_page_table);
+    identity_map_kernel(kernel_page_table);
+    // end_map_kernel(kernel_page_table);
 }
 
 } // namespace hls

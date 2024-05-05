@@ -123,6 +123,7 @@ const char *strrchr(const char *str, char c) {
 
 // TODO: DOES NOT BEHAVE ENTIRELY LIKE THE C STANDARD ONE
 // THUS ANY WHERE IT IS USED, THE CODE SHOULD BE REWORKED
+// ALSO, IT IS NOT UNDER BSD LICENSE, SO IT SHOULD BE REWRITTEN
 unsigned long strtoul(const char *nptr, char **endptr, int base) {
     const unsigned long ULONG_MAX = (0ul - 1ul);
 

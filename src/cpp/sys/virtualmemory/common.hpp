@@ -34,7 +34,7 @@ namespace hls {
 
 extern PageTable *kernel_page_table;
 
-void print_table(PageTable *table);
+void print_table(PageTable *table, PageTable *parent = nullptr);
 void *get_kernel_begin_address();
 void *get_kernel_end_address();
 

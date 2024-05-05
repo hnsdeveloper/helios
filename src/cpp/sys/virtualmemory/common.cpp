@@ -34,20 +34,20 @@ namespace hls {
 
 PageTable *kernel_page_table = nullptr;
 
-void print_table(PageTable *t) {
+void print_table(PageTable *t, PageTable *parent) {
     kprintln("Pagetable address {}.", t);
+    kprintln("Pagetable parent  {}", parent);
 
     for (size_t i = 0; i < 512; ++i) {
         auto &entry = t->get_entry(i);
-
-        if (entry.is_valid()) {
-            kprintln("Entry {}. Is leaf?  {}, Pointed address: {}. Permissions: {}{}{}", i, entry.is_leaf(),
-                     entry.as_pointer(), entry.is_executable() ? 'x' : '-', entry.is_writable() ? 'w' : '-',
-                     entry.is_readable() ? 'r' : '-');
-
-            if (!entry.is_leaf()) {
-                print_table(entry.as_table_pointer());
-            }
+        kprintln("Entry {}. Is leaf?  {}, Pointed address: {}. Permissions: {}{}{}", i, entry.is_leaf(),
+                 entry.as_pointer(), entry.is_executable() ? 'x' : '-', entry.is_writable() ? 'w' : '-',
+                 entry.is_readable() ? 'r' : '-');
+    }
+    for (size_t i = 0; i < 512; ++i) {
+        auto &entry = t->get_entry(i);
+        if (entry.is_valid() && !entry.is_leaf()) {
+            print_table(entry.as_table_pointer(), t);
         }
     }
 }
@@ -64,7 +64,7 @@ void enable_address_translation(const PageTable *table) {
     _enable_address_translation(table);
 }
 
-const PageTable *disable_address_transaltion() {
+const PageTable *disable_address_translation() {
     void *p = _disable_address_translation();
     return reinterpret_cast<const PageTable *>(p);
 }

@@ -114,9 +114,32 @@ size_t cpu_id() {
         strprintln("Setting up pageframe manager.");
         setup_page_frame_manager(device_tree);
 
+        size_t free_frames = PageFrameManager::instance().free_frames();
+        size_t used_frames = PageFrameManager::instance().used_frames();
+        kdebug("Before mapping kernel.");
+        kspit(free_frames);
+        kspit(used_frames);
+
         strprintln("Mapping kernel memory.");
         setup_kernel_memory_mapping();
 
+        free_frames = PageFrameManager::instance().free_frames();
+        used_frames = PageFrameManager::instance().used_frames();
+        kdebug("After mapping kernel.");
+        kspit(free_frames);
+        kspit(used_frames);
+
+        enable_address_translation(kernel_page_table);
+        disable_address_translation();
+
+        identity_unmap_kernel(kernel_page_table);
+        free_frames = PageFrameManager::instance().free_frames();
+        used_frames = PageFrameManager::instance().used_frames();
+        kdebug("After unmapping kernel.");
+        kspit(free_frames);
+        kspit(used_frames);
+
+        /*
         strprintln("Setting up memory allocators.");
         initialize_kmalloc();
         // initialize_vmalloc();
@@ -126,8 +149,7 @@ size_t cpu_id() {
 
         strprintln("Setting up kernel trap handling.");
         setup_trap_handling();
-
-        enable_address_translation(kernel_page_table);
+        */
 
         while (true)
             ;

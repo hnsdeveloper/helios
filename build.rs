@@ -30,15 +30,17 @@ fn find_files(dir: &String, ext: &String, recurse: bool) -> Vec<PathBuf> {
 }
 
 fn main() {
-
-    let output = Command::new("git").args(&["rev-parse", "--short", "HEAD"]).output().unwrap();
+    let output = Command::new("git")
+        .args(&["rev-parse", "--short", "HEAD"])
+        .output()
+        .unwrap();
     let git_hash = String::from_utf8(output.stdout).unwrap();
     let mut git_hash_arg = "-DG_HASH=".to_owned();
     git_hash_arg.push_str(git_hash.as_str());
 
     let d_string = match std::env::var("PROFILE").unwrap().as_str() {
         "debug" => "-DDEBUG",
-        _ => ""
+        _ => "",
     };
 
     let cpp_files = find_files(&"./src".to_string(), &"cpp".to_string(), true);
@@ -60,6 +62,7 @@ fn main() {
         .flag("-fno-use-cxa-atexit")
         .flag(&git_hash_arg)
         .flag(&d_string)
+        .flag("-fpie")
         .std("c++20")
         .shared_flag(true)
         .include("./src/cpp/")
