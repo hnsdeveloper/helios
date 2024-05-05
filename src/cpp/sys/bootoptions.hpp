@@ -27,6 +27,7 @@ SOFTWARE.
 #define _BOOT_OPTIONS_HPP_
 
 #include "misc/leanmeanparser/optionparser.hpp"
+#include "sys/print.hpp"
 #include "sys/string.hpp"
 #include "include/types.hpp"
 
@@ -41,6 +42,7 @@ struct ArgVal : public option::Arg {
         char* p = nullptr;
         size_t val = strtoul(option.arg, &p, 16);
         if(val == 0 && p == nullptr) {
+            
             return option::ARG_ILLEGAL;
         }
         
@@ -48,6 +50,7 @@ struct ArgVal : public option::Arg {
     }
 
     static option::ArgStatus Unique(const option::Option& option, bool) {
+        
         if(option.count() != 1) {
             return option::ARG_ILLEGAL;
         }
@@ -71,10 +74,9 @@ enum OptionIndex {
 };
 
 const option::Descriptor usage[] = {
-    {UNKNOWN, 0,""  , ""    , ArgVal::None,             "USAGE: example [options]\n\nOptions:" },
-    {HELP,    0,""  , "help", ArgVal::None,             "  --help  \tPrint usage and exit." },
-    {FDT,     0, "f", "fdt" , ArgVal::NumericHexUnique, "  --fdt, -f \t Flattened device tree address as hex value (e.g. FFFFFFFF or 0xFFFFFFF)."},
-    {UNKNOWN, 0, "" , ""    , ArgVal::None,             ""}
+    {UNKNOWN, 0,""     , ""  , ArgVal::None,             "USAGE: example [options]\n\nOptions:" },
+    {HELP,    0, "h" , "help", ArgVal::None,             "  --help    \tPrint usage and exit." },
+    {FDT,     0, "f" , "fdt" , ArgVal::NumericHexUnique, "  --fdt, -f \t Flattened device tree address as hex value (e.g. FFFFFFFF or 0xFFFFFFF)."}
 };
 
 }

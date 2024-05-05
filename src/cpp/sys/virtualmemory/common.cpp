@@ -24,10 +24,13 @@ SOFTWARE.
 ---------------------------------------------------------------------------------*/
 
 #include "sys/virtualmemory/common.hpp"
+#include "sys/print.hpp"
 
-hls::PageTable *kernel_page_table = nullptr;
+
 
 namespace hls {
+
+PageTable *kernel_page_table = nullptr;
 
 void print_table(PageTable *t) {
   kprintln("Pagetable address {}.", t);
@@ -54,9 +57,6 @@ void *get_kernel_begin_address() { return &_text_start; }
 void *get_kernel_end_address() { return &_heap_start; }
 
 void enable_address_translation(const PageTable* table) {
-  if(table == nullptr)
-    return;
-
   asm volatile(
         "add a0, x0, %0;"
         "srli a0, a0, 12;"
@@ -89,7 +89,7 @@ const PageTable* get_current_page_table() {
     "add a0, x0, x0;"
     "csrrw a0, satp, a0;"
     "add a1, a0, x0;"
-    "cssrw a0, satp, a0;"
+    "csrrw a0, satp, a0;"
     "add %0, a1, x0;"
     "slli %0, %0, 12;"
     : "=r"(table)

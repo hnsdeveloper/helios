@@ -32,6 +32,8 @@ extern "C" byte _text_start;
 extern "C" byte _text_end;
 extern "C" byte _global_pointer;
 extern "C" byte _rodata_start;
+extern "C" byte _devinfo_start;
+extern "C" byte _devinfo_end;
 extern "C" byte _rodata_end;
 extern "C" byte _data_start;
 extern "C" byte _data_end;

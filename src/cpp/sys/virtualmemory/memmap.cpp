@@ -28,8 +28,7 @@ SOFTWARE.
 #include "sys/mem.hpp"
 #include "sys/print.hpp"
 #include "sys/virtualmemory/paging.hpp"
-
-hls::PageTable *kernel_page_table;
+#include "sys/virtualmemory/common.hpp"
 
 namespace hls {
 
@@ -220,10 +219,6 @@ void kmunmap(const void* vaddress, PageTable* start_table) {
     
 }
 
-const void *get_kernel_begin_address() { return &_text_start; }
-
-const void *get_kernel_end_address() { return &_heap_start; }
-
 bool map_kernel(PageTable *table) {
   for (const char *p = (const char *)get_kernel_begin_address();
        p < get_kernel_end_address(); p += PageKB::s_size) {
@@ -246,6 +241,7 @@ void setup_kernel_memory_mapping() {
 
   memset(kernel_page_table, 0, sizeof(PageTable));
   map_kernel(kernel_page_table);
+  kmmap(kernel_page_table, kernel_page_table, kernel_page_table, PageLevel::KB_VPN, true, false);
 }
 
 } // namespace hls

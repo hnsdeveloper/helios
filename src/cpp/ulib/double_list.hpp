@@ -98,15 +98,15 @@ class DoubleList {
         
         DoubleListIterator(const DoubleList* list, node_const_ptr n) : m_list(list), m_n(n) {};
 
-        template<bool c>
+        template<bool c, typename Faketype = void>
         struct wrapper {
             node_const_ptr n;
             wrapper(node_const_ptr node) : n(node) {};
             node_const_ptr get_n() { return n; }
         };
 
-        template<>
-        struct wrapper<false> {
+        template<typename faketype>
+        struct wrapper<false, faketype> {
             node_const_ptr n;
             wrapper(node_const_ptr node) : n(node) {};
             node_ptr get_n() { return const_cast<node_ptr>(n); }
@@ -218,7 +218,7 @@ class DoubleList {
     iterator insert(iterator at, type_const_reference v) {
         node_ptr n = nullptr;
 
-        if(at->get_list() == this) {
+        if(at.get_list() == this) {
             bool head_upd = at == begin();
             node_ptr a = at.get_node();
             node_ptr b = a->get_previous();

@@ -4,6 +4,7 @@
 #include "include/types.hpp"
 #include "include/macros.hpp"
 #include "include/utilities.hpp"
+#include "misc/new.hpp"
 
 /** \defgroup ALLOCHOOKS liballoc hooks 
  *

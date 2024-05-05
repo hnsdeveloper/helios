@@ -23,27 +23,19 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef _COMMON_HPP_
-#define _COMMON_HPP_
-
-#include "include/arch/riscv/plat_def.hpp"
+#include "sys/devices/driverframework/driverframework.hpp"
 #include "include/symbols.hpp"
-#include "ulib/map.hpp"
-
-
 
 namespace hls {
+    
+void initialize_driver_framework() {
+    device_drivers = reinterpret_cast<driver_list*>(kmalloc(sizeof(driver_list)));
+    driver_info* begin = reinterpret_cast<driver_info*>(&_devinfo_start);
+    driver_info* end = reinterpret_cast<driver_info*>(&_devinfo_end);
 
-extern PageTable *kernel_page_table;
+    for(auto it = begin; it < end; ++it) {
+        device_drivers->push_back(it);
+    }
+}
 
-void print_table(PageTable *table);
-void *get_kernel_begin_address();
-void *get_kernel_end_address();
-
-void enable_address_translation(const PageTable* table);
-const PageTable* disable_address_translation();
-const PageTable* get_current_page_table();
-
-}; // namespace hls
-
-#endif
+}

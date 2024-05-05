@@ -174,6 +174,9 @@ SECTIONS
 	. = ALIGN(4096);
     PROVIDE(_rodata_start = .);
     *(.rodata .rodata.*)
+	PROVIDE(_devinfo_start = .);
+	*(.devinfo .devinfo.*)
+	PROVIDE(_devinfo_end = .);
     . = ALIGN(4096);
 	PROVIDE(_rodata_end = .);
 	/*
