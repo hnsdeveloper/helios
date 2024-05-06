@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef _GITHASH_HPP_
 #define _GITHASH_HPP_
 
-#include "include/macros.hpp"
+#include "misc/macros.hpp"
 
 #ifndef G_HASH
 #define G_HASH HASH_UNAVAILABLE

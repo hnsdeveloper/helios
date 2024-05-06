@@ -117,7 +117,7 @@ size_t cpu_id() {
         setup_kernel_memory_mapping();
 
         strprintln("Building device list.");
-        setup_device_list();
+        // setup_device_list();
 
         strprintln("Setting up trap handling.");
         setup_trap_handling();

@@ -26,8 +26,8 @@ SOFTWARE.
 #ifndef _LIMITS_H_
 #define _LIMITS_H_
 
-#include "include/concepts.hpp"
-#include "include/types.hpp"
+#include "misc/concepts.hpp"
+#include "misc/types.hpp"
 
 namespace hls {
 

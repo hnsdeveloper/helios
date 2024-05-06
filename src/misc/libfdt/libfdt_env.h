@@ -14,8 +14,8 @@
 // #include <string.h>
 // #include <limits.h>
 
-#include "include/limits.hpp"
-#include "include/types.hpp"
+#include "misc/limits.hpp"
+#include "misc/types.hpp"
 #include "sys/mem.hpp"
 #include "sys/string.hpp"
 

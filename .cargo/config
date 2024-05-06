@@ -1,6 +1,6 @@
 [build]
 target = "riscv64gc-unknown-none-elf"
-rustflags = ['-Crelocation-model=pie', '-Clink-arg=-Tsrc/lds/virt.lds']
+rustflags = ['-Crelocation-model=pie', '-Clink-arg=-Tsrc/arch/riscv64gc/link.lds']
 
 [target.riscv64gc-unknown-none-elf]
 linker = "riscv64-unknown-elf-ld"

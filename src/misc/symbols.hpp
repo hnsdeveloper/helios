@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef __SYMBOLS_HPP_
 #define __SYMBOLS_HPP_
 
-#include "include/types.hpp"
+#include "misc/types.hpp"
 
 extern "C" byte _kernel_begin;
 extern "C" byte _text_start;

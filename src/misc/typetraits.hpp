@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef _TYPETRAITS_HPP_
 #define _TYPETRAITS_HPP_
 
-#include "include/types.hpp"
+#include "misc/types.hpp"
 
 namespace hls {
 

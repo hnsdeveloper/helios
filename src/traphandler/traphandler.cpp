@@ -27,11 +27,15 @@ SOFTWARE.
 
 using namespace hls;
 
-extern "C" void _setup_trap_handling(void (*)(hart *));
+extern "C" void _setup_trap_handling();
 
 namespace hls {
 
-void traphandler(hart *) {
+void setup_trap_handling() {
+    _setup_trap_handling();
+}
+
+extern "C" void traphandler(hart *) {
 
     uintreg_t scause = 0;
     asm volatile("csrrw %1, scause, %0" : "=r"(scause) : "r"(scause));
@@ -52,10 +56,6 @@ void traphandler(hart *) {
             PANIC("Unhandled asynchronous trap cause.");
         }
     }
-}
-
-void setup_trap_handling() {
-    _setup_trap_handling(traphandler);
 }
 
 } // namespace hls

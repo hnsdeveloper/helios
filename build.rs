@@ -65,7 +65,7 @@ fn main() {
         .flag("-fpie")
         .std("c++20")
         .shared_flag(true)
-        .include("./src/cpp/")
+        .include("./src/")
         .files(c_files.into_iter())
         .files(cpp_files.into_iter())
         .files(assembly_files.into_iter())
