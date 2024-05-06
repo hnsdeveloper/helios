@@ -79,10 +79,12 @@ Result<PageLevel> walk_table(PageTable **table_ptr, const void *vaddress, PageLe
  * be pointing to. Note that paddress and vaddress must be aligned to this.
  * @param writable Enables writing to that region.
  * @param executable Enables executing from that region.
+ * @param accessed Sets the accessed bit
+ * @param dirty Sets the dirty bit
  * @return Result<const void *>
  */
 Result<const void *> kmmap(const void *paddress, const void *vaddress, PageTable *table, PageLevel page_level,
-                           bool writable = false, bool executable = false);
+                           bool writable = false, bool executable = false, bool accessed = false, bool dirty = false);
 
 /**
  * @brief Undo the mapping of a given virtual address on a specific page table. It releases the page frame used for the
@@ -111,6 +113,8 @@ void setup_kernel_memory_mapping();
 
 void identity_map_kernel(PageTable *table);
 void identity_unmap_kernel(PageTable *table);
+
+extern void *kernel_start_physical;
 
 } // namespace hls
 

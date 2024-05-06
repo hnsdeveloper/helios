@@ -40,6 +40,8 @@ void print_table(PageTable *t, PageTable *parent) {
 
     for (size_t i = 0; i < 512; ++i) {
         auto &entry = t->get_entry(i);
+        if (!entry.is_valid())
+            continue;
         kprintln("Entry {}. Is leaf?  {}, Pointed address: {}. Permissions: {}{}{}", i, entry.is_leaf(),
                  entry.as_pointer(), entry.is_executable() ? 'x' : '-', entry.is_writable() ? 'w' : '-',
                  entry.is_readable() ? 'r' : '-');

@@ -27,14 +27,12 @@ SOFTWARE.
 #include "sys/print.hpp"
 
 using namespace hls;
+
+extern "C" void _setup_trap_handling();
 namespace hls {
 
 void setup_trap_handling() {
-    asm volatile("la t0, _s_trap;"
-                 "csrrw t0, stvec, t0;"
-                 "li t0, 0x222;"
-                 "csrrw t0, sie, t0;"
-                 "csrsi sstatus, 2");
+    _setup_trap_handling();
 }
 
 } // namespace hls

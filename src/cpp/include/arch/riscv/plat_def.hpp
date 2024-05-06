@@ -48,6 +48,8 @@ const size_t READ_BIT = 1;
 const size_t WRITE_BIT = 2;
 const size_t EXECUTE_BIT = 3;
 
+#define HIGHEST_ADDRESS (void *)(0xFFFFFFFFFFFF)
+
 enum class PageLevel : size_t {
     FIRST_VPN = 0,
     KB_VPN = 0,
@@ -131,6 +133,9 @@ struct __attribute__((packed)) PageEntry {
     void make_writable(bool v);
     void make_readable(bool v);
     void make_executable(bool v);
+
+    void set_accessed(bool v);
+    void set_dirty(bool v);
 
     bool is_valid();
 

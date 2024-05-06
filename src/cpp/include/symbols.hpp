@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include "include/types.hpp"
 
+extern "C" byte _kernel_begin;
 extern "C" byte _text_start;
 extern "C" byte _text_end;
 extern "C" byte _global_pointer;
@@ -43,5 +44,6 @@ extern "C" byte _stack_start;
 extern "C" byte _stack_end;
 extern "C" byte _heap_start;
 extern "C" uint64_t _heap_size;
+extern "C" byte _kernel_end;
 
 #endif

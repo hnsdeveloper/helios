@@ -1,10 +1,15 @@
+.section .data
+.global _trap_sp
+_trap_sp:
+    .skip 0x1000000      # 1 MiB for trap stack
+
+
 .section .text
 
 .align 4
 .global _s_trap
 _s_trap:
     addi sp, sp, -256
-
     sd  x0, 0(sp)
     sd  x1, 8(sp)
     sd  x2, 16(sp)
@@ -76,5 +81,13 @@ _s_trap:
     ld  x31, 248(sp)
 
     addi sp, sp, 256
-
     sret
+
+.global _setup_trap_handling
+_setup_trap_handling:
+    la a0, _s_trap
+    csrrw a0, stvec, a0
+    li a0, 0x222
+    csrrw a0, sie, a0
+    csrsi sstatus, 2
+    ret

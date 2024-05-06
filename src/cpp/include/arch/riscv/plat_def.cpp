@@ -27,6 +27,28 @@ SOFTWARE.
 
 using namespace hls;
 
+void PageEntry::set_accessed(bool v) {
+    decltype(data) b = 1;
+    b = b << 6;
+
+    if (v) {
+        data = data | b;
+    } else {
+        data = (data | b) ^ b;
+    }
+}
+
+void PageEntry::set_dirty(bool v) {
+    decltype(data) b = 1;
+    b = b << 7;
+
+    if (v) {
+        data = data | b;
+    } else {
+        data = (data | b) ^ b;
+    }
+}
+
 void PageEntry::erase() {
     data = 0;
 }

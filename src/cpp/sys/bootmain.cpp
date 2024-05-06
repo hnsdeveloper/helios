@@ -77,6 +77,8 @@ size_t cpu_id() {
     return 0;
 }
 
+const int x = 100;
+
 /**
  * @brief Main function. Initialize the required kernel subsystems.
  *
@@ -110,34 +112,18 @@ size_t cpu_id() {
         void *device_tree = get_device_tree_from_options(options, buffer);
 
         kprintln("Loading flattened device tree at {}", device_tree);
-
-        strprintln("Setting up pageframe manager.");
         setup_page_frame_manager(device_tree);
-
-        size_t free_frames = PageFrameManager::instance().free_frames();
-        size_t used_frames = PageFrameManager::instance().used_frames();
-        kdebug("Before mapping kernel.");
-        kspit(free_frames);
-        kspit(used_frames);
 
         strprintln("Mapping kernel memory.");
         setup_kernel_memory_mapping();
 
-        free_frames = PageFrameManager::instance().free_frames();
-        used_frames = PageFrameManager::instance().used_frames();
-        kdebug("After mapping kernel.");
-        kspit(free_frames);
-        kspit(used_frames);
+        strprintln("Setting up trap handling.");
+        setup_trap_handling();
 
         enable_address_translation(kernel_page_table);
-        disable_address_translation();
+        // disable_address_translation();
 
-        identity_unmap_kernel(kernel_page_table);
-        free_frames = PageFrameManager::instance().free_frames();
-        used_frames = PageFrameManager::instance().used_frames();
-        kdebug("After unmapping kernel.");
-        kspit(free_frames);
-        kspit(used_frames);
+        kprintln("here!");
 
         /*
         strprintln("Setting up memory allocators.");

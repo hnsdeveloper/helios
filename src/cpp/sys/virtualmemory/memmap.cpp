@@ -103,7 +103,7 @@ Result<void *> get_physical_address(PageTable *start_table, const void *vaddress
 
 // TODO: IMPLEMENT FLAGS FOR MAPED ADDRESSES
 Result<const void *> kmmap(const void *paddress, const void *vaddress, PageTable *start_table, PageLevel page_level,
-                           bool writable, bool executable) {
+                           bool writable, bool executable, bool accessed, bool dirty) {
 
     // First lets check if it is already mapped
     auto address_result = get_physical_address(start_table, vaddress);
@@ -178,6 +178,9 @@ Result<const void *> kmmap(const void *paddress, const void *vaddress, PageTable
         entry.make_writable(true);
     }
 
+    entry.set_accessed(accessed);
+    entry.set_dirty(dirty);
+
     return value(vaddress);
 }
 
@@ -229,91 +232,103 @@ void kmunmap(const void *vaddress, PageTable *start_table) {
     }
 }
 
-void identity_map_kernel(PageTable *table) {
+void map_kernel_impl(PageTable *table, void *base_address, bool map) {
+    const void *vaddress = reinterpret_cast<const byte *>(base_address);
+
+    auto map_unmap_lambda = [map, table](const void *vaddress, const byte *start, const byte *end, bool write,
+                                         bool execute, bool accessed, bool dirty) -> const byte * {
+        const byte *v = reinterpret_cast<const byte *>(vaddress);
+        while (start < end) {
+            if (map)
+                kmmap(start, v, table, PageLevel::KB_VPN, write, execute, accessed, dirty);
+            else
+                kmunmap(v, table);
+
+            v += PAGE_FRAME_SIZE;
+            start += PAGE_FRAME_SIZE;
+
+            // kprintln("On loop:");
+            // kspit(v);
+            // kspit(start);
+        }
+
+        return v;
+    };
+
     // Mapping text section
     // Non writable but executable
     const byte *text_begin = reinterpret_cast<const byte *>(&_text_start);
     const byte *text_end = reinterpret_cast<const byte *>(&_text_end);
-    for (auto p = text_begin; p < text_end; p += PAGE_FRAME_SIZE) {
-        kmmap(p, p, table, PageLevel::KB_VPN, false, true);
-    }
+    map_unmap_lambda(vaddress, text_begin, text_end, false, true, true, false);
+
+    kspit(text_begin);
+    kspit(text_end);
+    kspit(vaddress);
 
     // Mapping read only data section
     // Non writable nor executable
     const byte *rodata_begin = reinterpret_cast<const byte *>(&_rodata_start);
     const byte *rodata_end = reinterpret_cast<const byte *>(&_rodata_end);
-    for (auto p = rodata_begin; p < rodata_end; p += PAGE_FRAME_SIZE) {
-        kmmap(p, p, table, PageLevel::KB_VPN, false, false);
-    }
+    vaddress = apply_offset(vaddress, rodata_begin - text_begin);
+    map_unmap_lambda(vaddress, rodata_begin, rodata_end, false, false, true, false);
+
+    kspit(rodata_begin);
+    kspit(rodata_end);
+    kspit(vaddress);
 
     // Mapping data section
     // Only readable/writable
     const byte *data_begin = reinterpret_cast<const byte *>(&_data_start);
     const byte *data_end = reinterpret_cast<const byte *>(&_data_end);
-    for (auto p = data_begin; p < data_end; p += PAGE_FRAME_SIZE) {
-        kmmap(p, p, table, PageLevel::KB_VPN, true, false);
-    }
+    vaddress = apply_offset(vaddress, data_begin - rodata_begin);
+    map_unmap_lambda(vaddress, data_begin, data_end, true, false, true, true);
+
+    kspit(data_begin);
+    kspit(data_end);
+    kspit(vaddress);
 
     // Mapping bss section
     // Only readable/writable
     const byte *bss_begin = reinterpret_cast<const byte *>(&_bss_start);
     const byte *bss_end = reinterpret_cast<const byte *>(&_bss_end);
-    for (auto p = bss_begin; p < bss_end; p += PAGE_FRAME_SIZE) {
-        kmmap(p, p, table, PageLevel::KB_VPN, true, false);
-    }
+    vaddress = apply_offset(vaddress, bss_begin - data_begin);
+    map_unmap_lambda(vaddress, bss_begin, bss_end, true, false, true, true);
+
+    kspit(bss_begin);
+    kspit(bss_end);
+    kspit(vaddress);
 
     // Mapping stack section
     // Only readable/writable
-    const byte *stack_start = reinterpret_cast<const byte *>(&_stack_start);
+    const byte *stack_begin = reinterpret_cast<const byte *>(&_stack_start);
     const byte *stack_end = reinterpret_cast<const byte *>(&_stack_end);
-    for (auto p = stack_start; p < stack_end; p += PAGE_FRAME_SIZE) {
-        kmmap(p, p, table, PageLevel::KB_VPN, true, false);
-    }
+    vaddress = apply_offset(vaddress, stack_begin - bss_begin);
+    map_unmap_lambda(vaddress, stack_begin, stack_end, true, false, true, true);
+
+    kspit(stack_begin);
+    kspit(stack_end);
+    kspit(vaddress);
 }
 
+void *kernel_start_physical = nullptr;
+
+void identity_map_kernel(PageTable *table) {
+    kernel_start_physical = reinterpret_cast<void *>(&_text_start);
+    kspit(kernel_start_physical);
+    map_kernel_impl(table, kernel_start_physical, true);
+}
 void identity_unmap_kernel(PageTable *table) {
-    // Mapping text section
-    // Non writable but executable
-    const byte *text_begin = reinterpret_cast<const byte *>(&_text_start);
-    const byte *text_end = reinterpret_cast<const byte *>(&_text_end);
-    for (auto p = text_begin; p < text_end; p += PAGE_FRAME_SIZE) {
-        kmunmap(p, table);
-    }
-
-    // Mapping read only data section
-    // Non writable nor executable
-    const byte *rodata_begin = reinterpret_cast<const byte *>(&_rodata_start);
-    const byte *rodata_end = reinterpret_cast<const byte *>(&_rodata_end);
-    for (auto p = rodata_begin; p < rodata_end; p += PAGE_FRAME_SIZE) {
-        kmunmap(p, table);
-    }
-
-    // Mapping data section
-    // Only readable/writable
-    const byte *data_begin = reinterpret_cast<const byte *>(&_data_start);
-    const byte *data_end = reinterpret_cast<const byte *>(&_data_end);
-    for (auto p = data_begin; p < data_end; p += PAGE_FRAME_SIZE) {
-        kmunmap(p, table);
-    }
-
-    // Mapping bss section
-    // Only readable/writable
-    const byte *bss_begin = reinterpret_cast<const byte *>(&_bss_start);
-    const byte *bss_end = reinterpret_cast<const byte *>(&_bss_end);
-    for (auto p = bss_begin; p < bss_end; p += PAGE_FRAME_SIZE) {
-        kmunmap(p, table);
-    }
-
-    // Mapping stack section
-    // Only readable/writable
-    const byte *stack_start = reinterpret_cast<const byte *>(&_stack_start);
-    const byte *stack_end = reinterpret_cast<const byte *>(&_stack_end);
-    for (auto p = stack_start; p < stack_end; p += PAGE_FRAME_SIZE) {
-        kmunmap(p, table);
-    }
+    map_kernel_impl(table, kernel_start_physical, false);
 }
 
 void end_map_kernel(PageTable *table) {
+    size_t kernel_size = reinterpret_cast<byte *>(&_stack_end) - reinterpret_cast<byte *>(&_text_start);
+    kdebug("Kernel size in bytes: {}", kernel_size);
+    kdebug("Highest address {}", HIGHEST_ADDRESS);
+    byte *highest_address = reinterpret_cast<byte *>(HIGHEST_ADDRESS);
+    highest_address = reinterpret_cast<byte *>(align_back(highest_address - kernel_size, PAGE_FRAME_SIZE));
+
+    map_kernel_impl(table, highest_address, true);
 }
 
 bool is_address_mapped(PageTable *table, void *vaddress) {
@@ -326,7 +341,8 @@ void setup_kernel_memory_mapping() {
 
     memset(kernel_page_table, 0, sizeof(PageTable));
     identity_map_kernel(kernel_page_table);
-    // end_map_kernel(kernel_page_table);
+    print_table(kernel_page_table);
+    end_map_kernel(kernel_page_table);
 }
 
 } // namespace hls

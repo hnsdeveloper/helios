@@ -103,6 +103,7 @@ SECTIONS
 		memory location moves as we add things.
 	  */
 	. = ALIGN(4096);
+	PROVIDE(_kernel_begin = .);
     PROVIDE(_text_start = .);
 	/*
 	  We are going to layout all text sections here, starting with 
@@ -241,6 +242,7 @@ SECTIONS
   PROVIDE(_stack_start = _bss_end);
   PROVIDE(_stack_end = _stack_start + 0x80000);
   . = ALIGN(4096);
+  PROVIDE(_kernel_end = .);
   PROVIDE(_memory_end = ORIGIN(ram) + LENGTH(ram));
 
   /* 
