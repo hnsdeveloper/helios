@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef _CONCEPTS_H_
 #define _CONCEPTS_H_
 
-#include "include/typetraits.hpp"
+#include "misc/typetraits.hpp"
 
 namespace hls {
 template <typename T>

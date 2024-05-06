@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef _PANIC_HPP_
 #define _PANIC_HPP_
 
-#include "print.hpp"
+#include "sys/print.hpp"
 
 struct hart;
 

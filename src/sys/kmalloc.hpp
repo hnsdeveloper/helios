@@ -1,10 +1,10 @@
 #ifndef _LIBALLOC_H
 #define _LIBALLOC_H
 
-#include "include/macros.hpp"
-#include "include/types.hpp"
-#include "include/utilities.hpp"
+#include "misc/macros.hpp"
 #include "misc/new.hpp"
+#include "misc/types.hpp"
+#include "misc/utilities.hpp"
 
 // This lets you prefix malloc and friends
 #define PREFIX(func) k##func

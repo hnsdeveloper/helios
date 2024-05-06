@@ -26,8 +26,8 @@ SOFTWARE.
 #ifndef _BOOT_OPTIONS_HPP_
 #define _BOOT_OPTIONS_HPP_
 
-#include "include/types.hpp"
 #include "misc/leanmeanparser/optionparser.hpp"
+#include "misc/types.hpp"
 #include "sys/print.hpp"
 #include "sys/string.hpp"
 

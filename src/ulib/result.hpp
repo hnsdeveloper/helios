@@ -26,11 +26,11 @@ SOFTWARE.
 #ifndef _EXPECTED_HPP_
 #define _EXPECTED_HPP_
 
-#include "include/macros.hpp"
-#include "include/types.hpp"
-#include "include/typetraits.hpp"
-#include "include/utilities.hpp"
+#include "misc/macros.hpp"
 #include "misc/new.hpp"
+#include "misc/types.hpp"
+#include "misc/typetraits.hpp"
+#include "misc/utilities.hpp"
 #include "sys/panic.hpp"
 
 namespace hls {

@@ -22,22 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
-
-#include "include/arch/riscv/plat_def.hpp"
+#include "arch/riscv64gc/plat_def.hpp"
 #include "sys/print.hpp"
 
 using namespace hls;
 
-extern "C" void _setup_trap_handling();
+extern "C" void _setup_trap_handling(void (*)(hart *));
+
 namespace hls {
 
-void setup_trap_handling() {
-    _setup_trap_handling();
-}
-
-} // namespace hls
-
-extern "C" void traphandler(hart *) {
+void traphandler(hart *) {
 
     uintreg_t scause = 0;
     asm volatile("csrrw %1, scause, %0" : "=r"(scause) : "r"(scause));
@@ -59,3 +53,9 @@ extern "C" void traphandler(hart *) {
         }
     }
 }
+
+void setup_trap_handling() {
+    _setup_trap_handling(traphandler);
+}
+
+} // namespace hls

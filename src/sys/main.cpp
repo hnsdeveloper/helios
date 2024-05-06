@@ -22,21 +22,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
-
-#include "include/arch/riscv/plat_def.hpp"
+#include "arch/riscv64gc/plat_def.hpp"
+#include "mem/common.hpp"
+#include "mem/memmap.hpp"
+#include "mem/paging.hpp"
 #include "misc/githash.hpp"
 #include "misc/libfdt/libfdt.h"
 #include "misc/splash.hpp"
 #include "sys/bootoptions.hpp"
+#include "sys/kmalloc.hpp"
 #include "sys/opensbi.hpp"
 #include "sys/panic.hpp"
 #include "sys/print.hpp"
 #include "sys/string.hpp"
-#include "sys/traphandler/traphandler.hpp"
-#include "sys/virtualmemory/common.hpp"
-#include "sys/virtualmemory/kmalloc.hpp"
-#include "sys/virtualmemory/memmap.hpp"
-#include "sys/virtualmemory/paging.hpp"
+#include "traphandler/traphandler.hpp"
 
 namespace hls {
 

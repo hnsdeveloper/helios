@@ -25,8 +25,8 @@ SOFTWARE.
 #ifndef _PRINT_HPP_
 #define _PRINT_HPP_
 
-#include "include/types.hpp"
-#include "include/typetraits.hpp"
+#include "misc/types.hpp"
+#include "misc/typetraits.hpp"
 
 extern "C" putchar_func_ptr putchar;
 

@@ -23,12 +23,12 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "sys/virtualmemory/memmap.hpp"
-#include "include/symbols.hpp"
+#include "mem/memmap.hpp"
+#include "mem/common.hpp"
+#include "mem/paging.hpp"
+#include "misc/symbols.hpp"
 #include "sys/mem.hpp"
 #include "sys/print.hpp"
-#include "sys/virtualmemory/common.hpp"
-#include "sys/virtualmemory/paging.hpp"
 
 namespace hls {
 

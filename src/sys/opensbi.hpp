@@ -23,7 +23,7 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "include/types.hpp"
+#include "misc/types.hpp"
 #include "ulib/result.hpp"
 
 #ifndef _OPENSBI_HPP_

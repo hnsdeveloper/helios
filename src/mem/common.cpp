@@ -23,7 +23,7 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "sys/virtualmemory/common.hpp"
+#include "mem/common.hpp"
 #include "sys/print.hpp"
 
 extern "C" void _enable_address_translation(const void *);

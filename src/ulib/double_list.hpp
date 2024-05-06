@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef __DOUBLE_LIST_HPP_
 #define __DOUBLE_LIST_HPP_
 
-#include "node.hpp"
+#include "ulib/node.hpp"
 
 namespace hls {
 

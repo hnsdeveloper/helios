@@ -26,9 +26,8 @@ SOFTWARE.
 #ifndef _COMMON_HPP_
 #define _COMMON_HPP_
 
-#include "include/arch/riscv/plat_def.hpp"
-#include "include/symbols.hpp"
-#include "ulib/map.hpp"
+#include "arch/riscv64gc/plat_def.hpp"
+#include "misc/symbols.hpp"
 
 namespace hls {
 

@@ -26,9 +26,9 @@ SOFTWARE.
 #ifndef _NODE_HPP_
 #define _NODE_HPP_
 
-#include "include/macros.hpp"
-#include "include/types.hpp"
-#include "include/utilities.hpp"
+#include "misc/macros.hpp"
+#include "misc/types.hpp"
+#include "misc/utilities.hpp"
 
 namespace hls {
 

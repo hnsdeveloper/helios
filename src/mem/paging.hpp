@@ -26,9 +26,9 @@ SOFTWARE.
 #ifndef _PAGING_HPP_
 #define _PAGING_HPP_
 
-#include "include/arch/riscv/plat_def.hpp"
-#include "include/symbols.hpp"
+#include "arch/riscv64gc/plat_def.hpp"
 #include "misc/libfdt/libfdt.h"
+#include "misc/symbols.hpp"
 #include "ulib/bit.hpp"
 #include "ulib/reference.hpp"
 #include "ulib/result.hpp"

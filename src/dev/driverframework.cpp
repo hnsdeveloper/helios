@@ -23,8 +23,8 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "sys/devices/driverframework/driverframework.hpp"
-#include "include/symbols.hpp"
+#include "dev/driverframework.hpp"
+#include "misc/symbols.hpp"
 
 namespace hls {
 

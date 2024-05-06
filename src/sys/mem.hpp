@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef _MEM_HPP_
 #define _MEM_HPP_
 
-#include "include/types.hpp"
+#include "misc/types.hpp"
 
 namespace hls {
 

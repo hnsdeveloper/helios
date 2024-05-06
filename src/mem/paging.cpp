@@ -23,7 +23,7 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "sys/virtualmemory/paging.hpp"
+#include "mem/paging.hpp"
 #include "misc/libfdt/libfdt.h"
 #include "misc/new.hpp"
 #include "sys/mem.hpp"

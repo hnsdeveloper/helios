@@ -1,9 +1,9 @@
-#include "sys/virtualmemory/kmalloc.hpp"
-#include "include/arch/riscv/plat_def.hpp"
+#include "sys/kmalloc.hpp"
+#include "arch/riscv64gc/plat_def.hpp"
+#include "mem/common.hpp"
+#include "mem/memmap.hpp"
+#include "mem/paging.hpp"
 #include "sys/print.hpp"
-#include "sys/virtualmemory/common.hpp"
-#include "sys/virtualmemory/memmap.hpp"
-#include "sys/virtualmemory/paging.hpp"
 
 using namespace hls;
 

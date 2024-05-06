@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef _STACK_HPP_
 #define _STACK_HPP_
 
-#include "include/macros.hpp"
+#include "misc/macros.hpp"
 #include "ulib/double_list.hpp"
 
 namespace hls {

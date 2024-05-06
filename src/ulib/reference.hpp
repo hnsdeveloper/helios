@@ -26,22 +26,39 @@ SOFTWARE.
 #ifndef _REFERENCE_HPP_
 #define _REFERENCE_HPP_
 
+#include "misc/macros.hpp"
+
 namespace hls {
 template <typename T> class Ref {
-    T *m_value;
+    SET_USING_CLASS(T, value);
+
+    value_ptr m_value;
 
   public:
-    Ref(T &value) {
-        m_value = &value;
+    Ref(value_reference v) {
+        m_value = &v;
     }
     Ref(const Ref &other) {
         m_value = other.m_value;
     }
     ~Ref() = default;
-    operator T &() const {
-        return get();
+
+    operator value_reference() {
+        const auto &as_const = *this;
+        value_const_reference v = as_const;
+        return const_cast<value_reference>(v);
     }
-    T &get() const {
+
+    operator value_const_reference() const {
+        return *m_value();
+    }
+
+    value_reference get() {
+        const auto &c = *this;
+        return const_cast<value_reference>(c.get());
+    }
+
+    value_const_reference get() const {
         return *m_value;
     }
 };

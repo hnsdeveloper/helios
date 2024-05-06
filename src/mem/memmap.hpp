@@ -26,11 +26,9 @@ SOFTWARE.
 #ifndef _MEMMAP_HPP_
 #define _MEMMAP_HPP_
 
-#include "include/arch/riscv/plat_def.hpp"
-#include "include/types.hpp"
+#include "arch/riscv64gc/plat_def.hpp"
 #include "misc/libfdt/libfdt.h"
-#include "ulib/map.hpp"
-#include "ulib/result.hpp"
+#include "misc/types.hpp"
 
 namespace hls {
 

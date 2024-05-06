@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef _PLAT_DEF_H_
 #define _PLAT_DEF_H_
 
-#include "include/types.hpp"
+#include "misc/types.hpp"
 #include "sys/mem.hpp"
 #include "ulib/result.hpp"
 

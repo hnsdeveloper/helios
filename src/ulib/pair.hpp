@@ -26,8 +26,8 @@ SOFTWARE.
 #ifndef _PAIR_HPP_
 #define _PAIR_HPP_
 
-#include "include/typetraits.hpp"
-#include "include/utilities.hpp"
+#include "misc/typetraits.hpp"
+#include "misc/utilities.hpp"
 
 namespace hls {
 

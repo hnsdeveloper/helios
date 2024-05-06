@@ -26,9 +26,9 @@ SOFTWARE.
 #ifndef _DRIVER_FRAMEWORK_HPP_
 #define _DRIVER_FRAMEWORK_HPP_
 
-#include "include/macros.hpp"
-#include "include/types.hpp"
-#include "sys/virtualmemory/kmalloc.hpp"
+#include "mem/kmalloc.hpp"
+#include "misc/macros.hpp"
+#include "misc/types.hpp"
 #include "ulib/double_list.hpp"
 
 namespace hls {

@@ -23,7 +23,7 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "include/arch/riscv/plat_def.hpp"
+#include "arch/riscv64gc/plat_def.hpp"
 
 using namespace hls;
 
