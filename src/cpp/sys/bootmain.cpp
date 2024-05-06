@@ -77,8 +77,6 @@ size_t cpu_id() {
     return 0;
 }
 
-const int x = 100;
-
 /**
  * @brief Main function. Initialize the required kernel subsystems.
  *
@@ -112,18 +110,21 @@ const int x = 100;
         void *device_tree = get_device_tree_from_options(options, buffer);
 
         kprintln("Loading flattened device tree at {}", device_tree);
+
+        strprintln("Setting up page frame manager.");
         setup_page_frame_manager(device_tree);
 
         strprintln("Mapping kernel memory.");
         setup_kernel_memory_mapping();
+
+        strprintln("Building device list.");
+        setup_device_list();
 
         strprintln("Setting up trap handling.");
         setup_trap_handling();
 
         enable_address_translation(kernel_page_table);
         // disable_address_translation();
-
-        kprintln("here!");
 
         /*
         strprintln("Setting up memory allocators.");

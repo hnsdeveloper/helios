@@ -216,7 +216,6 @@ void kmunmap(const void *vaddress, PageTable *start_table) {
         for (size_t i = (size_t)(current_page_level); i < sizeof(table_path) / sizeof(PageTable *); ++i) {
             auto checked_table = table_path[i];
             if (freed_last) {
-                size_t j = get_page_entry_index((PageLevel)(i), vaddress);
                 auto &entry = checked_table->get_entry(get_page_entry_index((PageLevel)(i), vaddress));
                 entry.erase();
             }
@@ -321,16 +320,6 @@ void identity_unmap_kernel(PageTable *table) {
     map_kernel_impl(table, kernel_start_physical, false);
 }
 
-void end_map_kernel(PageTable *table) {
-    size_t kernel_size = reinterpret_cast<byte *>(&_stack_end) - reinterpret_cast<byte *>(&_text_start);
-    kdebug("Kernel size in bytes: {}", kernel_size);
-    kdebug("Highest address {}", HIGHEST_ADDRESS);
-    byte *highest_address = reinterpret_cast<byte *>(HIGHEST_ADDRESS);
-    highest_address = reinterpret_cast<byte *>(align_back(highest_address - kernel_size, PAGE_FRAME_SIZE));
-
-    map_kernel_impl(table, highest_address, true);
-}
-
 bool is_address_mapped(PageTable *table, void *vaddress) {
     return !get_physical_address(table, vaddress).is_error();
 }
@@ -341,8 +330,6 @@ void setup_kernel_memory_mapping() {
 
     memset(kernel_page_table, 0, sizeof(PageTable));
     identity_map_kernel(kernel_page_table);
-    print_table(kernel_page_table);
-    end_map_kernel(kernel_page_table);
 }
 
 } // namespace hls
