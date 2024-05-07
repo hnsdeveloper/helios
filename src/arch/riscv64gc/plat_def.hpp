@@ -122,38 +122,35 @@ template <PageLevel type> struct PageFrame;
 struct __attribute__((packed)) PageEntry {
     uint64_t data = 0;
 
-    void erase();
+    LKERNELCLSSFUN void erase();
 
-    void set_accessed(bool v);
-    void set_dirty(bool v);
+    LKERNELCLSSFUN bool is_valid();
 
-    bool is_valid();
+    LKERNELCLSSFUN bool is_leaf();
+    LKERNELCLSSFUN bool is_table_pointer();
 
-    bool is_leaf();
-    bool is_table_pointer();
+    LKERNELCLSSFUN bool is_writable();
+    LKERNELCLSSFUN bool is_readable();
+    LKERNELCLSSFUN bool is_executable();
 
-    bool is_writable();
-    bool is_readable();
-    bool is_executable();
+    LKERNELCLSSFUN PageTable *as_table_pointer();
 
-    LKERNELFUN PageTable *as_table_pointer();
+    LKERNELCLSSFUN void *as_pointer();
 
-    LKERNELFUN void *as_pointer();
+    LKERNELCLSSFUN void point_to_table(const PageTable *table);
 
-    LKERNELFUN void point_to_table(const PageTable *table);
+    LKERNELCLSSFUN void point_to_frame(const void *frame);
 
-    LKERNELFUN void point_to_frame(const void *frame);
+    LKERNELCLSSFUN void set_flags(uint64_t flags);
 
-    LKERNELFUN void set_flags(uint64_t flags);
-
-    LKERNELFUN void unset_flags(uint64_t flags);
+    LKERNELCLSSFUN void unset_flags(uint64_t flags);
 };
 
 struct __attribute__((packed)) PageTable {
     PageEntry entries[ENTRIES_PER_TABLE];
 
-    LKERNELFUN PageEntry &get_entry(size_t entry_index);
-    LKERNELFUN bool is_empty();
+    LKERNELCLSSFUN PageEntry &get_entry(size_t entry_index);
+    LKERNELCLSSFUN bool is_empty();
 };
 
 template <PageLevel v> struct __attribute__((packed)) PageFrame {
@@ -163,7 +160,7 @@ template <PageLevel v> struct __attribute__((packed)) PageFrame {
 
     char data[FrameInfo<v>::size];
 
-    LKERNELFUN PageTable *as_table() {
+    LKERNELCLSSFUN PageTable *as_table() {
         if constexpr (FrameInfo<v>::page_type == PageLevel::KB_VPN)
             return reinterpret_cast<PageTable *>(this);
 

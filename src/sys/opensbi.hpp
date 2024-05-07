@@ -24,18 +24,41 @@ SOFTWARE.
 ---------------------------------------------------------------------------------*/
 
 #include "misc/types.hpp"
-#include "ulib/result.hpp"
 
 #ifndef _OPENSBI_HPP_
 #define _OPENSBI_HPP_
 
 namespace hls {
-void sbi_call(uint64_t extension, uint64_t function_id, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4,
-              uint64_t arg5, uint64_t arg6, uint64_t &error, uint64_t &value);
 
-void opensbi_putchar(char c);
+#define sbi_call(__x, __fid, __a1, __a2, __a3, __a4, __a5, __a6, __err, __val)                                         \
+    [](uint64_t extension, uint64_t function_id, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4,           \
+       uint64_t arg5, uint64_t arg6, uint64_t & error, uint64_t & value) __attribute__((always_inline)) {              \
+        register uint64_t a0 asm("a0") = arg1;                                                                         \
+        register uint64_t a1 asm("a1") = arg2;                                                                         \
+        register uint64_t a2 asm("a2") = arg3;                                                                         \
+        register uint64_t a3 asm("a3") = arg4;                                                                         \
+        register uint64_t a4 asm("a4") = arg5;                                                                         \
+        register uint64_t a5 asm("a5") = arg6;                                                                         \
+        register uint64_t a6 asm("a6") = function_id;                                                                  \
+        register uint64_t a7 asm("a7") = extension;                                                                    \
+        asm volatile("ecall" : "+r"(a0), "+r"(a1) : "r"(a2), "r"(a3), "r"(a4), "r"(a5), "r"(a6), "r"(a7) : "memory");  \
+        error = a0;                                                                                                    \
+        value = a1;                                                                                                    \
+    }                                                                                                                  \
+    (__x, __fid, __a1, __a2, __a3, __a4, __a5, __a6, __err, __val)
 
-void opensbi_set_timer(uint64_t time);
+#define opensbi_putchar(__c)                                                                                           \
+    [](char c) __attribute__((always_inline)) {                                                                        \
+        uint64_t a = 0;                                                                                                \
+        sbi_call(0x1u, 0x0, c, 0, 0, 0, 0, 0, a, a);                                                                   \
+    }                                                                                                                  \
+    (__c)
+
+#define opensbi_set_timer(__time)                                                                                      \
+    [](uint64_t time __attribute__((always_inline))) {                                                                 \
+        uint64_t a = 0;                                                                                                \
+        sbi_call(0x0, 0, time, 0, 0, 0, 0, 0, a, a);                                                                   \
+    }(__time)
 
 }; // namespace hls
 

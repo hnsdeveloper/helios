@@ -3,23 +3,18 @@
 
 namespace hls {
 
-size_t get_page_entry_index(const void *vaddress, PageLevel v) {
+LKERNELFUN size_t get_page_entry_index(const void *vaddress, PageLevel v) {
     size_t vpn_idx = static_cast<size_t>(v);
     uintptr_t idx = to_uintptr_t(vaddress) >> 12;
     return (idx >> (vpn_idx * 9)) & 0x1FF;
 }
 
-uintptr_t get_vaddress_offset(const void *vaddress) {
+LKERNELFUN uintptr_t get_vaddress_offset(const void *vaddress) {
     uintptr_t p = to_uintptr_t(vaddress);
     return p & 0xFFF;
 }
 
-void *apply_offset(void *p, uintptr_t offset) {
-    uintptr_t x = reinterpret_cast<uintptr_t>(p) + offset;
-    return reinterpret_cast<void *>(x);
-}
-
-void walk_table(const void *vaddress, PageTable **table_ptr, PageLevel &page_level) {
+LKERNELFUN void walk_table(const void *vaddress, PageTable **table_ptr, PageLevel &page_level) {
     PageTable *table = *table_ptr;
 
     if (table == nullptr || page_level == PageLevel::FIRST_VPN)
@@ -34,7 +29,7 @@ void walk_table(const void *vaddress, PageTable **table_ptr, PageLevel &page_lev
     }
 }
 
-void *v_to_p(const void *vaddress, PageTable *table = nullptr) {
+LKERNELFUN void *v_to_p(const void *vaddress, PageTable *table = nullptr) {
     if (table != nullptr) {
 
         constexpr size_t p_lvl_count = (size_t)(PageLevel::LAST_VPN);
@@ -54,8 +49,8 @@ void *v_to_p(const void *vaddress, PageTable *table = nullptr) {
     return nullptr;
 }
 
-bool kmmap(const void *paddress, const void *vaddress, PageTable *table, PageLevel p_lvl, uint64_t flags,
-           frame_fn f_src) {
+LKERNELFUN bool kmmap(const void *paddress, const void *vaddress, PageTable *table, PageLevel p_lvl, uint64_t flags,
+                      frame_fn f_src) {
 
     if (f_src == nullptr)
         f_src = &get_frame;

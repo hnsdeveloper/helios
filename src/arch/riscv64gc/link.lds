@@ -14,81 +14,77 @@ PHDRS
   bss PT_LOAD;
 }
 
+
 SECTIONS
 {
+	. = 0x84000000;
+
 	.text.low : {
 		. = ALIGN(4);
-		*(.text.low) *(.text.low.*)
-	}
+		*(.text.low)
+		*(.text.low.clss)
+		*(.text.low.*)
+	}>ram AT>ram :text
+
 	PROVIDE(_lglobal_pointer = .);
 
 	.rodata.low : {
 		. = ALIGN(4);
 		*(.rodata.low) *(.rodata.low.*)
-	}
+	}>ram AT>ram :text
 
 	.data.low : {
 		*(.data.low) *(.data.low.*)
 		*(.sdata.low) *(.sdata.low.*)
-	}
+	}>ram AT>ram :data
 
 	.bss.low : {
 		PROVIDE(_lbss_begin = .);
 		*(.bss.low) *(.bss.low.*)
 		*(.sbss.low) *(.sbss.low.*)
 		PROVIDE(_lbss_end = .);
-	}
+	}>ram AT>ram :bss
 
 	. = ALIGN(16);
 
 	PROVIDE(_lstack_begin = .);
 	PROVIDE(_lstack_end = _lstack_begin + 0x80000);
 
-	
-
-  	.text : {
-		. = ALIGN(4096);
+	. += 0xFFFFFFFFBFFFFFFF;
+	/* Add a symbol that indicates the start address of the kernel. */
+	.text ALIGN (4K) : AT (ADDR (.text) - 0xFFFFFFFFBFFFFFFF)
+	{
 		PROVIDE(_kernel_begin = .);
-  		PROVIDE(_text_start = .);
+  		PROVIDE(_text_begin = .);
   	  	*(.text.init) *(.text .text.*)
-		. = ALIGN(4096);
-  	  	PROVIDE(_text_end = .);
-  	} >ram AT>ram :text
-	
-	PROVIDE(_global_pointer = .);
-
-  	.rodata : {
-		. = ALIGN(4096);
-    	PROVIDE(_driverinfo_start = .);
+	}
+	.rodata ALIGN (4K) : AT (ADDR (.rodata) - 0xFFFFFFFFBFFFFFFF)
+	{
+		PROVIDE(_text_end = .);
+		PROVIDE(_global_pointer = .);
+		PROVIDE(_rodata_begin = .);
+    	PROVIDE(_driverinfo_begin = .);
 		*(.driverinfo .driverinfo.*)
 		PROVIDE(_driverinfo_end = .);
-		PROVIDE(_rodata_start = .);
     	*(.rodata .rodata.*)
-    	. = ALIGN(4096);
+	}
+	.data ALIGN (4K) : AT (ADDR (.data) - 0xFFFFFFFFBFFFFFFF)
+	{
 		PROVIDE(_rodata_end = .);
-  	} >ram AT>ram :text
-
-  	.data : {
-    	. = ALIGN(4096);
-    	PROVIDE(_data_start = .);
+    	PROVIDE(_data_begin = .);
     	*(.sdata .sdata.*) *(.data .data.*)
-    	. = ALIGN(4096);
+	}
+	.bss ALIGN (4K) : AT (ADDR (.bss) - 0xFFFFFFFFBFFFFFFF)
+	{
 		PROVIDE(_data_end = .);
-  	} >ram AT>ram :data
-
-  	.bss : {
-		. = ALIGN(4096);
-    	PROVIDE(_bss_start = .);
+    	PROVIDE(_bss_begin = .);
     	*(.sbss .sbss.*) *(.bss .bss.*)
-    	. = ALIGN(4096);
+		. = ALIGN (4K);
 		PROVIDE(_bss_end = .);
-  	} >ram AT>ram :bss
-
-  	PROVIDE(_memory_start = ORIGIN(ram));
-  	PROVIDE(_stack_start = _bss_end);
-  	PROVIDE(_stack_end = _stack_start + 0x80000);
-  	. = ALIGN(4096);
+	}
+	/* Add a symbol that indicates the end address of the kernel. */
+	PROVIDE(_stack_begin = _bss_end);
+  	PROVIDE(_stack_end = _stack_begin + 0x80000);
   	PROVIDE(_kernel_end = .);
-  	
-  	PROVIDE(_heap_start = _stack_end); 	
 }
+

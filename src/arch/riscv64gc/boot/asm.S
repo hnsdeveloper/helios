@@ -2,6 +2,7 @@
 .option norvc
 
 .section .data.low
+
  
 .section .text.low
 
@@ -37,5 +38,42 @@ _start:
 	call		bootmain
 
 4:
+	srli 		a0, a0, 12
+    li 			a1, 0x9000000000000000
+    or 			a0, a0, a1
+    addi 		t2, x0, 1
+    slli 		t2, t2, 18
+    csrrs 		t2, sstatus, t2
+    sfence.vma 	x0, x0
+5:
 	wfi
-	j 4b
+	j 5b
+    csrrw 		a0, satp, a0
+	
+/*
+4:
+	la 			gp, _global_pointer
+	la			t0, _bss_begin
+	la			t1, _bss_end
+
+	add			fp, x0, x0
+	la 			sp, _stack_end
+
+	srli 		a0, a0, 12
+    li 			a1, 0x9000000000000000
+    or 			a0, a0, a1
+    addi 		t2, x0, 1
+    slli 		t2, t2, 18
+    csrrs 		t2, sstatus, t2
+	la			ra, _kernel_start
+    sfence.vma 	x0, x0
+    csrrw 		a0, satp, a0
+	jr			ra
+
+
+.section .text
+.global _kernel_start
+_kernel_start:
+	wfi
+	j 			_kernel_start
+*/	

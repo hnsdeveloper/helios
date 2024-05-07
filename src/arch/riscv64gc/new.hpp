@@ -23,24 +23,26 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "misc/new.hpp"
+#ifndef _NEW_HPP_
+#define _NEW_HPP_
 
-extern "C" int __cxa_guard_acquire(__guard *g) {
-    return !*(char *)(g);
-}
+#include "misc/macros.hpp"
+#include "misc/types.hpp"
 
-extern "C" void __cxa_guard_release(__guard *g) {
-    *(char *)g = 1;
-}
+// Taken from stack overflow. GCC requires these functions to initialize local
+// static variables. Note that this offers no race protection, thus it is only
+// safe for single threaded code!
+__extension__ typedef int __guard __attribute__((mode(__DI__)));
 
-extern "C" void __cxa_guard_abort(__guard *) {
-}
+extern "C" LKERNELFUN int __cxa_guard_acquire(__guard *g);
 
-extern "C" int atexit(void (*)()) {
-    return 0;
-}
+extern "C" LKERNELFUN void __cxa_guard_release(__guard *g);
+
+extern "C" LKERNELFUN void __cxa_guard_abort(__guard *);
+
+extern "C" LKERNELFUN int atexit(void (*)());
 
 // Placement new
-extern "C" void *operator new(size_t, void *w) {
-    return w;
-}
+extern "C" void *operator new(size_t, void *w);
+
+#endif

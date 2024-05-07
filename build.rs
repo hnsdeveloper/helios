@@ -45,8 +45,9 @@ fn main() {
         _ => "",
     };
 
-    let bootfiles = find_files("./src/arch/riscv64gc/boot/", true);
-    println!("Building boot module.");
+    let bootfiles = find_files("./src/arch/riscv64gc/", true);
+    let memfiles = find_files("./src/mem/", true);
+    println!("Building kernel.");
     // Builds cpp files
     cc::Build::new()
         .cpp(true)
@@ -61,33 +62,11 @@ fn main() {
         .flag("-fno-use-cxa-atexit")
         .flag(&git_hash_arg)
         .flag(&ddebug)
-        .flag("-fpie")
+        //.flag("-fpie")
         .std("c++20")
         .shared_flag(true)
         .include("./src/")
         .files(bootfiles)
-        .compile("boot");
-
-    let memfiles = find_files("./src/mem/", true);
-    println!("Building memory module.");
-    // Builds cpp files
-    cc::Build::new()
-        .cpp(true)
-        .cpp_link_stdlib(None)
-        .flag("-ffreestanding")
-        .flag("-fmodules-ts")
-        .flag("-nostdlib")
-        .flag("-fno-exceptions")
-        .flag("-fno-rtti")
-        .flag("-mabi=lp64d")
-        .flag("-mcmodel=medany")
-        .flag("-fno-use-cxa-atexit")
-        .flag(&git_hash_arg)
-        .flag(&ddebug)
-        .flag("-fpie")
-        .std("c++20")
-        .shared_flag(true)
-        .include("./src/")
         .files(memfiles)
-        .compile("memory");
+        .compile("kernel");
 }
