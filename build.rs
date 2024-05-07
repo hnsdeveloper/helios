@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::process::Command;
 
 // It doesn't handle errors properly!!
-fn find_files(dir: &String, ext: &String, recurse: bool) -> Vec<PathBuf> {
+fn find_files(dir: &str, recurse: bool) -> Vec<PathBuf> {
     let mut modules: Vec<PathBuf> = vec![];
 
     if let Ok(directory) = std::fs::read_dir(dir) {
@@ -13,15 +13,17 @@ fn find_files(dir: &String, ext: &String, recurse: bool) -> Vec<PathBuf> {
             let file_type = node.file_type().unwrap();
 
             if file_type.is_dir() && recurse {
-                modules.append(&mut find_files(&node_path_str, &ext, true));
+                modules.append(&mut find_files(&node_path_str, true));
             } else if file_type.is_file() {
                 let extension = match node_path.extension() {
                     Some(str) => str.to_str().unwrap(),
                     _ => " ",
                 };
-                if extension == ext {
-                    modules.push(node_path);
-                }
+
+                match extension {
+                    "cpp" | "c" | "S" => modules.push(node_path),
+                    _ => (),
+                };
             }
         }
     }
@@ -38,16 +40,14 @@ fn main() {
     let mut git_hash_arg = "-DG_HASH=".to_owned();
     git_hash_arg.push_str(git_hash.as_str());
 
-    let d_string = match std::env::var("PROFILE").unwrap().as_str() {
+    let ddebug = match std::env::var("PROFILE").unwrap().as_str() {
         "debug" => "-DDEBUG",
         _ => "",
     };
 
-    let cpp_files = find_files(&"./src".to_string(), &"cpp".to_string(), true);
-    let assembly_files = find_files(&"./src".to_string(), &"S".to_string(), true);
-    let c_files = find_files(&"./src".to_string(), &"c".to_string(), true);
+    let bootfiles = find_files("./src/arch/riscv64gc/boot/", true);
 
-    println!("Building cpp");
+    println!("Building boot module.");
     // Builds cpp files
     cc::Build::new()
         .cpp(true)
@@ -61,13 +61,11 @@ fn main() {
         .flag("-mcmodel=medany")
         .flag("-fno-use-cxa-atexit")
         .flag(&git_hash_arg)
-        .flag(&d_string)
+        .flag(&ddebug)
         .flag("-fpie")
         .std("c++20")
         .shared_flag(true)
         .include("./src/")
-        .files(c_files.into_iter())
-        .files(cpp_files.into_iter())
-        .files(assembly_files.into_iter())
-        .compile("c++");
+        .files(bootfiles)
+        .compile("boot");
 }

@@ -57,4 +57,10 @@ SOFTWARE.
 #define STRINGFY_VAL(s) STRINGFY(s)
 #define STRINGFY(s) #s
 
+#define LKERNELFUN __attribute__((section(".text.low#")))
+#define LKERNELDATA __attribute__((section(".data.low#")))
+#define LKERNELSDATA __attribute__((section(".sdata.low#")))
+#define LKERNELBSS   __attribute__((section(".bss.low#")))
+#define LKERNELSBSS   __attribute__((section(".sbss.low#")))
+
 #endif

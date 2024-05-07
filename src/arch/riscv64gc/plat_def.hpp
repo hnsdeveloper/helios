@@ -28,7 +28,6 @@ SOFTWARE.
 
 #include "misc/types.hpp"
 #include "sys/mem.hpp"
-#include "ulib/result.hpp"
 
 namespace hls {
 
@@ -195,7 +194,8 @@ using PageMB = PageFrame<PageLevel::MB_VPN>;
 using PageGB = PageFrame<PageLevel::GB_VPN>;
 using PageTB = PageFrame<PageLevel::TB_VPN>;
 
-size_t get_vpn_index(void *v_address, PageLevel vpn);
+using GranularPage = PageKB;
+
 } // namespace hls
 
 #endif
