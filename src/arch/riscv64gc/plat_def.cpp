@@ -27,61 +27,29 @@ SOFTWARE.
 
 using namespace hls;
 
-void PageEntry::set_accessed(bool v) {
-    decltype(data) b = 1;
-    b = b << 6;
-
-    if (v) {
-        data = data | b;
-    } else {
-        data = (data | b) ^ b;
-    }
+LKERNELFUN void PageEntry::point_to_frame(void *frame) {
+    data = to_uintptr_t(frame) >> 2;
+    data |= 0x1;
+    set_flags(READ_BIT);
 }
 
-void PageEntry::set_dirty(bool v) {
-    decltype(data) b = 1;
-    b = b << 7;
+LKERNELFUN void *PageEntry::as_frame_pointer() {
+    return to_ptr(data);
+};
 
-    if (v) {
-        data = data | b;
-    } else {
-        data = (data | b) ^ b;
-    }
+LKERNELFUN void set_flags(uint64_t flags) {
+    data = data | flags;
 }
 
-void PageEntry::erase() {
+LKERNELFUN void unset_flags(uint64_t flags) {
+    data = (data | flags) ^ flags;
+}
+
+LKERNELFUN void PageEntry::erase() {
     data = 0;
 }
 
-void PageEntry::make_writable(bool v) {
-    if (v) {
-        make_readable(v);
-        data = data | (1u << WRITE_BIT);
-    } else {
-        data = (data | (1u << WRITE_BIT)) | (1u << WRITE_BIT);
-    }
-}
-
-void PageEntry::make_readable(bool v) {
-    if (v) {
-        data = data | (1u << READ_BIT);
-    } else {
-        make_writable(v);
-        make_executable(v);
-        data = (data | (1u << READ_BIT)) | (1u << READ_BIT);
-    }
-}
-
-void PageEntry::make_executable(bool v) {
-    if (v) {
-        make_readable(v);
-        data = data | (1u << EXECUTE_BIT);
-    } else {
-        data = (data | (1u << EXECUTE_BIT)) | (1u << EXECUTE_BIT);
-    }
-}
-
-bool PageEntry::is_valid() {
+LKERNELFUN bool PageEntry::is_valid() {
     bool result = data & 0x1;
 
     if (is_writable() && !is_readable())
@@ -90,36 +58,34 @@ bool PageEntry::is_valid() {
     return result;
 }
 
-void *PageEntry::as_pointer() {
-    return to_ptr((data << 2) & 0x00fffffffffff000);
+LKERNELFUN void *PageEntry::as_pointer() {
+    return to_ptr((data << 2) & 0xFFFFFFFFFFFFF000);
 }
 
-bool PageEntry::is_leaf() {
+LKERNELFUN bool PageEntry::is_leaf() {
     return is_valid() && (is_readable() || is_executable());
 }
 
-bool PageEntry::is_writable() {
+LKERNELFUN bool PageEntry::is_writable() {
     return data & (1u << WRITE_BIT);
 }
-bool PageEntry::is_readable() {
+LKERNELFUN bool PageEntry::is_readable() {
     return data & (1u << READ_BIT);
 }
-bool PageEntry::is_executable() {
+LKERNELFUN bool PageEntry::is_executable() {
     return data & (1u << EXECUTE_BIT);
 }
 
-PageTable *PageEntry::as_table_pointer() {
+LKERNELFUN PageTable *PageEntry::as_table_pointer() {
     return reinterpret_cast<PageTable *>(to_ptr((data >> 10) << 12));
 }
 
-void PageEntry::point_to_table(PageTable *table) {
-    if (is_aligned(table, alignof(PageTable))) {
-        data = to_uintptr_t(table) >> 2;
-        data |= 0x1;
-    }
+LKERNELFUN void PageEntry::point_to_table(const PageTable *table) {
+    data = to_uintptr_t(table) >> 2;
+    data |= 0x1;
 }
 
-bool PageTable::is_empty() {
+LKERNELFUN bool PageTable::is_empty() {
     for (size_t i = 0; i < ENTRIES_PER_TABLE; ++i) {
         auto &entry = get_entry(i);
         if (entry.data != 0)
@@ -129,11 +95,11 @@ bool PageTable::is_empty() {
     return true;
 }
 
-PageEntry &PageTable::get_entry(size_t entry_index) {
+LKERNELFUN PageEntry &PageTable::get_entry(size_t entry_index) {
     return entries[entry_index];
 }
 
-size_t get_page_entry_index(void *v_address, PageLevel vpn) {
+LKERNELFUN size_t hls::get_page_entry_index(void *v_address, PageLevel vpn) {
     size_t result = 0;
     size_t vpn_idx = static_cast<size_t>(vpn);
     auto addr = to_uintptr_t(v_address);
@@ -142,16 +108,8 @@ size_t get_page_entry_index(void *v_address, PageLevel vpn) {
     return result;
 }
 
-PageLevel hls::next_vpn(PageLevel v) {
+LKERNELFUN PageLevel hls::next_vpn(PageLevel v) {
     if (v == PageLevel::FIRST_VPN)
         return v;
     return static_cast<PageLevel>(static_cast<size_t>(v) - 1);
-}
-
-void PageTable::print_entries() {
-    for (size_t i = 0; i < ENTRIES_PER_TABLE; ++i) {
-        auto &entry = entries[i];
-        kprintln("i: {} entry_data: {} {} entry address: {}", i, entry.data, entry.as_pointer(),
-                 reinterpret_cast<const void *>(&entry.data));
-    }
 }

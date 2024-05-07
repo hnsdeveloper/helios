@@ -16,6 +16,36 @@ PHDRS
 
 SECTIONS
 {
+	.text.low : {
+		. = ALIGN(4);
+		*(.text.low) *(.text.low.*)
+	}
+	PROVIDE(_lglobal_pointer = .);
+
+	.rodata.low : {
+		. = ALIGN(4);
+		*(.rodata.low) *(.rodata.low.*)
+	}
+
+	.data.low : {
+		*(.data.low) *(.data.low.*)
+		*(.sdata.low) *(.sdata.low.*)
+	}
+
+	.bss.low : {
+		PROVIDE(_lbss_begin = .);
+		*(.bss.low) *(.bss.low.*)
+		*(.sbss.low) *(.sbss.low.*)
+		PROVIDE(_lbss_end = .);
+	}
+
+	. = ALIGN(16);
+
+	PROVIDE(_lstack_begin = .);
+	PROVIDE(_lstack_end = _lstack_begin + 0x80000);
+
+	
+
   	.text : {
 		. = ALIGN(4096);
 		PROVIDE(_kernel_begin = .);

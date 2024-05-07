@@ -27,7 +27,6 @@ SOFTWARE.
 #define _MEMMAP_HPP_
 
 #include "arch/riscv64gc/plat_def.hpp"
-#include "misc/libfdt/libfdt.h"
 #include "misc/types.hpp"
 
 namespace hls {
@@ -92,27 +91,6 @@ Result<const void *> kmmap(const void *paddress, const void *vaddress, PageTable
  * @param table The root table which will have the address unmaped.
  */
 void kmunmap(const void *vaddress, PageTable *table);
-
-/**
- * @brief Maps the kernel to a page table.
- *
- * @param table The table which the kernel is being mapped to.
- * @return true If the kernel was mapped succesfully to the page table.
- * @return false If the kernel wasn't mapped successfully to the page table.
- */
-bool map_kernel(PageTable *table);
-
-/**
- * @brief Creates the kernel page table
- *
- * @return PageTable* Pointer to the kernel page table
- */
-void setup_kernel_memory_mapping();
-
-void identity_map_kernel(PageTable *table);
-void identity_unmap_kernel(PageTable *table);
-
-extern void *kernel_start_physical;
 
 } // namespace hls
 

@@ -1,23 +1,23 @@
 # Boot for Risc-V 
 .option norvc
 
-.section .data
+.section .data.low
  
-.section .text.init
+.section .text.low
 
 .global _start
 _start:
 
 .option push
 .option norelax
-	la		gp, _global_pointer
+	la			gp, _lglobal_pointer
 .option pop
 	# No address translation for now
 	csrw		satp, x0
 		
 	# Zeroes the BSS section
-	la 			t0, _bss_start
-	la			t1, _bss_end
+	la 			t0, _lbss_begin
+	la			t1, _lbss_end
 	bgeu		t0, t1, 2f
 1:
 	sd			x0, (t0)
@@ -26,7 +26,7 @@ _start:
 2:	
 	# Store the stack frame, so we can unwind whenever the kernel panics!
 	add			fp, x0, x0
-	la			sp, _stack_end
+	la			sp, _lstack_end
 
 	addi		sp, sp, -16
 	sd			x0, 0(sp)
@@ -36,8 +36,6 @@ _start:
 	# Calls bootmain, so we start using C code. a0 and a1 should contain argc and argv
 	call		bootmain
 
-.global _bootconfig_wait
-_bootconfig_wait:
+4:
 	wfi
-	j	_bootconfig_wait
-
+	j 4b

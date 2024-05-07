@@ -58,9 +58,19 @@ SOFTWARE.
 #define STRINGFY(s) #s
 
 #define LKERNELFUN __attribute__((section(".text.low#")))
+#define LKERNELCLSSFUN __attribute__((section(".text.low.clss#")))
+#define LKERNELRODATA __attribute__((section(".rodata.low#")))
 #define LKERNELDATA __attribute__((section(".data.low#")))
 #define LKERNELSDATA __attribute__((section(".sdata.low#")))
-#define LKERNELBSS   __attribute__((section(".bss.low#")))
-#define LKERNELSBSS   __attribute__((section(".sbss.low#")))
+#define LKERNELBSS __attribute__((section(".bss.low#")))
+#define LKERNELSBSS __attribute__((section(".sbss.low#")))
+
+#define memset(__src, __c, __sz)                                                                                       \
+    for (size_t __i = 0; __i < __sz; ++__i) {                                                                          \
+        *((unsigned char *)(__src) + __i) = (unsigned char)(__c);                                                      \
+    }
+#define to_ptr(__x) reinterpret_cast<void *>(__x)
+#define to_uintptr_t(__x) reinterpret_cast<unsigned long long>(__x)
+static_assert(sizeof(unsigned long long) == sizeof(void *));
 
 #endif
