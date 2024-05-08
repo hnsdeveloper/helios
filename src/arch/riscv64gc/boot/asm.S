@@ -46,9 +46,9 @@ _start:
     csrrs 		t2, sstatus, t2
     sfence.vma 	x0, x0
 5:
+    csrrw 		a0, satp, a0
 	wfi
 	j 5b
-    csrrw 		a0, satp, a0
 	
 /*
 4:

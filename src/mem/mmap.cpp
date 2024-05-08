@@ -1,7 +1,25 @@
 #include "mmap.hpp"
 #include "framemanager.hpp"
+#include "sys/mem.hpp"
+#include "sys/opensbi.hpp"
 
 namespace hls {
+
+LKERNELRODATA const char HERE[] = "Here";
+LKERNELRODATA const char HERE2[] = "Here2";
+LKERNELRODATA const char NEW_LINE2[] = "\r\n";
+
+LKERNELFUN void strprint2(const char *str) {
+    while (*str) {
+        opensbi_putchar(*str);
+        ++str;
+    }
+}
+
+LKERNELFUN void strprintln2(const char *str) {
+    strprint2(str);
+    strprint2(NEW_LINE2);
+}
 
 LKERNELFUN size_t get_page_entry_index(const void *vaddress, PageLevel v) {
     size_t vpn_idx = static_cast<size_t>(v);
@@ -14,8 +32,7 @@ LKERNELFUN uintptr_t get_vaddress_offset(const void *vaddress) {
     return p & 0xFFF;
 }
 
-LKERNELFUN void walk_table(const void *vaddress, PageTable **table_ptr, PageLevel &page_level) {
-    PageTable *table = *table_ptr;
+LKERNELFUN void walk_table(const void *vaddress, PageTable *&table, PageLevel &page_level) {
 
     if (table == nullptr || page_level == PageLevel::FIRST_VPN)
         return;
@@ -23,9 +40,11 @@ LKERNELFUN void walk_table(const void *vaddress, PageTable **table_ptr, PageLeve
     uintptr_t vpn = get_page_entry_index(vaddress, page_level);
     auto &entry = table->get_entry(vpn);
 
-    if (entry.is_valid() && !entry.is_leaf()) {
-        *table_ptr = entry.as_table_pointer();
-        page_level = next_vpn(page_level);
+    if (entry.is_valid()) {
+        if (!entry.is_leaf()) {
+            table = entry.as_table_pointer();
+            page_level = next_vpn(page_level);
+        }
     }
 }
 
@@ -37,7 +56,7 @@ LKERNELFUN void *v_to_p(const void *vaddress, PageTable *table = nullptr) {
         for (size_t i = 0; i < p_lvl_count; ++i) {
             // Will walk the table as much as it can.
             // If it is a superpage, then it won't walk more, and then we only apply the offset to the address
-            walk_table(vaddress, &table, lvl);
+            walk_table(vaddress, table, lvl);
         }
 
         auto &entry = table->get_entry(get_page_entry_index(vaddress, lvl));
@@ -52,8 +71,6 @@ LKERNELFUN void *v_to_p(const void *vaddress, PageTable *table = nullptr) {
 LKERNELFUN bool kmmap(const void *paddress, const void *vaddress, PageTable *table, PageLevel p_lvl, uint64_t flags,
                       frame_fn f_src) {
 
-    if (f_src == nullptr)
-        f_src = &get_frame;
     void *p = v_to_p(vaddress);
 
     if (p != nullptr)
@@ -67,19 +84,28 @@ LKERNELFUN bool kmmap(const void *paddress, const void *vaddress, PageTable *tab
     PageTable *t = table;
 
     while (c_lvl != p_lvl) {
-        walk_table(vaddress, &t, c_lvl);
-        if (c_lvl != expected) {
-            size_t lvl_entry_idx = get_page_entry_index(vaddress, c_lvl);
-            auto &entry = t->get_entry(lvl_entry_idx);
-            if (!entry.is_valid()) {
-                PageTable *n_table = reinterpret_cast<PageTable *>(f_src());
-                // TODO: HANDLE ERROR (OUT OF MEMORY)
-                if (n_table == nullptr)
-                    return false;
-                memset(n_table, 0, PAGE_FRAME_SIZE);
-                entry.point_to_table(n_table);
-            }
+        walk_table(vaddress, t, c_lvl);
+
+        if (c_lvl == expected) {
+            expected = next_vpn(c_lvl);
+            continue;
         }
+
+        size_t lvl_entry_idx = get_page_entry_index(vaddress, c_lvl);
+        auto &entry = t->get_entry(lvl_entry_idx);
+
+        if (entry.is_leaf())
+            return false;
+
+        PageTable *n_table = reinterpret_cast<PageTable *>(f_src());
+        // TODO: HANDLE ERROR (OUT OF MEMORY)
+        if (n_table == nullptr)
+            return false;
+        memset(n_table, 0, PAGE_FRAME_SIZE);
+        entry.point_to_table(n_table);
+
+        t = n_table;
+        c_lvl = expected;
     }
 
     size_t lvl_entry_idx = get_page_entry_index(vaddress, c_lvl);

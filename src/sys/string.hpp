@@ -59,7 +59,18 @@ int strncmp(const char *str1, const char *str2, size_t n);
  * @param str Null terminated string.
  * @return size_t String lenght.
  */
-size_t strlen(const char *str);
+#ifndef __STRLEN
+#define __STRLEN
+#define strlen(__str)                                                                                                  \
+    [](const char *s) -> size_t __attribute__((always_inline)) {                                                       \
+        size_t i = 0;                                                                                                  \
+        if (str)                                                                                                       \
+            for (; str[i] != '\0'; ++i)                                                                                \
+                ;                                                                                                      \
+        return i;                                                                                                      \
+    }                                                                                                                  \
+    (str)
+#endif
 
 /**
  * @brief Count how many characters a string has, up to *maxlen* characters,

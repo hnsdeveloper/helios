@@ -22,7 +22,7 @@ SECTIONS
 	.text.low : {
 		. = ALIGN(4);
 		*(.text.low)
-		*(.text.low.clss)
+		*(.text.clss)
 		*(.text.low.*)
 	}>ram AT>ram :text
 

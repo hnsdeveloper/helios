@@ -24,6 +24,7 @@ SOFTWARE.
 ---------------------------------------------------------------------------------*/
 
 #include "arch/riscv64gc/plat_def.hpp"
+#include "sys/mem.hpp"
 
 namespace hls {
 
@@ -73,7 +74,7 @@ LKERNELCLSSFUN bool PageEntry::is_executable() {
 }
 
 LKERNELCLSSFUN PageTable *PageEntry::as_table_pointer() {
-    return reinterpret_cast<PageTable *>(to_ptr((data >> 10) << 12));
+    return reinterpret_cast<PageTable *>(as_pointer());
 }
 
 LKERNELCLSSFUN void PageEntry::point_to_table(const PageTable *table) {

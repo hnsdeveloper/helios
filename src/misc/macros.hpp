@@ -65,33 +65,4 @@ SOFTWARE.
 #define LKERNELBSS __attribute__((section(".bss.low#")))
 #define LKERNELSBSS __attribute__((section(".sbss.low#")))
 
-/*
-  These functions are written as macros so they are available equally on low mem and high mem parts of the kernel
-*/
-
-#define memset(__src, __c, __sz)                                                                                       \
-    for (size_t __i = 0; __i < __sz; ++__i) {                                                                          \
-        *((unsigned char *)(__src) + __i) = (unsigned char)(__c);                                                      \
-    }
-#define strlen(__str)                                                                                                  \
-    [](const char *s) -> size_t __attribute__((always_inline)) {                                                       \
-        if (s == nullptr)                                                                                              \
-            return 0;                                                                                                  \
-        for (size_t i = 0; *str; ++str, ++i)                                                                           \
-            ;                                                                                                          \
-        return i;                                                                                                      \
-    }                                                                                                                  \
-    (str)
-
-#define apply_offset(__p, __off)                                                                                       \
-    [](void *p, uintptr_t offset) -> void *__attribute__((always_inline)) {                                            \
-        uintptr_t x = reinterpret_cast<uintptr_t>(p) + offset;                                                         \
-        return reinterpret_cast<void *>(x);                                                                            \
-    }                                                                                                                  \
-    (__p, __off)
-#define to_ptr(__x) reinterpret_cast<void *>(__x)
-#define to_uintptr_t(__x) reinterpret_cast<unsigned long long>(__x)
-
-static_assert(sizeof(unsigned long long) == sizeof(void *));
-
 #endif

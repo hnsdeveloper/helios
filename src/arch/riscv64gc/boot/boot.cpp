@@ -2,6 +2,7 @@
 #include "mem/mmap.hpp"
 #include "misc/macros.hpp"
 #include "misc/symbols.hpp"
+#include "sys/mem.hpp"
 #include "sys/opensbi.hpp"
 
 #define INITIAL_PAGE_COUNT 32
@@ -47,8 +48,18 @@ LKERNELFUN void map_kernel(PageTable *kernel_table) {
     byte *text_begin = &_text_begin;
     byte *text_end = &_text_end;
 
-    for (auto p = text_begin; p < text_end; p += PAGE_FRAME_SIZE) {
-        hls::kmmap(text_begin, k_vaddress, kernel_table, PageLevel::KB_VPN, READ | EXECUTE | ACCESS | DIRTY, f_alloc);
+    for (auto p = text_begin; p < text_end; p += PAGE_FRAME_SIZE, k_address += PAGE_FRAME_SIZE) {
+        hls::kmmap(p, k_vaddress, kernel_table, PageLevel::KB_VPN, READ | EXECUTE | ACCESS | DIRTY, f_alloc);
+    }
+}
+
+LKERNELFUN void map(PageTable *k_table) {
+    uintptr_t addr = 0;
+    byte *k_vaddress = reinterpret_cast<byte *>(to_ptr(addr));
+
+    for (size_t i = 0; i < 8; ++i) {
+        hls::kmmap(k_vaddress, k_vaddress, k_table, PageLevel::FIRST_VPN, READ | EXECUTE, f_alloc);
+        k_vaddress += PAGE_FRAME_SIZE;
     }
 }
 
@@ -56,7 +67,7 @@ extern "C" LKERNELFUN void *bootmain(int argc, char **argv) {
     strprintln(BOOTING_STRING);
     init_f_alloc();
     PageTable *kernel_table = reinterpret_cast<PageTable *>(f_alloc());
-    map_kernel(kernel_table);
+    map(kernel_table);
 
     return kernel_table;
 }
