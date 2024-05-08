@@ -23,13 +23,14 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "misc/macros.hpp"
-#include "misc/types.hpp"
+#include "sys/print.hpp"
 
 namespace hls {
+[[no_return]] void kernel_main(int argc, const char **argv) {
+    strprint("Booting HELIOS!");
+}
 
-LKERNELFUN void *get_frame();
-LKERNELFUN void release_frame(void *);
-LKERNELFUN void initialize_frame_manager(void *mem, size_t mem_size);
+}; // namespace hls
 
-} // namespace hls
+extern "C" void _main(int argc, const char **argv) {
+}

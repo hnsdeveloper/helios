@@ -47,6 +47,7 @@ fn main() {
 
     let bootfiles = find_files("./src/arch/riscv64gc/", true);
     let memfiles = find_files("./src/mem/", true);
+    let sysfiles = find_files("./src/sys/", true);
     println!("Building kernel.");
     // Builds cpp files
     cc::Build::new()
@@ -62,11 +63,11 @@ fn main() {
         .flag("-fno-use-cxa-atexit")
         .flag(&git_hash_arg)
         .flag(&ddebug)
-        //.flag("-fpie")
         .std("c++20")
         .shared_flag(true)
         .include("./src/")
         .files(bootfiles)
         .files(memfiles)
+        .files(sysfiles)
         .compile("kernel");
 }

@@ -29,27 +29,46 @@ _start:
 	add			fp, x0, x0
 	la			sp, _lstack_end
 
-	addi		sp, sp, -16
-	sd			x0, 0(sp)
+	addi		sp, sp, -32
+	# Store argc and argv
+	sd			a0, 0(sp)
+	sd			a1, 8(sp)
+
+	# Store framepointer (none) and return address
+	sd			x0, 16(sp)
 	la			t4, 3f
-	sd			t4, 8(sp)
+	sd			t4, 24(sp)
 3:
 	# Calls bootmain, so we start using C code. a0 and a1 should contain argc and argv
 	call		bootmain
 
 4:
-	srli 		a0, a0, 12
-    li 			a1, 0x9000000000000000
-    or 			a0, a0, a1
+	# The page table should be in a0, but we need it for argc and argv
+	add			t0, x0, a0
+	ld			a0, 0(sp)
+	ld			a1, 8(sp)
+	
+	# Now we manipulate the page table pointer
+	srli 		t0, t0, 12
+    li 			t1, 0x9000000000000000
+    or 			t0, t0, t1
+
+	# We also manipulate the sstatus register
     addi 		t2, x0, 1
     slli 		t2, t2, 18
     csrrs 		t2, sstatus, t2
-    sfence.vma 	x0, x0
-5:
-    csrrw 		a0, satp, a0
-	wfi
-	j 5b
-	
+
+	la			gp, _global_pointer
+	la			t5, _bss_begin
+	la			t6, _bss_end
+	add			fp, x0, x0
+	la			sp, _stack_end
+	la			ra, _main
+    
+	sfence.vma 	x0, x0
+    csrrw 		t0, satp, t0
+	jr			ra
+
 /*
 4:
 	la 			gp, _global_pointer

@@ -156,13 +156,3 @@ size_t cpu_id() {
 }
 
 } // namespace hls
-
-/**
- * @brief Accessible symbol from assembly. Used to call the real main function.
- *
- * @param argc Argument count
- * @param argv Array of string arguments
- */
-extern "C" [[noreturn]] void bootmain(int argc, const char **argv) {
-    hls::main(argc, argv);
-}
