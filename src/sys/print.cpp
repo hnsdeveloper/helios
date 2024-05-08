@@ -26,7 +26,6 @@ SOFTWARE.
 #include "sys/print.hpp"
 #include "misc/limits.hpp"
 #include "misc/types.hpp"
-#include "sys/mem.hpp"
 #include "sys/opensbi.hpp"
 
 const bool UART_PRINTING = true;
