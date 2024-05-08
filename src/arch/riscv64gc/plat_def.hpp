@@ -150,6 +150,7 @@ struct __attribute__((packed)) PageTable {
     PageEntry entries[ENTRIES_PER_TABLE];
 
     LKERNELCLSSFUN PageEntry &get_entry(size_t entry_index);
+    LKERNELCLSSFUN void print_entries();
     LKERNELCLSSFUN bool is_empty();
 };
 

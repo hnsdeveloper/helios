@@ -25,6 +25,7 @@ SOFTWARE.
 
 #include "arch/riscv64gc/plat_def.hpp"
 #include "sys/mem.hpp"
+#include "sys/opensbi.hpp"
 
 namespace hls {
 
@@ -101,4 +102,90 @@ LKERNELFUN PageLevel next_vpn(PageLevel v) {
         return v;
     return static_cast<PageLevel>(static_cast<size_t>(v) - 1);
 }
+
+LKERNELFUN void uintprint(uint64_t v) {
+    if (v == 0) {
+        opensbi_putchar('0');
+        return;
+    }
+
+    char buffer[256];
+    size_t buffer_used = 0;
+
+    for (size_t i = 0; v; ++i, v /= 10, ++buffer_used) {
+        buffer[i] = v % 10 + '0';
+    }
+
+    for (size_t i = 0; i < buffer_used; ++i) {
+        char &c = buffer[buffer_used - i - 1];
+        opensbi_putchar(c);
+    }
+}
+
+LKERNELFUN void hexprint(uintptr_t p) {
+    char buffer[16];
+
+    for (size_t i = 0; i < 16; ++i) {
+        buffer[i] = p & 0xF;
+        p = p >> 4;
+    }
+
+    opensbi_putchar('0');
+    opensbi_putchar('x');
+    for (size_t i = 0; i < 16; ++i) {
+        char c = buffer[15 - i];
+        if (c <= 9) {
+            c = c + '0';
+        } else
+            c = c - 10 + 'a';
+        opensbi_putchar(c);
+    }
+}
+
+LKERNELFUN void _strprint(const char *str) {
+    while (*str) {
+        opensbi_putchar(*str);
+        ++str;
+    }
+}
+
+LKERNELFUN void _strprintln(const char *str) {
+    _strprint(str);
+    opensbi_putchar('\r');
+    opensbi_putchar('\n');
+}
+
+LKERNELDATA char _0[] = "Table address: ";
+
+LKERNELDATA char _1[] = "\r\ni: ";
+LKERNELDATA char _2[] = " entry data: ";
+LKERNELDATA char _3[] = " entry pointing address: ";
+
+LKERNELDATA char _4[] = "\r\n";
+
+LKERNELCLSSFUN void PageTable::print_entries() {
+    uintptr_t p_address = to_uintptr_t(this);
+    _strprint(_0);
+    hexprint(p_address);
+
+    for (size_t i = 0; i < ENTRIES_PER_TABLE; ++i) {
+        auto &entry = entries[i];
+        _strprint(_1);
+        uintprint(i);
+        _strprint(_2);
+        hexprint(entry.data);
+        _strprint(_3);
+        hexprint(to_uintptr_t(entry.as_pointer()));
+        // kprintln("i: {} entry_data: {} {} entry address: {}", i, entry.data, entry.as_pointer(),
+        //          reinterpret_cast<const void *>(&entry.data));
+        _strprint(_4);
+    }
+
+    for (size_t i = 0; i < ENTRIES_PER_TABLE; ++i) {
+        auto &entry = entries[i];
+        if (entry.is_valid() && !entry.is_leaf())
+            entry.as_table_pointer()->print_entries();
+    }
+}
+
 } // namespace hls
