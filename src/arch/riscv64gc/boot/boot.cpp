@@ -29,20 +29,25 @@ SOFTWARE.
 #include "sys/mem.hpp"
 #include "sys/opensbi.hpp"
 #include "sys/print.hpp"
+#include "sys/string.hpp"
 
-#ifndef BOOT_PAGE_COUNT
-#define BOOT_PAGE_COUNT 32
+#ifndef BOOTPAGES
+#define BOOTPAGES 32
+#endif
+
+#ifndef ARGPAGES
+#define ARGPAGES 2
 #endif
 
 using namespace hls;
 
-LKERNELBSS alignas(4096) PageKB INITIAL_FRAMES[BOOT_PAGE_COUNT];
-LKERNELRODATA char HERE1[] = "HERE1";
-LKERNELRODATA char HERE2[] = "HERE2";
-LKERNELRODATA char HERE3[] = "HERE3";
-LKERNELRODATA char HERE4[] = "HERE4";
-LKERNELRODATA char HERE5[] = "HERE5";
-LKERNELRODATA char HERE6[] = "HERE6";
+LKERNELBSS alignas(PAGE_FRAME_SIZE) PageKB INITIAL_FRAMES[BOOTPAGES];
+LKERNELBSS alignas(PAGE_FRAME_SIZE) byte ARGCV[PAGE_FRAME_SIZE * ARGPAGES];
+
+LKERNELRODATA const char NEEDPAGES[] = "Not enough pages. Please, compile kernel with higher BOOTPAGES option.";
+LKERNELRODATA const char NEEDARGCV[] =
+    "Not enough pages for arguments. Please, compile kernel with higher ARGPAGES option.";
+LKERNELDATA byte *kvaddress = reinterpret_cast<byte *>(uintptr_t(0) - uintptr_t(0x40000000));
 
 #define nvpn(__v) __v == PageLevel::KB_VPN ? PageLevel::KB_VPN : static_cast<PageLevel>(static_cast<size_t>(__v) - 1)
 
@@ -76,8 +81,13 @@ LKERNELFUN void *f_alloc() {
     LKERNELDATA static size_t i = 0;
 
     GranularPage *p = INITIAL_FRAMES;
-    if (i < BOOT_PAGE_COUNT)
+    if (i < BOOTPAGES)
         return p + i++;
+
+    strprintln(NEEDPAGES);
+    while (true)
+        ;
+
     return nullptr;
 }
 
@@ -127,17 +137,26 @@ LKERNELFUN bool bkmmap(const void *paddress, const void *vaddress, PageTable *ta
 LKERNELFUN void map_high_kernel(PageTable *kernel_table) {
     byte *_k_physical = &_kload_begin;
 
-    for (auto i = &_text_begin; i != &_text_end; i += PAGE_FRAME_SIZE, _k_physical += PAGE_FRAME_SIZE) {
-        bkmmap(_k_physical, i, kernel_table, PageLevel::FIRST_VPN, READ | EXECUTE | ACCESS | DIRTY);
+    kvaddress = &_text_begin;
+    for (; kvaddress != &_text_end; kvaddress += PAGE_FRAME_SIZE, _k_physical += PAGE_FRAME_SIZE) {
+        bkmmap(_k_physical, kvaddress, kernel_table, PageLevel::FIRST_VPN, READ | EXECUTE | ACCESS | DIRTY);
+    }
+    kvaddress = &_rodata_begin;
+    for (; kvaddress != &_rodata_end; kvaddress += PAGE_FRAME_SIZE, _k_physical += PAGE_FRAME_SIZE) {
+        bkmmap(_k_physical, kvaddress, kernel_table, PageLevel::FIRST_VPN, READ | ACCESS | DIRTY);
     }
 
-    for (auto i = &_rodata_begin; i != &_rodata_end; i += PAGE_FRAME_SIZE, _k_physical += PAGE_FRAME_SIZE) {
-        bkmmap(_k_physical, i, kernel_table, PageLevel::FIRST_VPN, READ | ACCESS | DIRTY);
-    }
-
+    kvaddress = &_data_begin;
     // DATA, BSS and STACK are all READ and WRITE
-    for (auto i = &_data_begin; i != &_stack_end; i += PAGE_FRAME_SIZE, _k_physical += PAGE_FRAME_SIZE) {
-        bkmmap(_k_physical, i, kernel_table, PageLevel::FIRST_VPN, READ | WRITE | ACCESS | DIRTY);
+    for (; kvaddress != &_stack_end; kvaddress += PAGE_FRAME_SIZE, _k_physical += PAGE_FRAME_SIZE) {
+        bkmmap(_k_physical, kvaddress, kernel_table, PageLevel::FIRST_VPN, READ | WRITE | ACCESS | DIRTY);
+    }
+}
+
+LKERNELFUN void map_page_tables(PageTable *kernel_table) {
+    for (size_t i = 0; i < BOOTPAGES; ++i) {
+        bkmmap(INITIAL_FRAMES + i, kvaddress, kernel_table, PageLevel::KB_VPN, READ | WRITE | ACCESS | DIRTY);
+        kvaddress += PAGE_FRAME_SIZE;
     }
 }
 
@@ -147,16 +166,52 @@ LKERNELFUN void identity_map(PageTable *kernel_table) {
     }
 }
 
-LKERNELFUN void map_args(PageTable *kernel_table, int argc, char **argv) {
+LKERNELFUN const char **map_args(PageTable *kernel_table, int argc, const char **argv) {
+    size_t consumed_bytes = 0;
+    byte *c = ARGCV;
+    const char *nargv[argc];
     for (size_t i = 0; i < argc; ++i) {
-        ptrprint(*argv);
+        const char *str = argv[i];
+        // Memory length, not string length
+        size_t len = strlen(str) + 1;
+        memcpy(c, str, len);
+        nargv[i] = reinterpret_cast<const char *>(kvaddress + consumed_bytes);
+        consumed_bytes += len;
+        c += len;
+        if (consumed_bytes > sizeof(ARGCV)) {
+            strprintln(NEEDARGCV);
+            while (true)
+                ;
+        }
     }
+
+    if (consumed_bytes + sizeof(nargv) > sizeof(ARGCV)) {
+        strprintln(NEEDARGCV);
+        while (true)
+            ;
+    }
+    memcpy(c, &nargv, sizeof(nargv));
+
+    auto old_kv = kvaddress;
+    for (size_t i = 0; i < ARGPAGES; ++i) {
+        bkmmap(ARGCV + i, kvaddress, kernel_table, PageLevel::KB_VPN, READ | ACCESS | DIRTY);
+        kvaddress += PAGE_FRAME_SIZE;
+    }
+
+    return reinterpret_cast<const char **>(old_kv + consumed_bytes);
 }
 
-extern "C" LKERNELFUN void *bootmain(int argc, char **argv) {
+extern "C" LKERNELFUN void bootmain(int argc, const char **argv, PageTable **kptp, PageTable **kptv,
+                                    const char ***argvnew, byte **unmapped) {
     init_f_alloc();
     PageTable *kernel_table = reinterpret_cast<PageTable *>(f_alloc());
     map_high_kernel(kernel_table);
     identity_map(kernel_table);
-    return kernel_table;
+
+    *kptv = reinterpret_cast<PageTable *>(kvaddress);
+    map_page_tables(kernel_table);
+
+    *argvnew = map_args(kernel_table, argc, argv);
+    *kptp = kernel_table;
+    *unmapped = kvaddress;
 }

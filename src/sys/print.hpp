@@ -27,8 +27,8 @@ SOFTWARE.
 
 #include "misc/types.hpp"
 #include "misc/typetraits.hpp"
+#include "sys/mem.hpp"
 #include "sys/opensbi.hpp"
-
 namespace hls {
 
 /**
@@ -40,9 +40,11 @@ namespace hls {
 #define __STRPRINT
 #define strprint(__str)                                                                                                \
     [](const char *str) __attribute__((always_inline)) {                                                               \
-        while (*str) {                                                                                                 \
-            opensbi_putchar(*str);                                                                                     \
-            ++str;                                                                                                     \
+        if (str) {                                                                                                     \
+            while (*str) {                                                                                             \
+                opensbi_putchar(*str);                                                                                 \
+                ++str;                                                                                                 \
+            }                                                                                                          \
         }                                                                                                              \
     }                                                                                                                  \
     (__str)

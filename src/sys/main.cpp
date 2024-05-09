@@ -23,17 +23,18 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
+#include "arch/riscv64gc/plat_def.hpp"
+#include "sys/mem.hpp"
 #include "sys/print.hpp"
+#include "sys/string.hpp"
 
 namespace hls {
-[[no_return]] void kernel_main(int argc, const char **argv) {
-    strprint("Booting HELIOS!");
-    while (true)
-        ;
+[[no_return]] void kernel_main(int argc, const char **argv, PageTable *kptp, PageTable *kptv, byte *unmapped) {
 }
 
 }; // namespace hls
 
-extern "C" void _main(int argc, const char **argv, void *kernel_table) {
-    hls::kernel_main(argc, argv);
+extern "C" void _main(int argc, const char **argv, hls::PageTable *kptp, hls::PageTable *kptv, byte *unmapped) {
+
+    hls::kernel_main(argc, argv, kptp, kptv, unmapped);
 }

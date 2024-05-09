@@ -38,15 +38,27 @@ _start:
 	sd			x0, 16(sp)
 	la			t4, 3f
 	sd			t4, 24(sp)
+
+	addi		sp, sp, -32
+	addi		a2, sp, 0
+	addi		a3, sp, 8
+	addi		a4, sp, 16
+	addi 		a5, sp, 24
 3:
 	# Calls bootmain, so we start using C code. a0 and a1 should contain argc and argv
 	call		bootmain
 
 4:
+	# Arguments for main function
+	ld			a2, 0(sp)
+	ld			a3, 8(sp)
+	ld			a1, 16(sp)
+	ld			a4, 24(sp)
+	addi		sp, sp, 32
+
 	# The page table should be in a0, but we need it for argc and argv
-	add			t0, x0, a0
+	add			t0, x0, a2
 	ld			a0, 0(sp)
-	ld			a1, 8(sp)
 	
 	# Now we manipulate the page table pointer
 	srli 		t0, t0, 12

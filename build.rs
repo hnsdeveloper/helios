@@ -41,9 +41,19 @@ fn main() {
     git_hash_arg.push_str(git_hash.as_str());
 
     let ddebug = match std::env::var("PROFILE").unwrap_or(String::new()).as_str() {
-        "debug" => "-DDEBUG",
-        _ => "",
+        "debug" => "-DDEBUG".to_string(),
+        _ => "".to_string(),
     };
+
+    let bootpages = match std::env::var("BOOTPAGES") {
+        Ok(str) => match str.parse::<u64>() {
+            Ok(val) => val,
+            _ => 32,
+        },
+        _ => 32,
+    };
+
+    let dbootpages = "-DBOOTPAGES=".to_string() + &bootpages.to_string();
 
     let bootfiles = find_files("./src/arch/riscv64gc/", true);
     let memfiles = find_files("./src/mem/", true);
@@ -63,6 +73,7 @@ fn main() {
         .flag("-fno-use-cxa-atexit")
         .flag(&git_hash_arg)
         .flag(&ddebug)
+        .flag(&dbootpages)
         .std("c++20")
         .shared_flag(true)
         .include("./src/")

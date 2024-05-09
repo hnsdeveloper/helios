@@ -259,14 +259,14 @@ namespace hls {
 #ifndef __STRLEN
 #define __STRLEN
 #define strlen(__str)                                                                                                  \
-    [](const char *s) -> size_t __attribute__((always_inline)) {                                                       \
+    [](const char *str) -> size_t __attribute__((always_inline)) {                                                     \
         size_t i = 0;                                                                                                  \
         if (str)                                                                                                       \
             for (; str[i] != '\0'; ++i)                                                                                \
                 ;                                                                                                      \
         return i;                                                                                                      \
     }                                                                                                                  \
-    (str)
+    (__str)
 #endif
 
 /**
