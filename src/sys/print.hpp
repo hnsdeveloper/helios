@@ -75,7 +75,7 @@ namespace hls {
     [](const void *ptr) __attribute__((always_inline)) {                                                               \
         auto v = to_uintptr_t(ptr);                                                                                    \
         char buffer[sizeof(v) * 8 / 4];                                                                                \
-        for (size_t i = 0; i < buffer_size; ++i) {                                                                     \
+        for (size_t i = 0; i < sizeof(v) * 8 / 4; ++i) {                                                               \
             char c = v & 0xF;                                                                                          \
             if (c <= 9) {                                                                                              \
                 c += '0';                                                                                              \
@@ -87,8 +87,8 @@ namespace hls {
         }                                                                                                              \
         opensbi_putchar('0');                                                                                          \
         opensbi_putchar('x');                                                                                          \
-        for (size_t i = 0; i < buffer_size; ++i) {                                                                     \
-            char &c = buffer[buffer_size - i - 1];                                                                     \
+        for (size_t i = 0; i < sizeof(v) * 8 / 4; ++i) {                                                               \
+            char &c = buffer[sizeof(v) * 8 / 4 - i - 1];                                                               \
             opensbi_putchar(c);                                                                                        \
         }                                                                                                              \
     }                                                                                                                  \

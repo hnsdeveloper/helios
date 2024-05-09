@@ -24,24 +24,49 @@ SOFTWARE.
 ---------------------------------------------------------------------------------*/
 
 #include "arch/riscv64gc/plat_def.hpp"
-#include "mem/mmap.hpp"
 #include "misc/macros.hpp"
 #include "misc/symbols.hpp"
 #include "sys/mem.hpp"
 #include "sys/opensbi.hpp"
 #include "sys/print.hpp"
 
-#define INITIAL_PAGE_COUNT 32
+#ifndef BOOT_PAGE_COUNT
+#define BOOT_PAGE_COUNT 32
+#endif
 
 using namespace hls;
 
-LKERNELBSS alignas(4096) GranularPage INITIAL_FRAMES[INITIAL_PAGE_COUNT];
+LKERNELBSS alignas(4096) PageKB INITIAL_FRAMES[BOOT_PAGE_COUNT];
+LKERNELRODATA char HERE1[] = "HERE1";
+LKERNELRODATA char HERE2[] = "HERE2";
+LKERNELRODATA char HERE3[] = "HERE3";
+LKERNELRODATA char HERE4[] = "HERE4";
+LKERNELRODATA char HERE5[] = "HERE5";
+LKERNELRODATA char HERE6[] = "HERE6";
 
-LKERNELRODATA const char BOOTING_STRING[] = "Booting HELIOS!";
-LKERNELRODATA const char NEW_LINE[] = "\r\n";
-LKERNELRODATA const char HERE[] = "HERE\r\n";
+#define nvpn(__v) __v == PageLevel::KB_VPN ? PageLevel::KB_VPN : static_cast<PageLevel>(static_cast<size_t>(__v) - 1)
 
-const char *TESTLINE = "\r\n";
+LKERNELFUN size_t pe_idx(const void *vaddress, PageLevel v) {
+    size_t vpn_idx = static_cast<size_t>(v);
+    uintptr_t idx = to_uintptr_t(vaddress) >> 12;
+    return (idx >> (vpn_idx * 9)) & 0x1FF;
+}
+
+LKERNELFUN void twlk(const void *vaddress, PageTable **table, PageLevel *lvl) {
+    if (table == nullptr || lvl == nullptr)
+        return;
+
+    PageLevel l = *lvl;
+    PageTable *t = *table;
+    size_t idx = pe_idx(vaddress, l);
+    auto &entry = t->entries[idx];
+    if (entry.data & VALID) {
+        if (!(entry.data & (READ | WRITE | EXECUTE))) {
+            *table = reinterpret_cast<PageTable *>((entry.data >> 10) << 12);
+            *lvl = nvpn(*lvl);
+        }
+    }
+}
 
 LKERNELFUN void init_f_alloc() {
     memset(INITIAL_FRAMES, 0, sizeof(INITIAL_FRAMES));
@@ -51,42 +76,87 @@ LKERNELFUN void *f_alloc() {
     LKERNELDATA static size_t i = 0;
 
     GranularPage *p = INITIAL_FRAMES;
-    if (i < INITIAL_PAGE_COUNT)
+    if (i < BOOT_PAGE_COUNT)
         return p + i++;
     return nullptr;
 }
 
-LKERNELFUN void map_kernel(PageTable *kernel_table) {
-    uintptr_t k_address = 0xFFFFFFFFC0000000;
+LKERNELFUN bool bkmmap(const void *paddress, const void *vaddress, PageTable *table, const PageLevel p_lvl,
+                       uint64_t flags) {
 
-    byte *v_address = reinterpret_cast<byte *>(to_ptr(k_address));
-    byte *text_begin = &_text_begin;
-    byte *text_end = &_text_end;
+    if (table == nullptr)
+        return false;
 
-    for (auto p = text_begin; p < text_end; p += PAGE_FRAME_SIZE) {
-        strprint(HERE);
-        hls::kmmap(p, v_address, kernel_table, PageLevel::KB_VPN, READ | EXECUTE | ACCESS | DIRTY, f_alloc);
-        v_address += PAGE_FRAME_SIZE;
+    PageLevel c_lvl = PageLevel::LAST_VPN;
+    PageLevel expected = nvpn(c_lvl);
+    PageTable *t = table;
+
+    while (c_lvl != p_lvl) {
+        twlk(vaddress, &t, &c_lvl);
+        if (c_lvl == expected) {
+            expected = nvpn(expected);
+            continue;
+        }
+
+        size_t idx = pe_idx(vaddress, c_lvl);
+        auto &entry = t->entries[idx];
+
+        if (entry.data & (READ | WRITE | EXECUTE))
+            return false;
+
+        if (!(entry.data & VALID)) {
+            void *frame = f_alloc();
+            memset(frame, 0, PAGE_FRAME_SIZE);
+            entry.data = ((reinterpret_cast<uint64_t>(frame) >> 12) << 10);
+            entry.data = entry.data | VALID;
+        }
+
+        c_lvl = nvpn(c_lvl);
+        expected = nvpn(expected);
+        t = reinterpret_cast<PageTable *>(to_ptr((entry.data >> 10) << 12));
+    }
+
+    size_t lvl_entry_idx = pe_idx(vaddress, c_lvl);
+    auto &entry = t->entries[lvl_entry_idx];
+    entry.data = (to_uintptr_t(paddress) >> 12) << 10;
+    entry.data = entry.data | VALID | flags;
+
+    return true;
+}
+
+LKERNELFUN void map_high_kernel(PageTable *kernel_table) {
+    byte *_k_physical = &_kload_begin;
+
+    for (auto i = &_text_begin; i != &_text_end; i += PAGE_FRAME_SIZE, _k_physical += PAGE_FRAME_SIZE) {
+        bkmmap(_k_physical, i, kernel_table, PageLevel::FIRST_VPN, READ | EXECUTE | ACCESS | DIRTY);
+    }
+
+    for (auto i = &_rodata_begin; i != &_rodata_end; i += PAGE_FRAME_SIZE, _k_physical += PAGE_FRAME_SIZE) {
+        bkmmap(_k_physical, i, kernel_table, PageLevel::FIRST_VPN, READ | ACCESS | DIRTY);
+    }
+
+    // DATA, BSS and STACK are all READ and WRITE
+    for (auto i = &_data_begin; i != &_stack_end; i += PAGE_FRAME_SIZE, _k_physical += PAGE_FRAME_SIZE) {
+        bkmmap(_k_physical, i, kernel_table, PageLevel::FIRST_VPN, READ | WRITE | ACCESS | DIRTY);
     }
 }
 
-LKERNELFUN void map(PageTable *k_table) {
-    uintptr_t addr = 0x80000000;
-    byte *k_vaddress = reinterpret_cast<byte *>(to_ptr(addr));
+LKERNELFUN void identity_map(PageTable *kernel_table) {
+    for (auto i = &_load_address; i != &_kload_begin; i += PAGE_FRAME_SIZE) {
+        bkmmap(i, i, kernel_table, PageLevel::FIRST_VPN, READ | WRITE | EXECUTE | ACCESS | DIRTY);
+    }
+}
 
-    for (size_t i = 0; i < 8; ++i) {
-        hls::kmmap(k_vaddress, k_vaddress, k_table, PageLevel::FIRST_VPN, READ | EXECUTE, f_alloc);
-        k_vaddress += PAGE_FRAME_SIZE;
+LKERNELFUN void map_args(PageTable *kernel_table, int argc, char **argv) {
+    for (size_t i = 0; i < argc; ++i) {
+        ptrprint(*argv);
     }
 }
 
 extern "C" LKERNELFUN void *bootmain(int argc, char **argv) {
-    strprintln(BOOTING_STRING);
     init_f_alloc();
     PageTable *kernel_table = reinterpret_cast<PageTable *>(f_alloc());
-    map_kernel(kernel_table);
-
-    kernel_table->print_entries();
-
+    map_high_kernel(kernel_table);
+    identity_map(kernel_table);
     return kernel_table;
 }

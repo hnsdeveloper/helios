@@ -41,7 +41,7 @@ using uintreg_t = uint64_t;
 #define PAGE_TABLE_SIZE PAGE_FRAME_SIZE
 #define PAGE_TABLE_ENTRY_SIZE 8
 #define ENTRIES_PER_TABLE PAGE_FRAME_SIZE / PAGE_TABLE_ENTRY_SIZE
-#define VALID_PAGE_BIT uint64_t(1u) << 0
+#define VALID uint64_t(1u) << 0
 #define READ uint64_t(1u) << 1
 #define WRITE uint64_t(1u) << 2
 #define EXECUTE uint64_t(1u) << 3
@@ -64,27 +64,27 @@ LKERNELFUN PageLevel next_vpn(PageLevel v);
 template <PageLevel...> struct FrameInfo;
 
 template <> struct FrameInfo<PageLevel::KB_VPN> {
-    LKERNELRODATA static constexpr size_t size = 4096;
-    LKERNELRODATA static constexpr PageLevel page_type = PageLevel::KB_VPN;
-    LKERNELRODATA static constexpr size_t alignment = size;
+    static constexpr size_t size = 4096;
+    static constexpr PageLevel page_type = PageLevel::KB_VPN;
+    static constexpr size_t alignment = size;
 };
 
 template <> struct FrameInfo<PageLevel::MB_VPN> {
-    LKERNELRODATA static constexpr size_t size = 512ul * FrameInfo<PageLevel::KB_VPN>::size;
-    LKERNELRODATA static constexpr PageLevel page_type = PageLevel::MB_VPN;
-    LKERNELRODATA static constexpr size_t alignment = size;
+    static constexpr size_t size = 512ul * FrameInfo<PageLevel::KB_VPN>::size;
+    static constexpr PageLevel page_type = PageLevel::MB_VPN;
+    static constexpr size_t alignment = size;
 };
 
 template <> struct FrameInfo<PageLevel::GB_VPN> {
-    LKERNELRODATA static constexpr size_t size = 512ul * FrameInfo<PageLevel::MB_VPN>::size;
-    LKERNELRODATA static constexpr PageLevel page_type = PageLevel::GB_VPN;
-    LKERNELRODATA static constexpr size_t alignment = size;
+    static constexpr size_t size = 512ul * FrameInfo<PageLevel::MB_VPN>::size;
+    static constexpr PageLevel page_type = PageLevel::GB_VPN;
+    static constexpr size_t alignment = size;
 };
 
 template <> struct FrameInfo<PageLevel::TB_VPN> {
-    LKERNELRODATA static constexpr size_t size = 512ul * FrameInfo<PageLevel::GB_VPN>::size;
-    LKERNELRODATA static constexpr PageLevel page_type = PageLevel::TB_VPN;
-    LKERNELRODATA static constexpr size_t alignment = size;
+    static constexpr size_t size = 512ul * FrameInfo<PageLevel::GB_VPN>::size;
+    static constexpr PageLevel page_type = PageLevel::TB_VPN;
+    static constexpr size_t alignment = size;
 };
 
 template <> struct FrameInfo<> {
@@ -122,46 +122,46 @@ template <PageLevel type> struct PageFrame;
 struct __attribute__((packed)) PageEntry {
     uint64_t data = 0;
 
-    LKERNELCLSSFUN void erase();
+    void erase();
 
-    LKERNELCLSSFUN bool is_valid();
+    bool is_valid();
 
-    LKERNELCLSSFUN bool is_leaf();
-    LKERNELCLSSFUN bool is_table_pointer();
+    bool is_leaf();
+    bool is_table_pointer();
 
-    LKERNELCLSSFUN bool is_writable();
-    LKERNELCLSSFUN bool is_readable();
-    LKERNELCLSSFUN bool is_executable();
+    bool is_writable();
+    bool is_readable();
+    bool is_executable();
 
-    LKERNELCLSSFUN PageTable *as_table_pointer();
+    PageTable *as_table_pointer();
 
-    LKERNELCLSSFUN void *as_pointer();
+    void *as_pointer();
 
-    LKERNELCLSSFUN void point_to_table(const PageTable *table);
+    void point_to_table(const PageTable *table);
 
-    LKERNELCLSSFUN void point_to_frame(const void *frame);
+    void point_to_frame(const void *frame);
 
-    LKERNELCLSSFUN void set_flags(uint64_t flags);
+    void set_flags(uint64_t flags);
 
-    LKERNELCLSSFUN void unset_flags(uint64_t flags);
+    void unset_flags(uint64_t flags);
 };
 
 struct __attribute__((packed)) PageTable {
     PageEntry entries[ENTRIES_PER_TABLE];
 
-    LKERNELCLSSFUN PageEntry &get_entry(size_t entry_index);
-    LKERNELCLSSFUN void print_entries();
-    LKERNELCLSSFUN bool is_empty();
+    PageEntry &get_entry(size_t entry_index);
+    void print_entries();
+    bool is_empty();
 };
 
 template <PageLevel v> struct __attribute__((packed)) PageFrame {
-    LKERNELRODATA static constexpr size_t s_size = FrameInfo<v>::size;
-    LKERNELRODATA static constexpr PageLevel s_type = FrameInfo<v>::page_type;
-    LKERNELRODATA static constexpr size_t alignment = FrameInfo<v>::size;
+    static constexpr size_t s_size = FrameInfo<v>::size;
+    static constexpr PageLevel s_type = FrameInfo<v>::page_type;
+    static constexpr size_t alignment = FrameInfo<v>::size;
 
     char data[FrameInfo<v>::size];
 
-    LKERNELCLSSFUN PageTable *as_table() {
+    PageTable *as_table() {
         if constexpr (FrameInfo<v>::page_type == PageLevel::KB_VPN)
             return reinterpret_cast<PageTable *>(this);
 

@@ -28,7 +28,9 @@ SOFTWARE.
 
 #include "misc/types.hpp"
 
+extern "C" byte _load_address;
 extern "C" byte _kernel_begin;
+extern "C" byte _kload_begin;
 extern "C" byte _text_begin;
 extern "C" byte _text_end;
 extern "C" byte _global_pointer;
@@ -43,5 +45,7 @@ extern "C" byte _bss_end;
 extern "C" byte _stack_begin;
 extern "C" byte _stack_end;
 extern "C" byte _kernel_end;
+extern "C" byte _kload_end;
+extern "C" byte _kphysical_end;
 
 #endif

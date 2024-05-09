@@ -36,7 +36,7 @@ fn main() {
         .args(&["rev-parse", "--short", "HEAD"])
         .output()
         .unwrap();
-    let git_hash = String::from_utf8(output.stdout).unwrap();
+    let git_hash = String::from_utf8(output.stdout).unwrap_or(String::new());
     let mut git_hash_arg = "-DG_HASH=".to_owned();
     git_hash_arg.push_str(git_hash.as_str());
 

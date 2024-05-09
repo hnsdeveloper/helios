@@ -30,22 +30,6 @@ SOFTWARE.
 
 namespace hls {
 
-LKERNELRODATA const char HERE[] = "Here";
-LKERNELRODATA const char HERE2[] = "Here2";
-LKERNELRODATA const char NEW_LINE2[] = "\r\n";
-
-LKERNELFUN void strprint2(const char *str) {
-    while (*str) {
-        opensbi_putchar(*str);
-        ++str;
-    }
-}
-
-LKERNELFUN void strprintln2(const char *str) {
-    strprint2(str);
-    strprint2(NEW_LINE2);
-}
-
 LKERNELFUN size_t get_page_entry_index(const void *vaddress, PageLevel v) {
     size_t vpn_idx = static_cast<size_t>(v);
     uintptr_t idx = to_uintptr_t(vaddress) >> 12;

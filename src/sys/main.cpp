@@ -34,6 +34,6 @@ namespace hls {
 
 }; // namespace hls
 
-extern "C" void _main(int argc, const char **argv) {
+extern "C" void _main(int argc, const char **argv, void *kernel_table) {
     hls::kernel_main(argc, argv);
 }

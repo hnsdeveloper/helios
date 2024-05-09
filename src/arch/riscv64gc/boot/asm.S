@@ -63,36 +63,15 @@ _start:
 	la			t6, _bss_end
 	add			fp, x0, x0
 	la			sp, _stack_end
-	la			ra, _main
-    
 	sfence.vma 	x0, x0
     csrrw 		t0, satp, t0
+	
+	# Zeroes the BSS
+5:
+	sd			x0, (t5)
+	addi		t5, t5, 8
+	bltu		t5, t6, 1b
+6:	
+	la			ra, _main
 	jr			ra
-
-/*
-4:
-	la 			gp, _global_pointer
-	la			t0, _bss_begin
-	la			t1, _bss_end
-
-	add			fp, x0, x0
-	la 			sp, _stack_end
-
-	srli 		a0, a0, 12
-    li 			a1, 0x9000000000000000
-    or 			a0, a0, a1
-    addi 		t2, x0, 1
-    slli 		t2, t2, 18
-    csrrs 		t2, sstatus, t2
-	la			ra, _kernel_start
-    sfence.vma 	x0, x0
-    csrrw 		a0, satp, a0
-	jr			ra
-
-
-.section .text
-.global _kernel_start
-_kernel_start:
-	wfi
-	j 			_kernel_start
-*/	
+	

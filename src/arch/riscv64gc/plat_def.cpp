@@ -29,25 +29,25 @@ SOFTWARE.
 
 namespace hls {
 
-LKERNELCLSSFUN void PageEntry::point_to_frame(const void *frame) {
+void PageEntry::point_to_frame(const void *frame) {
     data = to_uintptr_t(frame) >> 2;
     data |= 0x1;
     set_flags(READ);
 }
 
-LKERNELCLSSFUN void PageEntry::set_flags(uint64_t flags) {
+void PageEntry::set_flags(uint64_t flags) {
     data = data | flags;
 }
 
-LKERNELCLSSFUN void PageEntry::unset_flags(uint64_t flags) {
+void PageEntry::unset_flags(uint64_t flags) {
     data = (data | flags) ^ flags;
 }
 
-LKERNELCLSSFUN void PageEntry::erase() {
+void PageEntry::erase() {
     data = 0;
 }
 
-LKERNELCLSSFUN bool PageEntry::is_valid() {
+bool PageEntry::is_valid() {
     bool result = data & 0x1;
 
     if (is_writable() && !is_readable())
@@ -56,34 +56,34 @@ LKERNELCLSSFUN bool PageEntry::is_valid() {
     return result;
 }
 
-LKERNELCLSSFUN void *PageEntry::as_pointer() {
+void *PageEntry::as_pointer() {
     return to_ptr((data << 2) & 0xFFFFFFFFFFFFF000);
 }
 
-LKERNELCLSSFUN bool PageEntry::is_leaf() {
+bool PageEntry::is_leaf() {
     return is_valid() && (is_readable() || is_executable());
 }
 
-LKERNELCLSSFUN bool PageEntry::is_writable() {
+bool PageEntry::is_writable() {
     return data & (1u << WRITE);
 }
-LKERNELCLSSFUN bool PageEntry::is_readable() {
+bool PageEntry::is_readable() {
     return data & (1u << READ);
 }
-LKERNELCLSSFUN bool PageEntry::is_executable() {
+bool PageEntry::is_executable() {
     return data & (1u << EXECUTE);
 }
 
-LKERNELCLSSFUN PageTable *PageEntry::as_table_pointer() {
+PageTable *PageEntry::as_table_pointer() {
     return reinterpret_cast<PageTable *>(as_pointer());
 }
 
-LKERNELCLSSFUN void PageEntry::point_to_table(const PageTable *table) {
+void PageEntry::point_to_table(const PageTable *table) {
     data = to_uintptr_t(table) >> 2;
     data |= 0x1;
 }
 
-LKERNELCLSSFUN bool PageTable::is_empty() {
+bool PageTable::is_empty() {
     for (size_t i = 0; i < ENTRIES_PER_TABLE; ++i) {
         auto &entry = get_entry(i);
         if (entry.data != 0)
@@ -93,17 +93,17 @@ LKERNELCLSSFUN bool PageTable::is_empty() {
     return true;
 }
 
-LKERNELCLSSFUN PageEntry &PageTable::get_entry(size_t entry_index) {
+PageEntry &PageTable::get_entry(size_t entry_index) {
     return entries[entry_index];
 }
 
-LKERNELFUN PageLevel next_vpn(PageLevel v) {
+PageLevel next_vpn(PageLevel v) {
     if (v == PageLevel::FIRST_VPN)
         return v;
     return static_cast<PageLevel>(static_cast<size_t>(v) - 1);
 }
 
-LKERNELFUN void uintprint(uint64_t v) {
+void uintprint(uint64_t v) {
     if (v == 0) {
         opensbi_putchar('0');
         return;
@@ -122,7 +122,7 @@ LKERNELFUN void uintprint(uint64_t v) {
     }
 }
 
-LKERNELFUN void hexprint(uintptr_t p) {
+void hexprint(uintptr_t p) {
     char buffer[16];
 
     for (size_t i = 0; i < 16; ++i) {
@@ -142,28 +142,28 @@ LKERNELFUN void hexprint(uintptr_t p) {
     }
 }
 
-LKERNELFUN void _strprint(const char *str) {
+void _strprint(const char *str) {
     while (*str) {
         opensbi_putchar(*str);
         ++str;
     }
 }
 
-LKERNELFUN void _strprintln(const char *str) {
+void _strprintln(const char *str) {
     _strprint(str);
     opensbi_putchar('\r');
     opensbi_putchar('\n');
 }
 
-LKERNELDATA char _0[] = "Table address: ";
+char _0[] = "Table address: ";
 
-LKERNELDATA char _1[] = "\r\ni: ";
-LKERNELDATA char _2[] = " entry data: ";
-LKERNELDATA char _3[] = " entry pointing address: ";
+char _1[] = "\r\ni: ";
+char _2[] = " entry data: ";
+char _3[] = " entry pointing address: ";
 
-LKERNELDATA char _4[] = "\r\n";
+char _4[] = "\r\n";
 
-LKERNELCLSSFUN void PageTable::print_entries() {
+void PageTable::print_entries() {
     uintptr_t p_address = to_uintptr_t(this);
     _strprint(_0);
     hexprint(p_address);
