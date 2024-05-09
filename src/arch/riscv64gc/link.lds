@@ -7,58 +7,59 @@ MEMORY
   ram  (wxa) : ORIGIN = 0x84000000, LENGTH = 10M
 }
 
+/*
 PHDRS
 {
   text PT_LOAD;
   data PT_LOAD;
   bss PT_LOAD;
 }
-
+*/
 
 SECTIONS
 {
-	. = 0x84000000;
-
 	.text.low : {
 		. = ALIGN(4);
 		*(.text.low)
 		*(.text.clss)
 		*(.text.low.*)
-	}>ram AT>ram :text
+	}
 
 	PROVIDE(_lglobal_pointer = .);
 
 	.rodata.low : {
 		. = ALIGN(4);
 		*(.rodata.low) *(.rodata.low.*)
-	}>ram AT>ram :text
+	}
 
 	.data.low : {
 		*(.data.low) *(.data.low.*)
 		*(.sdata.low) *(.sdata.low.*)
-	}>ram AT>ram :data
+	}
 
 	.bss.low : {
 		PROVIDE(_lbss_begin = .);
 		*(.bss.low) *(.bss.low.*)
 		*(.sbss.low) *(.sbss.low.*)
 		PROVIDE(_lbss_end = .);
-	}>ram AT>ram :bss
+	}
 
 	. = ALIGN(16);
-
+	PROVIDE(_bootstack_size = 0x10000);
 	PROVIDE(_lstack_begin = .);
-	PROVIDE(_lstack_end = _lstack_begin + 0x80000);
+	PROVIDE(_lstack_end = _lstack_begin + _bootstack_size);
 
-	. += 0xFFFFFFFFBFFFFFFF;
+	/* With this symbol we know where to start mapping the kernel */
+	PROVIDE(_kload_begin = _lstack_end);
 	/* Add a symbol that indicates the start address of the kernel. */
-	.text ALIGN (4K) : AT (ADDR (.text) - 0xFFFFFFFFBFFFFFFF)
+	.text  0xFFFFFFFFC0000000 : AT(_lstack_end)
 	{
 		PROVIDE(_kernel_begin = .);
   		PROVIDE(_text_begin = .);
   	  	*(.text.init) *(.text .text.*)
 	}
-	.rodata ALIGN (4K) : AT (ADDR (.rodata) - 0xFFFFFFFFBFFFFFFF)
+
+	.rodata ALIGN (4K) : AT(LOADADDR(.text) + SIZEOF(.text) + (4096 - (SIZEOF(.text) % 4096)))
 	{
 		PROVIDE(_text_end = .);
 		PROVIDE(_global_pointer = .);
@@ -66,15 +67,18 @@ SECTIONS
     	PROVIDE(_driverinfo_begin = .);
 		*(.driverinfo .driverinfo.*)
 		PROVIDE(_driverinfo_end = .);
-    	*(.rodata .rodata.*)
+    	*(.rodata)
+		*(.rodata.*)
 	}
-	.data ALIGN (4K) : AT (ADDR (.data) - 0xFFFFFFFFBFFFFFFF)
+
+	.data ALIGN (4K) : AT(LOADADDR(.rodata) + SIZEOF(.rodata) + (4096 - (SIZEOF(.rodata) % 4096)))
 	{
 		PROVIDE(_rodata_end = .);
     	PROVIDE(_data_begin = .);
     	*(.sdata .sdata.*) *(.data .data.*)
 	}
-	.bss ALIGN (4K) : AT (ADDR (.bss) - 0xFFFFFFFFBFFFFFFF)
+	
+	.bss ALIGN (4K) : AT(LOADADDR(.data) + SIZEOF(.data) + (4096 - SIZEOF(.data) % 4096))
 	{
 		PROVIDE(_data_end = .);
     	PROVIDE(_bss_begin = .);
@@ -82,9 +86,13 @@ SECTIONS
 		. = ALIGN (4K);
 		PROVIDE(_bss_end = .);
 	}
-	/* Add a symbol that indicates the end address of the kernel. */
+
+	/* With this symbol we know where to stop mapping, and we also get to know the size of the kernel */
+	PROVIDE(_kload_end = LOADADDR(.bss) + SIZEOF(.bss) + (4096 - SIZEOF(.bss) % 4096));
 	PROVIDE(_stack_begin = _bss_end);
   	PROVIDE(_stack_end = _stack_begin + 0x80000);
   	PROVIDE(_kernel_end = .);
+
+	
 }
 

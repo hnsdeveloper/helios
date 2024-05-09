@@ -40,7 +40,7 @@ fn main() {
     let mut git_hash_arg = "-DG_HASH=".to_owned();
     git_hash_arg.push_str(git_hash.as_str());
 
-    let ddebug = match std::env::var("PROFILE").unwrap().as_str() {
+    let ddebug = match std::env::var("PROFILE").unwrap_or(String::new()).as_str() {
         "debug" => "-DDEBUG",
         _ => "",
     };

@@ -28,9 +28,12 @@ SOFTWARE.
 namespace hls {
 [[no_return]] void kernel_main(int argc, const char **argv) {
     strprint("Booting HELIOS!");
+    while (true)
+        ;
 }
 
 }; // namespace hls
 
 extern "C" void _main(int argc, const char **argv) {
+    hls::kernel_main(argc, argv);
 }
