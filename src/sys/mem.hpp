@@ -76,8 +76,8 @@ namespace hls {
             for (; i < bytes; ++i) {                                                                                   \
                 dest_c[i] = buffer[i];                                                                                 \
             }                                                                                                          \
-            return dest;                                                                                               \
         }                                                                                                              \
+        return dest;                                                                                                   \
     }                                                                                                                  \
     (__dest, __src, __bytes)
 #endif

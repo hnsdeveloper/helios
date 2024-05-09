@@ -23,30 +23,16 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef __SYMBOLS_HPP_
-#define __SYMBOLS_HPP_
+#ifndef _CPU_HPP_
+#define _CPU_HPP_
 
 #include "misc/types.hpp"
 
-extern "C" byte _load_address;
-extern "C" byte _imap;
-extern "C" byte _kernel_begin;
-extern "C" byte _kload_begin;
-extern "C" byte _text_begin;
-extern "C" byte _text_end;
-extern "C" byte _global_pointer;
-extern "C" byte _rodata_begin;
-extern "C" byte _driverinfo_begin;
-extern "C" byte _driverinfo_end;
-extern "C" byte _rodata_end;
-extern "C" byte _data_begin;
-extern "C" byte _data_end;
-extern "C" byte _bss_begin;
-extern "C" byte _bss_end;
-extern "C" byte _stack_begin;
-extern "C" byte _stack_end;
-extern "C" byte _kernel_end;
-extern "C" byte _kload_end;
-extern "C" byte _kphysical_end;
+namespace hls {
+
+size_t get_cpu_id();
+void flush_tlb();
+
+}; // namespace hls
 
 #endif

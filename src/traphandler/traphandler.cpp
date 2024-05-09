@@ -35,7 +35,7 @@ void setup_trap_handling() {
     _setup_trap_handling();
 }
 
-extern "C" void traphandler(hart *) {
+extern "C" void traphandler(registers *) {
 
     uintreg_t scause = 0;
     asm volatile("csrrw %1, scause, %0" : "=r"(scause) : "r"(scause));

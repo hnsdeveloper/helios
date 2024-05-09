@@ -26,9 +26,8 @@ SOFTWARE.
 #ifndef _PANIC_HPP_
 #define _PANIC_HPP_
 
+#include "arch/riscv64gc/plat_def.hpp"
 #include "sys/print.hpp"
-
-struct hart;
 
 /**
  * @brief Prints a stack trace, where caller addresses are printed.

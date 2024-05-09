@@ -82,7 +82,7 @@ _start:
 5:
 	sd			x0, (t5)
 	addi		t5, t5, 8
-	bltu		t5, t6, 1b
+	bltu		t5, t6, 5b
 6:	
 	la			ra, _main
 	jr			ra

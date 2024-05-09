@@ -50,6 +50,6 @@ using ptrdiff_t = size_t;
 
 static_assert(sizeof(uintptr_t) == sizeof(void *));
 
-using putchar_func_ptr = void (*)(char);
+using frame_fn = void *(*)();
 
 #endif

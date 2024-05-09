@@ -27,26 +27,46 @@ SOFTWARE.
 #include "mem/framemanager.hpp"
 #include "sys/mem.hpp"
 #include "sys/opensbi.hpp"
-
+#include "sys/print.hpp"
 namespace hls {
 
-LKERNELFUN size_t get_page_entry_index(const void *vaddress, PageLevel v) {
+static PageTable *s_scratch_page;
+
+void set_scratch_page(PageTable *vpaddress) {
+    s_scratch_page = vpaddress;
+}
+
+PageTable *get_scratch_page() {
+    return s_scratch_page;
+}
+
+PageTable *translated_page_vaddress(PageTable *paddress) {
+    auto scratch = get_scratch_page();
+    auto &entry = scratch->get_entry(ENTRIES_PER_TABLE - get_cpu_id() - 2);
+    ptrprint(entry.as_pointer());
+    entry.point_to_frame(paddress);
+    entry.set_flags(READ | WRITE | ACCESS | DIRTY);
+    flush_tlb();
+    return (PageTable *)(nullptr) - get_cpu_id() - 2;
+}
+
+size_t get_page_entry_index(const void *vaddress, PageLevel v) {
     size_t vpn_idx = static_cast<size_t>(v);
     uintptr_t idx = to_uintptr_t(vaddress) >> 12;
     return (idx >> (vpn_idx * 9)) & 0x1FF;
 }
 
-LKERNELFUN uintptr_t get_vaddress_offset(const void *vaddress) {
+uintptr_t get_vaddress_offset(const void *vaddress) {
     uintptr_t p = to_uintptr_t(vaddress);
     return p & 0xFFF;
 }
 
-LKERNELFUN void walk_table(const void *vaddress, PageTable **table, PageLevel *lvl) {
+void walk_table(const void *vaddress, PageTable **table, PageLevel *lvl) {
     if (table == nullptr || lvl == nullptr)
         return;
 
     PageLevel l = *lvl;
-    PageTable *t = *table;
+    PageTable *t = translated_page_vaddress(*table);
 
     size_t idx = get_page_entry_index(vaddress, l);
     auto &entry = t->get_entry(idx);
@@ -59,7 +79,7 @@ LKERNELFUN void walk_table(const void *vaddress, PageTable **table, PageLevel *l
     }
 }
 
-LKERNELFUN void *v_to_p(const void *vaddress, PageTable *table = nullptr) {
+void *v_to_p(const void *vaddress, PageTable *table = nullptr) {
     if (table != nullptr) {
 
         constexpr size_t p_lvl_count = (size_t)(PageLevel::LAST_VPN);
@@ -79,15 +99,15 @@ LKERNELFUN void *v_to_p(const void *vaddress, PageTable *table = nullptr) {
     return nullptr;
 }
 
-LKERNELFUN bool kmmap(const void *paddress, const void *vaddress, PageTable *table, const PageLevel p_lvl,
-                      uint64_t flags, frame_fn f_src) {
+bool kmmap(const void *paddress, const void *vaddress, PageTable *table, const PageLevel p_lvl, uint64_t flags,
+           frame_fn f_src) {
 
     if (table == nullptr)
         return false;
 
     PageLevel c_lvl = PageLevel::LAST_VPN;
     PageLevel expected = next_vpn(c_lvl);
-    PageTable *t = table;
+    PageTable *t = translated_page_vaddress(table);
 
     while (c_lvl != p_lvl) {
         walk_table(vaddress, &t, &c_lvl);
@@ -110,7 +130,7 @@ LKERNELFUN bool kmmap(const void *paddress, const void *vaddress, PageTable *tab
 
         c_lvl = next_vpn(c_lvl);
         expected = next_vpn(expected);
-        t = entry.as_table_pointer();
+        t = translated_page_vaddress(entry.as_table_pointer());
     }
 
     size_t lvl_entry_idx = get_page_entry_index(vaddress, c_lvl);

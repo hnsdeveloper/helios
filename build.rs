@@ -58,6 +58,8 @@ fn main() {
     let bootfiles = find_files("./src/arch/riscv64gc/", true);
     let memfiles = find_files("./src/mem/", true);
     let sysfiles = find_files("./src/sys/", true);
+    let miscfiles = find_files("./src/misc/", false);
+    let libfdt = find_files("./src/misc/libfdt", true);
     println!("Building kernel.");
     // Builds cpp files
     cc::Build::new()
@@ -80,5 +82,7 @@ fn main() {
         .files(bootfiles)
         .files(memfiles)
         .files(sysfiles)
+        .files(miscfiles)
+        .files(libfdt)
         .compile("kernel");
 }

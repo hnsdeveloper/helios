@@ -109,7 +109,7 @@ int fdt_create_with_flags(void *buf, int bufsize, uint32_t flags) {
     if (flags & ~FDT_CREATE_FLAGS_ALL)
         return -FDT_ERR_BADFLAGS;
 
-    hls::memset(buf, 0, bufsize);
+    memset(buf, 0, bufsize);
 
     /*
      * magic and last_comp_version keep intermediate state during the fdt
@@ -159,11 +159,11 @@ int fdt_resize(void *fdt, void *buf, int bufsize) {
     /* Two cases to avoid clobbering data if the old and new
      * buffers partially overlap */
     if (buf <= fdt) {
-        hls::memmove(buf, fdt, headsize);
-        hls::memmove(newtail, oldtail, tailsize);
+        memmove(buf, fdt, headsize);
+        memmove(newtail, oldtail, tailsize);
     } else {
-        hls::memmove(newtail, oldtail, tailsize);
-        hls::memmove(buf, fdt, headsize);
+        memmove(newtail, oldtail, tailsize);
+        memmove(buf, fdt, headsize);
     }
 
     fdt_set_totalsize(buf, bufsize);
@@ -208,13 +208,13 @@ int fdt_begin_node(void *fdt, const char *name) {
 
     FDT_SW_PROBE_STRUCT(fdt);
 
-    namelen = hls::strlen(name) + 1;
+    namelen = strlen(name) + 1;
     nh = reinterpret_cast<struct fdt_node_header *>(fdt_grab_space_(fdt, sizeof(*nh) + FDT_TAGALIGN(namelen)));
     if (!nh)
         return -FDT_ERR_NOSPACE;
 
     nh->tag = cpu_to_fdt32(FDT_BEGIN_NODE);
-    hls::memcpy(nh->name, name, namelen);
+    memcpy(nh->name, name, namelen);
     return 0;
 }
 
@@ -234,7 +234,7 @@ int fdt_end_node(void *fdt) {
 static int fdt_add_string_(void *fdt, const char *s) {
     char *strtab = (char *)fdt + fdt_totalsize(fdt);
     unsigned int strtabsize = fdt_size_dt_strings(fdt);
-    unsigned int len = hls::strlen(s) + 1;
+    unsigned int len = strlen(s) + 1;
     unsigned int struct_top, offset;
 
     offset = strtabsize + len;
@@ -242,7 +242,7 @@ static int fdt_add_string_(void *fdt, const char *s) {
     if (fdt_totalsize(fdt) - offset < struct_top)
         return 0; /* no more room :( */
 
-    hls::memcpy(strtab - offset, s, len);
+    memcpy(strtab - offset, s, len);
     fdt_set_size_dt_strings(fdt, strtabsize + len);
     return -offset;
 }
@@ -250,7 +250,7 @@ static int fdt_add_string_(void *fdt, const char *s) {
 /* Must only be used to roll back in case of error */
 static void fdt_del_last_string_(void *fdt, const char *s) {
     int strtabsize = fdt_size_dt_strings(fdt);
-    int len = hls::strlen(s) + 1;
+    int len = strlen(s) + 1;
 
     fdt_set_size_dt_strings(fdt, strtabsize - len);
 }
@@ -309,7 +309,7 @@ int fdt_property(void *fdt, const char *name, const void *val, int len) {
     ret = fdt_property_placeholder(fdt, name, len, &ptr);
     if (ret)
         return ret;
-    hls::memcpy(ptr, val, len);
+    memcpy(ptr, val, len);
     return 0;
 }
 
@@ -331,7 +331,7 @@ int fdt_finish(void *fdt) {
     /* Relocate the string table */
     oldstroffset = fdt_totalsize(fdt) - fdt_size_dt_strings(fdt);
     newstroffset = fdt_off_dt_struct(fdt) + fdt_size_dt_struct(fdt);
-    hls::memmove(p + newstroffset, p + oldstroffset, fdt_size_dt_strings(fdt));
+    memmove(p + newstroffset, p + oldstroffset, fdt_size_dt_strings(fdt));
     fdt_set_off_dt_strings(fdt, newstroffset);
 
     /* Walk the structure, correcting string offsets */

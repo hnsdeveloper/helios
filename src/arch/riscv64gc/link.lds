@@ -4,7 +4,7 @@ ENTRY( _start )
 
 MEMORY
 {
-  ram  (wxa) : ORIGIN = 0x84000000, LENGTH = 10M
+  ram  (wxa) : ORIGIN = 0x84000000, LENGTH = 1024M
 }
 
 /*
@@ -39,7 +39,9 @@ SECTIONS
 		*(.sdata.low) *(.sdata.low.*)
 	}
 
-	.bss.low : {
+	. = ALIGN(4K);
+
+	.bss.low (NOLOAD) : {
 		PROVIDE(_lbss_begin = .);
 		*(.bss.low) *(.bss.low.*)
 		*(.sbss.low) *(.sbss.low.*)
@@ -84,7 +86,10 @@ SECTIONS
 	{
 		PROVIDE(_data_end = .);
     	PROVIDE(_bss_begin = .);
-    	*(.sbss .sbss.*) *(.bss .bss.*)
+    	*(.sbss)
+		*(.sbss.*) 
+		*(.bss)
+		*(.bss.*)
 		. = ALIGN (4K);
 		PROVIDE(_bss_end = .);
 	}

@@ -32,7 +32,7 @@ SOFTWARE.
 #include "sys/string.hpp"
 
 #ifndef BOOTPAGES
-#define BOOTPAGES 32
+#define BOOTPAGES 64
 #endif
 
 #ifndef ARGPAGES
@@ -41,9 +41,10 @@ SOFTWARE.
 
 using namespace hls;
 
-LKERNELBSS alignas(PAGE_FRAME_SIZE) PageKB INITIAL_FRAMES[BOOTPAGES];
+LKERNELBSS alignas(PAGE_FRAME_SIZE) byte INITIAL_FRAMES[PAGE_FRAME_SIZE * BOOTPAGES];
 LKERNELBSS alignas(PAGE_FRAME_SIZE) byte ARGCV[PAGE_FRAME_SIZE * ARGPAGES];
-
+LKERNELDATA static size_t s_used = 0;
+LKERNELRODATA const char HERE[] = "HERE";
 LKERNELRODATA const char NEEDPAGES[] = "Not enough pages. Please, compile kernel with higher BOOTPAGES option.";
 LKERNELRODATA const char NEEDARGCV[] =
     "Not enough pages for arguments. Please, compile kernel with higher ARGPAGES option.";
@@ -75,14 +76,14 @@ LKERNELFUN void twlk(const void *vaddress, PageTable **table, PageLevel *lvl) {
 
 LKERNELFUN void init_f_alloc() {
     memset(INITIAL_FRAMES, 0, sizeof(INITIAL_FRAMES));
+    s_used = 0;
 }
 
 LKERNELFUN void *f_alloc() {
-    LKERNELDATA static size_t i = 0;
 
-    GranularPage *p = INITIAL_FRAMES;
-    if (i < BOOTPAGES)
-        return p + i++;
+    GranularPage *p = reinterpret_cast<GranularPage *>(INITIAL_FRAMES);
+    if (s_used < BOOTPAGES)
+        return p + s_used++;
 
     strprintln(NEEDPAGES);
     while (true)
@@ -91,11 +92,11 @@ LKERNELFUN void *f_alloc() {
     return nullptr;
 }
 
-LKERNELFUN bool bkmmap(const void *paddress, const void *vaddress, PageTable *table, const PageLevel p_lvl,
-                       uint64_t flags) {
+LKERNELFUN PageTable *bkmmap(const void *paddress, const void *vaddress, PageTable *table, const PageLevel p_lvl,
+                             uint64_t flags) {
 
     if (table == nullptr)
-        return false;
+        return nullptr;
 
     PageLevel c_lvl = PageLevel::LAST_VPN;
     PageLevel expected = nvpn(c_lvl);
@@ -112,7 +113,7 @@ LKERNELFUN bool bkmmap(const void *paddress, const void *vaddress, PageTable *ta
         auto &entry = t->entries[idx];
 
         if (entry.data & (READ | WRITE | EXECUTE))
-            return false;
+            return nullptr;
 
         if (!(entry.data & VALID)) {
             void *frame = f_alloc();
@@ -131,7 +132,7 @@ LKERNELFUN bool bkmmap(const void *paddress, const void *vaddress, PageTable *ta
     entry.data = (to_uintptr_t(paddress) >> 12) << 10;
     entry.data = entry.data | VALID | flags;
 
-    return true;
+    return t;
 }
 
 LKERNELFUN void map_high_kernel(PageTable *kernel_table) {
@@ -150,13 +151,6 @@ LKERNELFUN void map_high_kernel(PageTable *kernel_table) {
     // DATA, BSS and STACK are all READ and WRITE
     for (; kvaddress != &_stack_end; kvaddress += PAGE_FRAME_SIZE, _k_physical += PAGE_FRAME_SIZE) {
         bkmmap(_k_physical, kvaddress, kernel_table, PageLevel::FIRST_VPN, READ | WRITE | ACCESS | DIRTY);
-    }
-}
-
-LKERNELFUN void map_page_tables(PageTable *kernel_table) {
-    for (size_t i = 0; i < BOOTPAGES; ++i) {
-        bkmmap(INITIAL_FRAMES + i, kvaddress, kernel_table, PageLevel::KB_VPN, READ | WRITE | ACCESS | DIRTY);
-        kvaddress += PAGE_FRAME_SIZE;
     }
 }
 
@@ -194,23 +188,30 @@ LKERNELFUN const char **map_args(PageTable *kernel_table, int argc, const char *
 
     auto old_kv = kvaddress;
     for (size_t i = 0; i < ARGPAGES; ++i) {
-        bkmmap(ARGCV + i, kvaddress, kernel_table, PageLevel::KB_VPN, READ | ACCESS | DIRTY);
+        bkmmap(ARGCV + i * PAGE_FRAME_SIZE, kvaddress, kernel_table, PageLevel::KB_VPN, READ | ACCESS | DIRTY);
         kvaddress += PAGE_FRAME_SIZE;
     }
 
     return reinterpret_cast<const char **>(old_kv + consumed_bytes);
 }
 
-extern "C" LKERNELFUN void bootmain(int argc, const char **argv, PageTable **kptp, PageTable **kptv,
+LKERNELFUN PageTable *force_scratch_page(PageTable *kernel_table) {
+    byte *p = nullptr;
+    p = p - PAGE_FRAME_SIZE;
+
+    auto t = bkmmap(p, p, kernel_table, PageLevel::KB_VPN, READ | WRITE);
+    bkmmap(t, p, kernel_table, PageLevel::KB_VPN, READ | WRITE);
+
+    return reinterpret_cast<PageTable *>(p);
+}
+
+extern "C" LKERNELFUN void bootmain(int argc, const char **argv, PageTable **kptp, PageTable **scratch,
                                     const char ***argvnew, byte **unmapped) {
     init_f_alloc();
     PageTable *kernel_table = reinterpret_cast<PageTable *>(f_alloc());
     map_high_kernel(kernel_table);
+    *scratch = force_scratch_page(kernel_table);
     identity_map(kernel_table);
-
-    *kptv = reinterpret_cast<PageTable *>(kvaddress);
-    map_page_tables(kernel_table);
-
     *argvnew = map_args(kernel_table, argc, argv);
     *kptp = kernel_table;
     *unmapped = kvaddress;

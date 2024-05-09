@@ -22,25 +22,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
-
-#ifndef _COMMON_HPP_
-#define _COMMON_HPP_
-
+#include "sys/cpu.hpp"
 #include "arch/riscv64gc/plat_def.hpp"
-#include "misc/symbols.hpp"
-
 namespace hls {
+size_t get_cpu_id() {
+    // TODO: IMPLEMENT
+    return 0;
+}
 
-extern PageTable *kernel_page_table;
-
-void print_table(PageTable *table, PageTable *parent = nullptr);
-void *get_kernel_begin_address();
-void *get_kernel_end_address();
-
-void enable_address_translation(const PageTable *table);
-const PageTable *disable_address_translation();
-const PageTable *get_current_page_table();
-
-}; // namespace hls
-
-#endif
+void flush_tlb() {
+    _flush_tlb();
+}
+} // namespace hls

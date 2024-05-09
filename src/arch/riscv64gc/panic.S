@@ -69,9 +69,3 @@ ld x1, 32(x2)
 ld a0, 16(sp)
 addi sp, sp, 288
 jr a0
-
-
-.global _die
-_die:
-wfi
-j _die

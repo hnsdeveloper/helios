@@ -29,6 +29,10 @@ SOFTWARE.
 
 namespace hls {
 
+void _flush_tlb() {
+    asm volatile("sfence.vma x0, x0");
+}
+
 void PageEntry::point_to_frame(const void *frame) {
     data = to_uintptr_t(frame) >> 2;
     data |= 0x1;

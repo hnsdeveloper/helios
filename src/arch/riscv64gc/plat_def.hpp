@@ -59,7 +59,8 @@ enum class PageLevel : size_t {
     LAST_VPN = TB_VPN
 };
 
-LKERNELFUN PageLevel next_vpn(PageLevel v);
+PageLevel next_vpn(PageLevel v);
+void _flush_tlb();
 
 template <PageLevel...> struct FrameInfo;
 
@@ -70,19 +71,19 @@ template <> struct FrameInfo<PageLevel::KB_VPN> {
 };
 
 template <> struct FrameInfo<PageLevel::MB_VPN> {
-    static constexpr size_t size = 512ul * FrameInfo<PageLevel::KB_VPN>::size;
+    static constexpr size_t size = ENTRIES_PER_TABLE * FrameInfo<PageLevel::KB_VPN>::size;
     static constexpr PageLevel page_type = PageLevel::MB_VPN;
     static constexpr size_t alignment = size;
 };
 
 template <> struct FrameInfo<PageLevel::GB_VPN> {
-    static constexpr size_t size = 512ul * FrameInfo<PageLevel::MB_VPN>::size;
+    static constexpr size_t size = ENTRIES_PER_TABLE * FrameInfo<PageLevel::MB_VPN>::size;
     static constexpr PageLevel page_type = PageLevel::GB_VPN;
     static constexpr size_t alignment = size;
 };
 
 template <> struct FrameInfo<PageLevel::TB_VPN> {
-    static constexpr size_t size = 512ul * FrameInfo<PageLevel::GB_VPN>::size;
+    static constexpr size_t size = ENTRIES_PER_TABLE * FrameInfo<PageLevel::GB_VPN>::size;
     static constexpr PageLevel page_type = PageLevel::TB_VPN;
     static constexpr size_t alignment = size;
 };
@@ -175,6 +176,50 @@ using PageGB = PageFrame<PageLevel::GB_VPN>;
 using PageTB = PageFrame<PageLevel::TB_VPN>;
 
 using GranularPage = PageKB;
+
+struct __attribute__((packed)) _reg_as_data {
+    uint64_t x0;
+    uint64_t x1;
+    uint64_t x2;
+    uint64_t x3;
+    uint64_t x4;
+    uint64_t x5;
+    uint64_t x6;
+    uint64_t x7;
+    uint64_t x8;
+    uint64_t x9;
+    uint64_t x10;
+    uint64_t x11;
+    uint64_t x12;
+    uint64_t x13;
+    uint64_t x14;
+    uint64_t x15;
+    uint64_t x16;
+    uint64_t x17;
+    uint64_t x18;
+    uint64_t x19;
+    uint64_t x20;
+    uint64_t x21;
+    uint64_t x22;
+    uint64_t x23;
+    uint64_t x24;
+    uint64_t x25;
+    uint64_t x26;
+    uint64_t x27;
+    uint64_t x28;
+    uint64_t x29;
+    uint64_t x30;
+    uint64_t x31;
+    uint64_t pc;
+};
+
+struct registers {
+    static constexpr size_t register_count = 32;
+    union {
+        _reg_as_data data;
+        uint64_t array[32];
+    } reg;
+};
 
 } // namespace hls
 

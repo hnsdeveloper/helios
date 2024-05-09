@@ -280,12 +280,12 @@ int fdt_next_subnode(const void *fdt, int offset) {
 }
 
 const char *fdt_find_string_(const char *strtab, int tabsize, const char *s) {
-    int len = hls::strlen(s) + 1;
+    int len = strlen(s) + 1;
     const char *last = strtab + tabsize - len;
     const char *p;
 
     for (p = strtab; p <= last; p++)
-        if (hls::memcmp(p, s, len) == 0)
+        if (memcmp(p, s, len) == 0)
             return p;
     return NULL;
 }
@@ -299,6 +299,6 @@ int fdt_move(const void *fdt, void *buf, int bufsize) {
     if (fdt_totalsize(fdt) > (unsigned int)bufsize)
         return -FDT_ERR_NOSPACE;
 
-    hls::memmove(buf, fdt, fdt_totalsize(fdt));
+    memmove(buf, fdt, fdt_totalsize(fdt));
     return 0;
 }
