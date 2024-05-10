@@ -25,6 +25,8 @@ SOFTWARE.
 
 #include "mem/framemanager.hpp"
 #include "arch/riscv64gc/plat_def.hpp"
+#include "misc/libfdt/libfdt.h"
+#include "sys/print.hpp"
 
 namespace hls {
 
@@ -41,7 +43,7 @@ struct FrameNode {
     Color c;
 };
 
-LKERNELFUN char *as_char_p(void *p) {
+char *as_char_p(void *p) {
     return reinterpret_cast<char *>(p);
 }
 
@@ -50,11 +52,11 @@ class PageFrameManager {
     FrameNode *m_used = nullptr;
     FrameNode m_null;
 
-    LKERNELCLSSFUN FrameNode *null() {
+    FrameNode *null() {
         return &m_null;
     }
 
-    LKERNELCLSSFUN FrameNode *find_minimum(FrameNode *n) {
+    FrameNode *find_minimum(FrameNode *n) {
         FrameNode *ret_val = n;
         while (n != null()) {
             ret_val = n;
@@ -63,7 +65,7 @@ class PageFrameManager {
         return ret_val;
     }
 
-    LKERNELCLSSFUN void transplant(FrameNode *n, FrameNode *sn, FrameNode **tree) {
+    void transplant(FrameNode *n, FrameNode *sn, FrameNode **tree) {
         if (n == null())
             return;
 
@@ -91,7 +93,7 @@ class PageFrameManager {
         }
     }
 
-    LKERNELCLSSFUN bool is_left_child(FrameNode *n, FrameNode *p = nullptr) const {
+    bool is_left_child(FrameNode *n, FrameNode *p = nullptr) const {
         if (n != nullptr) {
             if (n->parent != nullptr) {
                 return n->parent->left == n;
@@ -105,7 +107,7 @@ class PageFrameManager {
         return false;
     }
 
-    LKERNELCLSSFUN bool is_right_child(FrameNode *n, FrameNode *p = nullptr) const {
+    bool is_right_child(FrameNode *n, FrameNode *p = nullptr) const {
         if (n != nullptr) {
             if (n->parent != nullptr) {
                 return n->parent->right == n;
@@ -118,7 +120,7 @@ class PageFrameManager {
         return false;
     }
 
-    LKERNELCLSSFUN void rotate_left(FrameNode *n, FrameNode **tree) {
+    void rotate_left(FrameNode *n, FrameNode **tree) {
         if (n == nullptr || n == null())
             return;
 
@@ -143,7 +145,7 @@ class PageFrameManager {
         }
     }
 
-    LKERNELCLSSFUN void rotate_right(FrameNode *n, FrameNode **tree) {
+    void rotate_right(FrameNode *n, FrameNode **tree) {
         if (n == nullptr || n == null())
             return;
 
@@ -167,17 +169,17 @@ class PageFrameManager {
         }
     }
 
-    LKERNELCLSSFUN bool is_black(FrameNode *n) {
+    bool is_black(FrameNode *n) {
         return !is_red(n);
     }
 
-    LKERNELCLSSFUN bool is_red(FrameNode *n) {
+    bool is_red(FrameNode *n) {
         if (n == nullptr || n->c == Color::BLACK)
             return false;
         return true;
     }
 
-    LKERNELCLSSFUN FrameNode *find_helper(FrameNode *node, FrameNode **parent_save, FrameNode **tree) {
+    FrameNode *find_helper(FrameNode *node, FrameNode **parent_save, FrameNode **tree) {
         FrameNode *current = *tree;
         *parent_save = null();
         while (current != null()) {
@@ -197,7 +199,7 @@ class PageFrameManager {
         return current;
     }
 
-    LKERNELCLSSFUN void insert(FrameNode *n, FrameNode **tree) {
+    void insert(FrameNode *n, FrameNode **tree) {
         n->c = Color::RED;
         n->left = null();
         n->right = null();
@@ -223,7 +225,7 @@ class PageFrameManager {
         (*tree)->parent = nullptr;
     }
 
-    LKERNELCLSSFUN void insert_fix(FrameNode *n, FrameNode **tree) {
+    void insert_fix(FrameNode *n, FrameNode **tree) {
         FrameNode *p = nullptr;
         FrameNode *u = nullptr;
         FrameNode *gp = nullptr;
@@ -277,7 +279,7 @@ class PageFrameManager {
         }
     }
 
-    LKERNELCLSSFUN FrameNode *remove(FrameNode *n, FrameNode **tree) {
+    FrameNode *remove(FrameNode *n, FrameNode **tree) {
         FrameNode *x = null();
         Color original_color = n->c;
 
@@ -313,7 +315,7 @@ class PageFrameManager {
         return n;
     }
 
-    LKERNELCLSSFUN void remove_fix(FrameNode *n, FrameNode **tree) {
+    void remove_fix(FrameNode *n, FrameNode **tree) {
         while (n != *tree && is_black(n)) {
             FrameNode *p = n->parent;
             FrameNode *s;
@@ -373,15 +375,15 @@ class PageFrameManager {
             n->c = (Color::BLACK);
     }
 
-    LKERNELCLSSFUN static PageFrameManager &__internal_instance(void *mem, size_t size) {
-        LKERNELSDATA static PageFrameManager m(mem, size);
+    static PageFrameManager &__internal_instance(void *mem, size_t size) {
+        static PageFrameManager m(mem, size);
         return m;
     }
 
-    LKERNELFUN PageFrameManager(void *mem, size_t size);
+    PageFrameManager(void *mem, size_t size);
 
   public:
-    LKERNELCLSSFUN PageKB *get_frame() {
+    PageKB *get_frame() {
         if (m_free == null())
             return nullptr;
 
@@ -391,7 +393,7 @@ class PageFrameManager {
         return node->frame_pointer;
     }
 
-    LKERNELCLSSFUN void release_frame(void *frame) {
+    void release_frame(void *frame) {
         if (m_used == null() || m_used == nullptr)
             return;
 
@@ -406,16 +408,16 @@ class PageFrameManager {
         }
     }
 
-    LKERNELCLSSFUN static PageFrameManager &instance() {
+    static PageFrameManager &instance() {
         return __internal_instance(nullptr, 0);
     }
 
-    LKERNELCLSSFUN static void init(void *mem, size_t mem_size) {
+    static void init(void *mem, size_t mem_size) {
         __internal_instance(mem, mem_size);
     }
 };
 
-LKERNELFUN PageFrameManager::PageFrameManager(void *mem, size_t size) {
+PageFrameManager::PageFrameManager(void *mem, size_t size) {
     m_null.frame_pointer = nullptr;
     m_null.c = Color::BLACK;
     m_null.left = nullptr;
@@ -458,14 +460,76 @@ LKERNELFUN PageFrameManager::PageFrameManager(void *mem, size_t size) {
     }
 }
 
-LKERNELFUN void *get_frame() {
+void *get_frame() {
     return PageFrameManager::instance().get_frame();
 }
-LKERNELFUN void release_frame(void *frame) {
+void release_frame(void *frame) {
     return PageFrameManager::instance().release_frame(frame);
 }
-LKERNELFUN void initialize_frame_manager(void *mem, size_t mem_size) {
-    PageFrameManager::init(mem, mem_size);
+
+bool is_memory_node(void *fdt, int node) {
+    const char *memory_string = "memory@";
+    int len = 0;
+    const char *node_name = fdt_get_name(fdt, node, &len);
+
+    if (len) {
+        return strncmp(memory_string, node_name, strlen(memory_string)) == 0;
+    }
+
+    return false;
+}
+
+void initialize_frame_manager(void *fdt, bootinfo *b_info) {
+    byte *mem = b_info->p_kernel_physical_end;
+    size_t i = 0;
+
+    for (auto node = fdt_first_subnode(fdt, 0); node >= 0; node = fdt_next_subnode(fdt, node)) {
+        if (is_memory_node(fdt, node)) {
+            size_t address_cells = fdt_address_cells(fdt, 0);
+            size_t size_cells = fdt_size_cells(fdt, 0);
+            int len;
+            const struct fdt_property *prop = fdt_get_property(fdt, node, "reg", &len);
+
+            auto get_address = [&](size_t idx) {
+                const char *d = reinterpret_cast<const char *>(prop->data);
+                d += idx * (sizeof(uint32_t) * address_cells + sizeof(uint32_t) * size_cells);
+                uintptr_t p = 0;
+
+                if (address_cells == 1)
+                    p = fdt32_ld(reinterpret_cast<const fdt32_t *>(d));
+                else if (address_cells == 2)
+                    p = fdt64_ld(reinterpret_cast<const fdt64_t *>(d));
+
+                return to_ptr(p);
+            };
+
+            auto get_size = [&](size_t idx) {
+                const char *d = reinterpret_cast<const char *>(prop->data);
+                d += idx * (sizeof(uint32_t) * address_cells + sizeof(uint32_t) * size_cells);
+                size_t p = 0;
+
+                d += address_cells * sizeof(uint32_t);
+
+                if (size_cells == 1)
+                    p = fdt32_ld(reinterpret_cast<const fdt32_t *>(d));
+                else if (size_cells == 2)
+                    p = fdt64_ld(reinterpret_cast<const fdt64_t *>(d));
+
+                return p;
+            };
+
+            byte *mem_temp = reinterpret_cast<byte *>(get_address(0));
+            byte mem_size = get_size(0);
+
+            mem_size -= (mem - mem_temp);
+
+            kspit(mem);
+            kspit(mem_size);
+
+            PageFrameManager::init(mem, mem_size);
+            break;
+        }
+    }
 }
 
 } // namespace hls

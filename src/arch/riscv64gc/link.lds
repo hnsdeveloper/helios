@@ -49,7 +49,7 @@ SECTIONS
 	}
 
 	. = ALIGN(16);
-	PROVIDE(_bootstack_size = 0x10000);
+	PROVIDE(_bootstack_size = 0x1000);
 	PROVIDE(_lstack_begin = .);
 	PROVIDE(_lstack_end = _lstack_begin + _bootstack_size);
 

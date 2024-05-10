@@ -51,5 +51,6 @@ using ptrdiff_t = size_t;
 static_assert(sizeof(uintptr_t) == sizeof(void *));
 
 using frame_fn = void *(*)();
+using frame_rls_fn = void (*)(void *);
 
 #endif

@@ -26,6 +26,7 @@ SOFTWARE.
 #include "arch/riscv64gc/plat_def.hpp"
 #include "misc/macros.hpp"
 #include "misc/symbols.hpp"
+#include "sys/bootdata.hpp"
 #include "sys/mem.hpp"
 #include "sys/opensbi.hpp"
 #include "sys/print.hpp"
@@ -135,7 +136,7 @@ LKERNELFUN PageTable *bkmmap(const void *paddress, const void *vaddress, PageTab
     return t;
 }
 
-LKERNELFUN void map_high_kernel(PageTable *kernel_table) {
+LKERNELFUN void *map_high_kernel(PageTable *kernel_table) {
     byte *_k_physical = &_kload_begin;
 
     kvaddress = &_text_begin;
@@ -152,6 +153,8 @@ LKERNELFUN void map_high_kernel(PageTable *kernel_table) {
     for (; kvaddress != &_stack_end; kvaddress += PAGE_FRAME_SIZE, _k_physical += PAGE_FRAME_SIZE) {
         bkmmap(_k_physical, kvaddress, kernel_table, PageLevel::FIRST_VPN, READ | WRITE | ACCESS | DIRTY);
     }
+
+    return _k_physical;
 }
 
 LKERNELFUN void identity_map(PageTable *kernel_table) {
@@ -205,14 +208,25 @@ LKERNELFUN PageTable *force_scratch_page(PageTable *kernel_table) {
     return reinterpret_cast<PageTable *>(p);
 }
 
-extern "C" LKERNELFUN void bootmain(int argc, const char **argv, PageTable **kptp, PageTable **scratch,
-                                    const char ***argvnew, byte **unmapped) {
+extern "C" LKERNELFUN void bootmain(int argc, const char **argv, bootinfo *info) {
     init_f_alloc();
     PageTable *kernel_table = reinterpret_cast<PageTable *>(f_alloc());
-    map_high_kernel(kernel_table);
-    *scratch = force_scratch_page(kernel_table);
+
+    auto *k_ph_end = map_high_kernel(kernel_table);
+    auto scratch = force_scratch_page(kernel_table);
     identity_map(kernel_table);
-    *argvnew = map_args(kernel_table, argc, argv);
-    *kptp = kernel_table;
-    *unmapped = kvaddress;
+    auto nargv = map_args(kernel_table, argc, argv);
+
+    info->argc = argc;
+    info->argv = nargv;
+    info->used_bootpages = s_used;
+    info->p_kernel_table = kernel_table;
+    info->v_scratch = scratch;
+    info->v_highkernel_start = &_kload_begin;
+    info->v_highkernel_end = kvaddress;
+    info->p_lowkernel_start = &_load_address;
+    info->p_lowkernel_end = &_kload_begin;
+    info->p_kernel_physical_end = reinterpret_cast<byte *>(k_ph_end);
+    info->v_device_drivers_begin = &_driverinfo_begin;
+    info->v_device_drivers_end = &_driverinfo_end;
 }

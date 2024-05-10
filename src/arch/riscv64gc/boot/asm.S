@@ -28,37 +28,27 @@ _start:
 	# Store the stack frame, so we can unwind whenever the kernel panics!
 	add			fp, x0, x0
 	la			sp, _lstack_end
+	la			ra, _start
 
-	addi		sp, sp, -32
-	# Store argc and argv
+	# Return address and frame pointer saved on the stack.
+	addi 		sp, sp, -16
+	sd			ra, 0(sp)
+	sd			fp, 8(sp)
+
+	addi		sp, sp, -128
 	sd			a0, 0(sp)
 	sd			a1, 8(sp)
+	add			a2, sp, x0
+	addi		a2, a2, 16	
 
-	# Store framepointer (none) and return address
-	sd			x0, 16(sp)
-	la			t4, 3f
-	sd			t4, 24(sp)
-
-	addi		sp, sp, -32
-	addi		a2, sp, 0
-	addi		a3, sp, 8
-	addi		a4, sp, 16
-	addi 		a5, sp, 24
 3:
 	# Calls bootmain, so we start using C code. a0 and a1 should contain argc and argv
 	call		bootmain
-
 4:
-	# Arguments for main function
-	ld			a2, 0(sp)
-	ld			a3, 8(sp)
-	ld			a1, 16(sp)
-	ld			a4, 24(sp)
-	addi		sp, sp, 32
+	add			a0, x0, sp
+	addi		a0, a0, 16
 
-	# The page table should be in a0, but we need it for argc and argv
-	add			t0, x0, a2
-	ld			a0, 0(sp)
+	ld			t0, 24(a0)
 	
 	# Now we manipulate the page table pointer
 	srli 		t0, t0, 12
@@ -85,5 +75,12 @@ _start:
 	bltu		t5, t6, 5b
 6:	
 	la			ra, _main
-	jr			ra
+	addi		sp, sp, -16
+	sd			fp, 0(sp)
+	sd			ra, 8(sp)
+	jr 			ra
+	
+7:	
+	wfi
+	j 			7b
 	

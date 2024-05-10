@@ -271,7 +271,7 @@ template <typename... Args> void kprintln(const char *str, Args... args) {
     }
 #define kdebug(...)                                                                                                    \
     kprint("kdebug: ");                                                                                                \
-    \ kprintln(__VA_ARGS__)
+    kprintln(__VA_ARGS__)
 #else
 #define kspit(expr)
 #define kdebug(expr)

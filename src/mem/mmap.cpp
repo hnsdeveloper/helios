@@ -30,20 +30,37 @@ SOFTWARE.
 #include "sys/print.hpp"
 namespace hls {
 
-static PageTable *s_scratch_page;
+static PageTable *s_scratch_page_table;
+static PageTable *s_kernel_page_table;
+static byte *s_kernel_free_addr;
 
-void set_scratch_page(PageTable *vpaddress) {
-    s_scratch_page = vpaddress;
+void set_kernel_v_free_address(byte *vaddress) {
+    s_kernel_free_addr = vaddress;
 }
 
-PageTable *get_scratch_page() {
-    return s_scratch_page;
+byte *get_kernel_v_free_address() {
+    return s_kernel_free_addr;
+}
+
+void set_scratch_pagetable(PageTable *vpaddress) {
+    s_scratch_page_table = vpaddress;
+}
+
+PageTable *get_scratch_pagetable() {
+    return s_scratch_page_table;
+}
+
+void set_kernel_pagetable(PageTable *paddress) {
+    s_kernel_page_table = paddress;
+}
+
+PageTable *get_kernel_pagetable() {
+    return s_kernel_page_table;
 }
 
 PageTable *translated_page_vaddress(PageTable *paddress) {
-    auto scratch = get_scratch_page();
+    auto scratch = get_scratch_pagetable();
     auto &entry = scratch->get_entry(ENTRIES_PER_TABLE - get_cpu_id() - 2);
-    ptrprint(entry.as_pointer());
     entry.point_to_frame(paddress);
     entry.set_flags(READ | WRITE | ACCESS | DIRTY);
     flush_tlb();
@@ -63,6 +80,8 @@ uintptr_t get_vaddress_offset(const void *vaddress) {
 
 void walk_table(const void *vaddress, PageTable **table, PageLevel *lvl) {
     if (table == nullptr || lvl == nullptr)
+        return;
+    if (*lvl == PageLevel::FIRST_VPN)
         return;
 
     PageLevel l = *lvl;
@@ -107,38 +126,103 @@ bool kmmap(const void *paddress, const void *vaddress, PageTable *table, const P
 
     PageLevel c_lvl = PageLevel::LAST_VPN;
     PageLevel expected = next_vpn(c_lvl);
-    PageTable *t = translated_page_vaddress(table);
+    PageTable *p_table = table;
 
     while (c_lvl != p_lvl) {
-        walk_table(vaddress, &t, &c_lvl);
+        walk_table(vaddress, &p_table, &c_lvl);
         if (c_lvl == expected) {
             expected = next_vpn(expected);
             continue;
         }
 
+        PageTable *vt = translated_page_vaddress(p_table);
         size_t idx = get_page_entry_index(vaddress, c_lvl);
-        auto &entry = t->get_entry(idx);
+        auto *entry = &(vt->get_entry(idx));
 
-        if (entry.is_leaf())
+        // Address already mapped
+        if (entry->is_leaf())
             return false;
 
-        if (!entry.is_valid()) {
+        if (!(entry->is_valid())) {
+            // If entry is not valid, either it has been swapped or it never been mapped
+            // TODO: add code to check for swapped pages
             void *frame = f_src();
-            memset(frame, 0, PAGE_FRAME_SIZE);
-            entry.point_to_table(reinterpret_cast<PageTable *>(frame));
+            if (frame == nullptr) {
+                // TODO: add proper error handling
+                return false;
+            }
+            entry->point_to_table(reinterpret_cast<PageTable *>(frame));
+            auto vt = translated_page_vaddress(reinterpret_cast<PageTable *>(frame));
+            memset(vt, 0, PAGE_FRAME_SIZE);
+            // Recovering t, given that we have mapped other page table
+            vt = translated_page_vaddress(p_table);
         }
 
         c_lvl = next_vpn(c_lvl);
         expected = next_vpn(expected);
-        t = translated_page_vaddress(entry.as_table_pointer());
+        p_table = entry->as_table_pointer();
     }
-
+    PageTable *vt = translated_page_vaddress(p_table);
     size_t lvl_entry_idx = get_page_entry_index(vaddress, c_lvl);
-    auto &entry = t->get_entry(lvl_entry_idx);
+    auto &entry = vt->get_entry(lvl_entry_idx);
     entry.point_to_frame(paddress);
     entry.set_flags(flags);
-
     return true;
+}
+
+void kmunmap(const void *vaddress, PageTable *ptable, frame_rls_fn rls_fn) {
+    if (vaddress == nullptr || ptable == nullptr)
+        return;
+
+    // We assume we are using the highest possible page level.
+    PageLevel current_level = PageLevel::LAST_VPN;
+
+    // Stores all pages used to reach the address
+    PageTable *table_path[(size_t)(PageLevel::LAST_VPN) + 1];
+
+    size_t i = 0;
+    while (current_level != PageLevel::KB_VPN) {
+        table_path[i++] = ptable;
+        // If the current page contains a leaf node, the page will not be walked.
+        // Thus later it will break out of the loop
+        walk_table(vaddress, &ptable, &current_level);
+        PageTable *vtable = translated_page_vaddress(ptable);
+
+        size_t idx = get_page_entry_index(vaddress, current_level);
+        PageEntry &entry = vtable->get_entry(idx);
+
+        if (!entry.is_valid())
+            return;
+
+        if (entry.is_leaf())
+            break;
+    }
+
+    PageTable *vtable = translated_page_vaddress(ptable);
+    auto &entry = vtable->get_entry(get_page_entry_index(vaddress, current_level));
+    entry.erase();
+
+    bool freed = false;
+
+    while (true) {
+        PageTable *ph_table = table_path[--i];
+        PageTable *vh_table = translated_page_vaddress(ph_table);
+
+        if (freed) {
+            auto &entry = vh_table->get_entry(get_page_entry_index(vaddress, current_level));
+            entry.erase();
+        }
+
+        if (vh_table->is_empty()) {
+            rls_fn(ph_table);
+            freed = true;
+        }
+
+        current_level = next_vpn(current_level);
+
+        if (i == 0)
+            break;
+    }
 }
 
 } // namespace hls

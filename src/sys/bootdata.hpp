@@ -22,15 +22,29 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
+#ifndef _BOOTDATA__HPP_
+#define _BOOTDATA__HPP_
 
-#include "misc/macros.hpp"
 #include "misc/types.hpp"
-#include "sys/bootdata.hpp"
 
 namespace hls {
 
-void *get_frame();
-void release_frame(void *);
-void initialize_frame_manager(void *fdt, bootinfo *b_info);
+struct PageTable;
 
+struct bootinfo {
+    size_t argc;
+    const char **argv;
+    size_t used_bootpages;
+    PageTable *p_kernel_table;
+    PageTable *v_scratch;
+    byte *p_lowkernel_start;
+    byte *p_lowkernel_end;
+    byte *v_highkernel_start;
+    byte *v_highkernel_end;
+    byte *p_kernel_physical_end;
+    byte *v_device_drivers_begin;
+    byte *v_device_drivers_end;
+};
 } // namespace hls
+
+#endif
