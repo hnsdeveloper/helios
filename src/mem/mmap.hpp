@@ -12,6 +12,11 @@ bool kmmap(const void *paddress, const void *vaddress, PageTable *table, FrameLe
 
 void kmunmap(const void *vaddress, PageTable *start_table, frame_rls_fn rls_fn);
 
+bool kmmap(const void *paddress, const void *vaddress, PageTable *table, const FrameLevel p_lvl, uint64_t flags,
+           FrameKB *f_src, size_t &f_count);
+
+void kmunmap(const void *vaddress, PageTable *ptable, FrameKB **f_dst, size_t &limit);
+
 uintptr_t get_vaddress_offset(const void *vaddress);
 
 void set_scratch_pagetable(PageTable *vpaddress);

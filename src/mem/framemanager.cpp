@@ -28,6 +28,8 @@ SOFTWARE.
 #include "misc/libfdt/libfdt.h"
 #include "sys/print.hpp"
 
+#define FRAMEMANAGEMENT_BEGIN 0x1000
+
 namespace hls {
 
 enum Color {
@@ -41,6 +43,65 @@ struct FrameNode : frame_info {
     FrameNode *parent = nullptr;
     size_t use_count;
     Color c;
+};
+
+class FrameNodeAllocator {
+    byte *m_nodes_vaddress_begin = nullptr;
+    byte *m_nodes_vaddress_current = nullptr;
+
+    FrameNode *m_nodes_list;
+    FrameNodeAllocator() = default;
+
+  public:
+    FrameNode *get() {
+        if (m_nodes_list == nullptr) {
+            return nullptr;
+        }
+        auto temp = m_nodes_list;
+        m_nodes_list = m_nodes_list->left;
+        return temp;
+    }
+
+    void release(FrameNode *f) {
+        f->left = m_nodes_list;
+        m_nodes_list = f;
+    }
+
+    void set_nodes_vaddress_begin(byte *vaddress) {
+        if (m_nodes_vaddress_begin == nullptr) {
+            m_nodes_vaddress_begin = vaddress;
+            m_nodes_vaddress_current = vaddress;
+        }
+    }
+
+    size_t map_node_frame(FrameKB *p_frame, FrameKB **frames, size_t count) {
+        auto vaddress = m_nodes_vaddress_current;
+        size_t usedframes = kmmap(p_frame, m_nodes_vaddress, get_kernel_pagetable(), FrameLevel::KB_VPN,
+                                  READ | WRITE | ACCESS | DIRTY, frames, *count);
+        m_nodes_vaddress += FrameInfo<FrameLevel::KB_VPN>::s_size;
+
+        FrameNode *list_first = reinterpret_cast<FrameNode *>(vaddress);
+        FrameNode *list_last = nullptr;
+        for (; vaddress < m_nodes_vaddress; vaddress += sizeof(FrameNode)) {
+            auto frame = reinterpret_cast<FrameNode *>(vaddress);
+            if (vaddress + sizeof(FrameNode) >= m_nodes_vaddress) {
+                list_last = frame;
+                frame->left = nullptr;
+            } else {
+                frame->left = frame + 1;
+            }
+        }
+
+        list_last->left = m_nodes_list;
+        m_nodes_list = list_first;
+
+        return usedframes;
+    };
+
+    static FrameNodeAllocator &instance() {
+        static FrameNodeAllocator s_allocator;
+        return s_allocator;
+    }
 };
 
 class PageFrameManager {
@@ -372,39 +433,106 @@ class PageFrameManager {
             n->c = (Color::BLACK);
     }
 
+    FrameNode *get_in_order_successor(FrameNode *n) {
+        if (n != null()) {
+            if (n->right != null()) {
+                return find_minimum(n->right);
+            } else {
+                while (n != nullptr && !is_left_child(n)) {
+                    n = n->parent;
+                }
+                if (n != nullptr)
+                    return n->parent;
+            }
+        }
+
+        return null();
+    }
+
     static PageFrameManager &__internal_instance(void *mem, size_t size, frame_fn f_alloc) {
         static PageFrameManager m(mem, size, f_alloc);
         return m;
     }
 
-    PageFrameManager(void *mem, size_t size, frame_fn f_alloc);
+    PageFrameManager::PageFrameManager(void *mem, size_t size, frame_fn f_alloc) {
+        m_null.frame_pointer = nullptr;
+        m_null.c = Color::BLACK;
+        m_null.left = nullptr;
+        m_null.right = nullptr;
+        m_null.parent = nullptr;
 
-  public:
-    FrameKB *get_frame() {
-        if (m_free == null())
-            return nullptr;
+        m_free = null();
+        m_used = null();
 
-        auto node = find_minimum(m_free);
-        remove(node, &m_free);
-        insert(node, &m_used);
-        return node->frame_pointer;
+        void *p_frame_begin = mem;
+        void *p_frame_end = align_back(apply_offset(p_frame_begin, size), FrameKB::s_alignment);
+
+        FrameKB *p_begin = reinterpret_cast<FrameNode *>(align_forward(mem, FrameKB::s_alignment));
+        FrameKB *p_end = reinterpret_cast<FrameKB *>(p_frame_end);
+
+        auto &f_node_alloc = FrameNodeAllocator::instance();
+
+        byte *vaddress_begin = nullptr;
+        vaddress_begin = vaddress_begin + FRAMEMANAGEMENT_BEGIN;
+        f_node_alloc.set_nodes_vaddress_begin(vaddress_begin);
+
+        const size_t f_count = reinterpret_cast<size_t>(FrameLevel::LAST_VPN);
+        FrameKB *frames[f_count];
+        size_t used_frames = f_node_alloc.map_node_frame(p_begin, frames, f_count);
+        p_begin += 1;
+        p_begin += used_frames;
+
+        size_t count = p_end - p_begin;
+
+        auto node = f_node_alloc.get();
+
+        node->frame_pointer = p_begin;
+        node->size = count * FrameKB::s_size;
+        node->use_count = 0;
+        insert(node, &m_free);
     }
 
-    void release_frame(void *frame) {
-        if (m_used == null() || m_used == nullptr)
+    void validate_and_fix_node_allocator() {
+        auto &allocator = FrameNodeAllocator::instance();
+        auto ptr = allocator.get();
+        if (ptr != nullptr) {
+            allocator.release(ptr);
             return;
+        }
 
-        FrameNode n;
-        n.frame_pointer = reinterpret_cast<FrameKB *>(frame);
-        FrameNode *p = nullptr;
-        auto node = find_helper(&n, &p, &m_used);
+        const size_t f_count = reinterpret_cast<size_t>(FrameLevel::LAST_VPN);
+        FrameKB *frames[f_count + 1];
 
-        if (node != null()) {
-            node = remove(node, &m_used);
-            insert(node, &m_free);
+        for (size_t i = 0; i < f_count + 1;) {
+            auto min = find_minimum(m_free);
+            remove(min, &m_free);
+            while (min->size && i < f_count + 1) {
+                frames[i++] = min->frame_pointer;
+                min->size -= FrameKB::s_size;
+                min->frame_pointer += 1;
+            }
+
+            if (min->size) {
+                insert(min, &m_free);
+            } else {
+                allocator.release(min);
+            }
+        }
+
+        size_t used = allocator.map_node_frame(frames[0], frames + 1, f_count);
+
+        while (used < f_count) {
+            auto node = allocator.get();
+            node->frame_pointer = frames[used];
+            node->size = FrameKB::s_size;
+            node->use_count = 1;
+            insert(node, &m_used);
+            // Let the releasing algorithm figure out joining frames.
+            release_frame(frames[used]);
         }
     }
 
+  public:
     static PageFrameManager &instance() {
         // TODO: PANIC IF UNITIALIZED
         return __internal_instance(nullptr, 0, nullptr);
@@ -414,68 +542,27 @@ class PageFrameManager {
         __internal_instance(mem, mem_size, f_alloc);
         return false;
     }
+
+    bool is_valid_frame(FrameNode *frame, size_t needed_size, size_t needed_alignment) {
+    }
+
+    frame_info *get_frames(size_t size, size_t alignment, uint64_t flags) {
+        // Needed when getting a new frame, given that frames can be split.
+        validate_and_fix_node_allocator();
+
+        if (m_free == null())
+            return nullptr;
+
+        bool is_alignment_valid = alignment % FrameKB::s_alignment == 0;
+        if (!is_alignment_valid)
+            return nullptr;
+
+        auto min = find_minimum(m_free);
+    }
+
+    void release_frames(void *frames) {
+    }
 };
-
-PageFrameManager::PageFrameManager(void *mem, size_t size, frame_fn f_alloc) {
-    m_null.frame_pointer = nullptr;
-    m_null.c = Color::BLACK;
-    m_null.left = nullptr;
-    m_null.right = nullptr;
-    m_null.parent = nullptr;
-
-    m_free = null();
-    m_used = null();
-
-    void *p_frame_begin = mem;
-    void *p_frame_end = align_back(apply_offset(p_frame_begin, size), FrameKB::s_alignment);
-
-    FrameNode *p_nodes = reinterpret_cast<FrameNode *>(align_forward(mem, FrameKB::s_alignment));
-    FrameKB *p_frames = reinterpret_cast<FrameKB *>(p_frame_end);
-
-    size_t count = 0;
-
-    while (reinterpret_cast<byte *>(p_nodes + (count + 1)) < reinterpret_cast<byte *>(p_frames - (count + 1))) {
-        ++count;
-    }
-
-    auto lvl = get_fit_level(sizeof(FrameNode) * count);
-    size_t pages = get_needed_pages(p_nodes, sizeof(FrameNode) * count, lvl);
-
-    byte *vaddress_begin = nullptr;
-    byte *paddress_begin = nullptr;
-    vaddress_begin = reinterpret_cast<byte *>(align_forward(vaddress_begin + 1, get_frame_alignment(lvl)));
-    paddress_begin = reinterpret_cast<byte *>(align_back(p_nodes, get_frame_alignment(lvl)));
-
-    auto vaddress = vaddress_begin;
-    auto paddress = paddress_begin;
-
-    for (size_t i = 0; i < pages; ++i) {
-        kmmap(paddress, vaddress, get_kernel_pagetable(), lvl, READ | WRITE | ACCESS | DIRTY, f_alloc);
-        paddress += get_frame_size(lvl);
-        vaddress += get_frame_size(lvl);
-    }
-
-    auto v_nodes =
-        reinterpret_cast<FrameNode *>(apply_offset(vaddress_begin, reinterpret_cast<byte *>(p_nodes) - paddress_begin));
-
-    for (size_t i = 0; i < count; ++i) {
-        v_nodes->frame_pointer = p_frames;
-        insert(v_nodes, &m_free);
-        ++v_nodes;
-        ++p_frames;
-    }
-}
-
-void *get_frame_management_begin_vaddress() {
-    return (void *)(FRAMEMANAGEMENT_BEGIN);
-}
-
-void *get_frame() {
-    return PageFrameManager::instance().get_frame();
-}
-void release_frame(void *frame) {
-    return PageFrameManager::instance().release_frame(frame);
-}
 
 bool is_memory_node(void *fdt, int node) {
     const char *memory_string = "memory@";

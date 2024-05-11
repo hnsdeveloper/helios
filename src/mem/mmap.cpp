@@ -228,4 +228,123 @@ void kmunmap(const void *vaddress, PageTable *ptable, frame_rls_fn rls_fn) {
     }
 }
 
+size_t kmmap(const void *paddress, const void *vaddress, PageTable *table, const FrameLevel p_lvl, uint64_t flags,
+             FrameKB **f_src, size_t f_count) {
+
+    if (table == nullptr)
+        return false;
+
+    if (vaddress == get_scratch_pagetable())
+        return false;
+
+    FrameLevel c_lvl = FrameLevel::LAST_VPN;
+    FrameLevel expected = next_vpn(c_lvl);
+    PageTable *p_table = table;
+    size_t used_frames = 0;
+    while (c_lvl != p_lvl) {
+        walk_table(vaddress, &p_table, &c_lvl);
+        if (c_lvl == expected) {
+            expected = next_vpn(expected);
+            continue;
+        }
+
+        PageTable *vt = translated_page_vaddress(p_table);
+        size_t idx = get_page_entry_index(vaddress, c_lvl);
+        auto *entry = &(vt->get_entry(idx));
+
+        // Address already mapped
+        if (entry->is_leaf())
+            return false;
+
+        if (!(entry->is_valid())) {
+            // If entry is not valid, either it has been swapped or it never been mapped
+            // TODO: add code to check for swapped pages
+            if (f_src == nullptr || used_frames == f_count) {
+                // TODO: add proper error handling
+                return used_frames;
+            }
+            void *frame = f_src[used_frames];
+            f_src[used_frames++] = nullptr;
+
+            entry->point_to_table(reinterpret_cast<PageTable *>(frame));
+            auto vt = translated_page_vaddress(reinterpret_cast<PageTable *>(frame));
+            memset(vt, 0, PAGE_FRAME_SIZE);
+            // Recovering t, given that we have mapped other page table
+            vt = translated_page_vaddress(p_table);
+        }
+
+        c_lvl = next_vpn(c_lvl);
+        expected = next_vpn(expected);
+        p_table = entry->as_table_pointer();
+    }
+    PageTable *vt = translated_page_vaddress(p_table);
+    size_t lvl_entry_idx = get_page_entry_index(vaddress, c_lvl);
+    auto &entry = vt->get_entry(lvl_entry_idx);
+    entry.point_to_frame(paddress);
+    entry.set_flags(flags);
+    return used_frames;
+}
+
+bool kmunmap(const void *vaddress, PageTable *ptable, FrameKB **f_dst, const size_t &limit) {
+    if (vaddress == nullptr || ptable == nullptr)
+        return;
+
+    // We assume we are using the highest possible page level.
+    FrameLevel current_level = FrameLevel::LAST_VPN;
+
+    // Stores all pages used to reach the address
+    PageTable *table_path[(size_t)(FrameLevel::LAST_VPN) + 1];
+
+    size_t i = 0;
+    while (current_level != FrameLevel::KB_VPN) {
+        table_path[i++] = ptable;
+        // If the current page contains a leaf node, the page will not be walked.
+        // Thus later it will break out of the loop
+        walk_table(vaddress, &ptable, &current_level);
+        PageTable *vtable = translated_page_vaddress(ptable);
+
+        size_t idx = get_page_entry_index(vaddress, current_level);
+        TableEntry &entry = vtable->get_entry(idx);
+
+        if (!entry.is_valid())
+            return;
+
+        if (entry.is_leaf())
+            break;
+    }
+
+    PageTable *vtable = translated_page_vaddress(ptable);
+    auto &entry = vtable->get_entry(get_page_entry_index(vaddress, current_level));
+    entry.erase();
+
+    bool freed = false;
+    size_t released = 0;
+    while (true) {
+        PageTable *ph_table = table_path[--i];
+        PageTable *vh_table = translated_page_vaddress(ph_table);
+
+        if (freed) {
+            auto &entry = vh_table->get_entry(get_page_entry_index(vaddress, current_level));
+            entry.erase();
+        }
+
+        if (vh_table->is_empty()) {
+            if (released < limit) {
+                f_dst[released] = ph_table;
+                ++released;
+                freed = true;
+            } else {
+                return false;
+            }
+        }
+
+        current_level = next_vpn(current_level);
+
+        if (i == 0)
+            break;
+    }
+
+    return true;
+}
+
 } // namespace hls

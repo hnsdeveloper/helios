@@ -28,14 +28,13 @@ SOFTWARE.
 #include "misc/types.hpp"
 #include "sys/bootdata.hpp"
 
-#define FRAMEMANAGEMENT_BEGIN 0x1000
-
 #define FRAME_SWAPPABLE 1 << 0
 
 namespace hls {
 
 struct frame_info {
     FrameKB *frame_pointer = nullptr;
+    size_t size;
     uint64_t flags;
     size_t frame_count;
 };
