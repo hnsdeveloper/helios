@@ -101,21 +101,18 @@ void *get_device_tree_from_options(option::Option *options, option::Option *) {
 void *mapfdt(void *fdt) {
     PageTable *kptp = get_kernel_pagetable();
     byte *aligned = reinterpret_cast<byte *>(align_back(fdt, PAGE_FRAME_ALIGNMENT));
-    kmmap(aligned, aligned, kptp, PageLevel::KB_VPN, READ | ACCESS | DIRTY, dirtyfallocator);
-    kmmap(aligned + PAGE_FRAME_SIZE, aligned + PAGE_FRAME_SIZE, kptp, PageLevel::KB_VPN, READ | ACCESS | DIRTY,
-          dirtyfallocator);
+    kmmap(aligned, aligned, kptp, FrameLevel::KB_VPN, READ | ACCESS | DIRTY, dirtyfallocator);
 
     size_t fdt_size = fdt_totalsize(fdt);
     size_t needed_size = reinterpret_cast<byte *>(fdt) - aligned + fdt_size;
     size_t needed_pages = needed_size / PAGE_FRAME_SIZE + (needed_size % PAGE_FRAME_SIZE ? 1 : 0);
 
     kmunmap(aligned, kptp, nothing_deallocator);
-    kmunmap(aligned + PAGE_FRAME_SIZE, kptp, nothing_deallocator);
 
     byte *addr = get_kernel_v_free_address();
     void *retval = addr + (reinterpret_cast<byte *>(fdt) - aligned);
     for (size_t i = 0; i < needed_pages; ++i) {
-        kmmap(aligned, addr, kptp, PageLevel::KB_VPN, READ | ACCESS | DIRTY, dirtyfallocator);
+        kmmap(aligned, addr, kptp, FrameLevel::KB_VPN, READ | ACCESS | DIRTY, dirtyfallocator);
         aligned += PAGE_FRAME_SIZE;
         addr += PAGE_FRAME_SIZE;
     }
@@ -130,7 +127,7 @@ void unmap_low_kernel(byte *begin, byte *end) {
     }
 }
 
-[[no_return]] void kernel_main(bootinfo *b_info) {
+__attribute__((noreturn)) void kernel_main(bootinfo *b_info) {
     display_initial_info();
     int argc = b_info->argc;
     const char **argv = b_info->argv;
@@ -156,8 +153,7 @@ void unmap_low_kernel(byte *begin, byte *end) {
 
     void *device_tree = get_device_tree_from_options(options, buffer);
     device_tree = mapfdt(device_tree);
-    initialize_frame_manager(device_tree, b_info);
-
+    initialize_frame_manager(device_tree, b_info, dirtyfallocator);
     while (true)
         ;
 }

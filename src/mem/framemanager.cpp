@@ -24,7 +24,7 @@ SOFTWARE.
 ---------------------------------------------------------------------------------*/
 
 #include "mem/framemanager.hpp"
-#include "arch/riscv64gc/plat_def.hpp"
+#include "mem/mmap.hpp"
 #include "misc/libfdt/libfdt.h"
 #include "sys/print.hpp"
 
@@ -35,21 +35,18 @@ enum Color {
     RED = 1
 };
 
-struct FrameNode {
+struct FrameNode : frame_info {
     FrameNode *left = nullptr;
     FrameNode *right = nullptr;
     FrameNode *parent = nullptr;
-    PageKB *frame_pointer = nullptr;
+    size_t use_count;
     Color c;
 };
-
-char *as_char_p(void *p) {
-    return reinterpret_cast<char *>(p);
-}
 
 class PageFrameManager {
     FrameNode *m_free = nullptr;
     FrameNode *m_used = nullptr;
+    FrameNode *m_nodes_list = nullptr;
     FrameNode m_null;
 
     FrameNode *null() {
@@ -375,15 +372,15 @@ class PageFrameManager {
             n->c = (Color::BLACK);
     }
 
-    static PageFrameManager &__internal_instance(void *mem, size_t size) {
-        static PageFrameManager m(mem, size);
+    static PageFrameManager &__internal_instance(void *mem, size_t size, frame_fn f_alloc) {
+        static PageFrameManager m(mem, size, f_alloc);
         return m;
     }
 
-    PageFrameManager(void *mem, size_t size);
+    PageFrameManager(void *mem, size_t size, frame_fn f_alloc);
 
   public:
-    PageKB *get_frame() {
+    FrameKB *get_frame() {
         if (m_free == null())
             return nullptr;
 
@@ -398,7 +395,7 @@ class PageFrameManager {
             return;
 
         FrameNode n;
-        n.frame_pointer = reinterpret_cast<PageKB *>(frame);
+        n.frame_pointer = reinterpret_cast<FrameKB *>(frame);
         FrameNode *p = nullptr;
         auto node = find_helper(&n, &p, &m_used);
 
@@ -409,15 +406,17 @@ class PageFrameManager {
     }
 
     static PageFrameManager &instance() {
-        return __internal_instance(nullptr, 0);
+        // TODO: PANIC IF UNITIALIZED
+        return __internal_instance(nullptr, 0, nullptr);
     }
 
-    static void init(void *mem, size_t mem_size) {
-        __internal_instance(mem, mem_size);
+    static bool init(void *mem, size_t mem_size, frame_fn f_alloc) {
+        __internal_instance(mem, mem_size, f_alloc);
+        return false;
     }
 };
 
-PageFrameManager::PageFrameManager(void *mem, size_t size) {
+PageFrameManager::PageFrameManager(void *mem, size_t size, frame_fn f_alloc) {
     m_null.frame_pointer = nullptr;
     m_null.c = Color::BLACK;
     m_null.left = nullptr;
@@ -427,37 +426,48 @@ PageFrameManager::PageFrameManager(void *mem, size_t size) {
     m_free = null();
     m_used = null();
 
-    uintptr_t p_begin = reinterpret_cast<uintptr_t>(mem);
-    size_t align_begin = p_begin % sizeof(FrameNode);
-    if (align_begin) {
-        p_begin += align_begin;
-    }
+    void *p_frame_begin = mem;
+    void *p_frame_end = align_back(apply_offset(p_frame_begin, size), FrameKB::s_alignment);
 
-    uintptr_t p_end = reinterpret_cast<uintptr_t>(mem) + size;
-    size_t align_end = p_end % 4096;
-    if (align_end) {
-        p_end = p_end - (4096 - (p_end % 4096));
-    }
-
-    FrameNode *nodes = reinterpret_cast<FrameNode *>(p_begin);
-    PageKB *frames = reinterpret_cast<PageKB *>(p_end);
+    FrameNode *p_nodes = reinterpret_cast<FrameNode *>(align_forward(mem, FrameKB::s_alignment));
+    FrameKB *p_frames = reinterpret_cast<FrameKB *>(p_frame_end);
 
     size_t count = 0;
 
-    while (as_char_p(nodes + 1) < as_char_p(frames - 1)) {
-        ++nodes;
-        --frames;
+    while (reinterpret_cast<byte *>(p_nodes + (count + 1)) < reinterpret_cast<byte *>(p_frames - (count + 1))) {
         ++count;
     }
 
-    nodes = reinterpret_cast<FrameNode *>(p_begin);
+    auto lvl = get_fit_level(sizeof(FrameNode) * count);
+    size_t pages = get_needed_pages(p_nodes, sizeof(FrameNode) * count, lvl);
+
+    byte *vaddress_begin = nullptr;
+    byte *paddress_begin = nullptr;
+    vaddress_begin = reinterpret_cast<byte *>(align_forward(vaddress_begin + 1, get_frame_alignment(lvl)));
+    paddress_begin = reinterpret_cast<byte *>(align_back(p_nodes, get_frame_alignment(lvl)));
+
+    auto vaddress = vaddress_begin;
+    auto paddress = paddress_begin;
+
+    for (size_t i = 0; i < pages; ++i) {
+        kmmap(paddress, vaddress, get_kernel_pagetable(), lvl, READ | WRITE | ACCESS | DIRTY, f_alloc);
+        paddress += get_frame_size(lvl);
+        vaddress += get_frame_size(lvl);
+    }
+
+    auto v_nodes =
+        reinterpret_cast<FrameNode *>(apply_offset(vaddress_begin, reinterpret_cast<byte *>(p_nodes) - paddress_begin));
 
     for (size_t i = 0; i < count; ++i) {
-        nodes->frame_pointer = frames;
-        insert(nodes, &m_free);
-        ++nodes;
-        ++frames;
+        v_nodes->frame_pointer = p_frames;
+        insert(v_nodes, &m_free);
+        ++v_nodes;
+        ++p_frames;
     }
+}
+
+void *get_frame_management_begin_vaddress() {
+    return (void *)(FRAMEMANAGEMENT_BEGIN);
 }
 
 void *get_frame() {
@@ -479,14 +489,13 @@ bool is_memory_node(void *fdt, int node) {
     return false;
 }
 
-void initialize_frame_manager(void *fdt, bootinfo *b_info) {
+void initialize_frame_manager(void *fdt, bootinfo *b_info, frame_fn f_alloc) {
     byte *mem = b_info->p_kernel_physical_end;
-    size_t i = 0;
-
     for (auto node = fdt_first_subnode(fdt, 0); node >= 0; node = fdt_next_subnode(fdt, node)) {
         if (is_memory_node(fdt, node)) {
             size_t address_cells = fdt_address_cells(fdt, 0);
             size_t size_cells = fdt_size_cells(fdt, 0);
+
             int len;
             const struct fdt_property *prop = fdt_get_property(fdt, node, "reg", &len);
 
@@ -519,14 +528,11 @@ void initialize_frame_manager(void *fdt, bootinfo *b_info) {
             };
 
             byte *mem_temp = reinterpret_cast<byte *>(get_address(0));
-            byte mem_size = get_size(0);
+            size_t mem_size = get_size(0);
 
             mem_size -= (mem - mem_temp);
 
-            kspit(mem);
-            kspit(mem_size);
-
-            PageFrameManager::init(mem, mem_size);
+            PageFrameManager::init(mem, mem_size, f_alloc);
             break;
         }
     }

@@ -23,14 +23,32 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
+#include "arch/riscv64gc/plat_def.hpp"
 #include "misc/macros.hpp"
 #include "misc/types.hpp"
 #include "sys/bootdata.hpp"
 
+#define FRAMEMANAGEMENT_BEGIN 0x1000
+
+#define FRAME_SWAPPABLE 1 << 0
+
 namespace hls {
 
-void *get_frame();
+struct frame_info {
+    FrameKB *frame_pointer = nullptr;
+    uint64_t flags;
+    size_t frame_count;
+};
+
+const frame_info *get_frame(uint64_t flags);
 void release_frame(void *);
-void initialize_frame_manager(void *fdt, bootinfo *b_info);
+
+const frame_info *get_frames(size_t count, uint64_t flags);
+void *release_frames(void *);
+
+void *get_frame_management_begin_vaddress();
+void *get_frame_management_end_vaddress();
+
+void initialize_frame_manager(void *fdt, bootinfo *b_info, frame_fn);
 
 } // namespace hls

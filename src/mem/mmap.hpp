@@ -7,10 +7,12 @@ namespace hls {
 
 void *v_to_p(const void *vaddress, PageTable *table);
 
-bool kmmap(const void *paddress, const void *vaddress, PageTable *table, PageLevel p_lvl, uint64_t flags,
+bool kmmap(const void *paddress, const void *vaddress, PageTable *table, FrameLevel p_lvl, uint64_t flags,
            frame_fn f_src);
 
 void kmunmap(const void *vaddress, PageTable *start_table, frame_rls_fn rls_fn);
+
+uintptr_t get_vaddress_offset(const void *vaddress);
 
 void set_scratch_pagetable(PageTable *vpaddress);
 PageTable *get_scratch_pagetable();

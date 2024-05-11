@@ -1,8 +1,7 @@
 .section .data
 .global _trap_sp
 _trap_sp:
-    .skip 0x1000000      # 1 MiB for trap stack
-
+    .skip 0x1000      # 4KiB for trap stack
 
 .section .text
 
@@ -45,7 +44,7 @@ _s_trap:
 
     add a0, x0, sp
     
-    call traphandler
+    #call traphandler
 
     ld  x0, 0(sp)
     ld  x1, 8(sp)

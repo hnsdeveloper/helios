@@ -732,7 +732,7 @@ void *liballoc_alloc(size_t frames) {
         void *x = result.get_value();
         // All pages are identity mapped, so we can use kmalloc pointers when using virtual addressing.
         kmmap(apply_offset(x, i * PAGE_FRAME_SIZE), apply_offset(x, i * PAGE_FRAME_SIZE), kernel_page_table,
-              PageLevel::KB_VPN, true, false, true, true);
+              FrameLevel::KB_VPN, true, false, true, true);
     }
 
     return result.get_value();

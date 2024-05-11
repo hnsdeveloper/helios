@@ -34,54 +34,58 @@ void _flush_tlb() {
     asm volatile("sfence.vma x0, x0");
 }
 
-void PageEntry::point_to_frame(const void *frame) {
+void TableEntry::point_to_frame(const void *frame) {
     data = to_uintptr_t(frame) >> 2;
     data |= 0x1;
     set_flags(READ);
 }
 
-void PageEntry::set_flags(uint64_t flags) {
+void TableEntry::set_flags(uint64_t flags) {
     data = data | flags;
 }
 
-void PageEntry::unset_flags(uint64_t flags) {
+void TableEntry::unset_flags(uint64_t flags) {
     data = (data | flags) ^ flags;
 }
 
-void PageEntry::erase() {
+void TableEntry::erase() {
     data = 0;
 }
 
-bool PageEntry::is_valid() {
+bool TableEntry::is_valid() {
     bool result = data & 0x1;
     return result;
 }
 
-void *PageEntry::as_pointer() {
+void *TableEntry::as_pointer() {
     return to_ptr((data << 2) & 0xFFFFFFFFFFFFF000);
 }
 
-bool PageEntry::is_leaf() {
+bool TableEntry::is_leaf() {
     return is_valid() && (is_readable() || is_executable());
 }
 
-bool PageEntry::is_writable() {
+bool TableEntry::is_writable() {
     return data & (1u << WRITE);
 }
-bool PageEntry::is_readable() {
+bool TableEntry::is_readable() {
     return data & (1u << READ);
 }
-bool PageEntry::is_executable() {
+bool TableEntry::is_executable() {
     return data & (1u << EXECUTE);
 }
 
-PageTable *PageEntry::as_table_pointer() {
+PageTable *TableEntry::as_table_pointer() {
     return reinterpret_cast<PageTable *>(as_pointer());
 }
 
-void PageEntry::point_to_table(const PageTable *table) {
+void TableEntry::point_to_table(const PageTable *table) {
     data = to_uintptr_t(table) >> 2;
     data |= 0x1;
+}
+
+TableEntry *PageTable::entries() {
+    return reinterpret_cast<TableEntry *>(data);
 }
 
 bool PageTable::is_empty() {
@@ -94,19 +98,50 @@ bool PageTable::is_empty() {
     return true;
 }
 
-PageEntry &PageTable::get_entry(size_t entry_index) {
-    return entries[entry_index];
+TableEntry &PageTable::get_entry(size_t entry_index) {
+    return entries()[entry_index];
 }
 
-PageLevel next_vpn(PageLevel v) {
-    if (v == PageLevel::FIRST_VPN)
+FrameLevel next_vpn(FrameLevel v) {
+    if (v == FrameLevel::FIRST_VPN)
         return v;
-    return static_cast<PageLevel>(static_cast<size_t>(v) - 1);
+    return static_cast<FrameLevel>(static_cast<size_t>(v) - 1);
+}
+
+size_t get_frame_size(FrameLevel lvl) {
+    switch (lvl) {
+    case FrameLevel::KB_VPN:
+        return FrameInfo<FrameLevel::KB_VPN>::s_size;
+    case FrameLevel::MB_VPN:
+        return FrameInfo<FrameLevel::MB_VPN>::s_size;
+    case FrameLevel::GB_VPN:
+        return FrameInfo<FrameLevel::GB_VPN>::s_size;
+    case FrameLevel::TB_VPN:
+        return FrameInfo<FrameLevel::TB_VPN>::s_size;
+    default:
+        return 0;
+    }
+}
+
+size_t get_frame_alignment(FrameLevel lvl) {
+    return get_frame_size(lvl);
+}
+
+FrameLevel get_fit_level(size_t bytes) {
+    FrameLevel lvl = FrameLevel::LAST_VPN;
+
+    while (lvl != FrameLevel::FIRST_VPN) {
+        if (bytes <= get_frame_size(lvl) && bytes > get_frame_size(next_vpn(lvl)))
+            return next_vpn(lvl);
+        lvl = next_vpn(lvl);
+    }
+
+    return lvl;
 }
 
 void PageTable::print_entries() {
     for (size_t i = 0; i < ENTRIES_PER_TABLE; ++i) {
-        auto &entry = entries[i];
+        auto &entry = entries()[i];
         if (entry.is_valid()) {
             kprintln("Entry {}. Pointed address: {}. Is leaf? {}.", i, entry.as_pointer(), entry.is_leaf());
         }

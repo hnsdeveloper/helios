@@ -60,14 +60,14 @@ PageTable *get_kernel_pagetable() {
 
 PageTable *translated_page_vaddress(PageTable *paddress) {
     auto scratch = get_scratch_pagetable();
-    auto &entry = scratch->get_entry(ENTRIES_PER_TABLE - get_cpu_id() - 2);
+    auto &entry = scratch->get_entry(PageTable::entries_on_table - get_cpu_id() - 2);
     entry.point_to_frame(paddress);
     entry.set_flags(READ | WRITE | ACCESS | DIRTY);
     flush_tlb();
     return (PageTable *)(nullptr) - get_cpu_id() - 2;
 }
 
-size_t get_page_entry_index(const void *vaddress, PageLevel v) {
+size_t get_page_entry_index(const void *vaddress, FrameLevel v) {
     size_t vpn_idx = static_cast<size_t>(v);
     uintptr_t idx = to_uintptr_t(vaddress) >> 12;
     return (idx >> (vpn_idx * 9)) & 0x1FF;
@@ -78,13 +78,13 @@ uintptr_t get_vaddress_offset(const void *vaddress) {
     return p & 0xFFF;
 }
 
-void walk_table(const void *vaddress, PageTable **table, PageLevel *lvl) {
+void walk_table(const void *vaddress, PageTable **table, FrameLevel *lvl) {
     if (table == nullptr || lvl == nullptr)
         return;
-    if (*lvl == PageLevel::FIRST_VPN)
+    if (*lvl == FrameLevel::FIRST_VPN)
         return;
 
-    PageLevel l = *lvl;
+    FrameLevel l = *lvl;
     PageTable *t = translated_page_vaddress(*table);
 
     size_t idx = get_page_entry_index(vaddress, l);
@@ -101,8 +101,8 @@ void walk_table(const void *vaddress, PageTable **table, PageLevel *lvl) {
 void *v_to_p(const void *vaddress, PageTable *table = nullptr) {
     if (table != nullptr) {
 
-        constexpr size_t p_lvl_count = (size_t)(PageLevel::LAST_VPN);
-        PageLevel lvl = PageLevel::LAST_VPN;
+        constexpr size_t p_lvl_count = (size_t)(FrameLevel::LAST_VPN);
+        FrameLevel lvl = FrameLevel::LAST_VPN;
         for (size_t i = 0; i < p_lvl_count; ++i) {
             // Will walk the table as much as it can.
             // If it is a superpage, then it won't walk more, and then we only apply the offset to the address
@@ -118,14 +118,17 @@ void *v_to_p(const void *vaddress, PageTable *table = nullptr) {
     return nullptr;
 }
 
-bool kmmap(const void *paddress, const void *vaddress, PageTable *table, const PageLevel p_lvl, uint64_t flags,
+bool kmmap(const void *paddress, const void *vaddress, PageTable *table, const FrameLevel p_lvl, uint64_t flags,
            frame_fn f_src) {
 
     if (table == nullptr)
         return false;
 
-    PageLevel c_lvl = PageLevel::LAST_VPN;
-    PageLevel expected = next_vpn(c_lvl);
+    if (vaddress == get_scratch_pagetable())
+        return false;
+
+    FrameLevel c_lvl = FrameLevel::LAST_VPN;
+    FrameLevel expected = next_vpn(c_lvl);
     PageTable *p_table = table;
 
     while (c_lvl != p_lvl) {
@@ -175,13 +178,13 @@ void kmunmap(const void *vaddress, PageTable *ptable, frame_rls_fn rls_fn) {
         return;
 
     // We assume we are using the highest possible page level.
-    PageLevel current_level = PageLevel::LAST_VPN;
+    FrameLevel current_level = FrameLevel::LAST_VPN;
 
     // Stores all pages used to reach the address
-    PageTable *table_path[(size_t)(PageLevel::LAST_VPN) + 1];
+    PageTable *table_path[(size_t)(FrameLevel::LAST_VPN) + 1];
 
     size_t i = 0;
-    while (current_level != PageLevel::KB_VPN) {
+    while (current_level != FrameLevel::KB_VPN) {
         table_path[i++] = ptable;
         // If the current page contains a leaf node, the page will not be walked.
         // Thus later it will break out of the loop
@@ -189,7 +192,7 @@ void kmunmap(const void *vaddress, PageTable *ptable, frame_rls_fn rls_fn) {
         PageTable *vtable = translated_page_vaddress(ptable);
 
         size_t idx = get_page_entry_index(vaddress, current_level);
-        PageEntry &entry = vtable->get_entry(idx);
+        TableEntry &entry = vtable->get_entry(idx);
 
         if (!entry.is_valid())
             return;

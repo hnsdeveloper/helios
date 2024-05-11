@@ -1,5 +1,4 @@
 #include "sys/panic.hpp"
-
 #include "sys/print.hpp"
 
 using namespace hls;
@@ -71,5 +70,5 @@ extern "C" void die() {
 }
 
 extern "C" void panic_message_print(const char *msg) {
-    kprintln("{}", msg);
+    kprintln(msg);
 }

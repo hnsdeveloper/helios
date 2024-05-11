@@ -337,6 +337,20 @@ namespace hls {
     (__data)
 #endif
 
+#ifndef __GETNEEDEDPAGES
+#define __GETNEEDEDPAGES
+#define get_needed_pages(__mem, __memsize, __p_lvl)                                                                    \
+    [](const void *mem, size_t size, FrameLevel lvl) -> auto __attribute__((always_inline)) {                           \
+        size_t alignment = get_frame_alignment(lvl);                                                                   \
+        byte *p = reinterpret_cast<byte *>(const_cast<void *>(mem));                                                   \
+        byte *back = reinterpret_cast<byte *>(align_back(p, alignment));                                               \
+        byte *forward = reinterpret_cast<byte *>(                                                                      \
+            align_forward(reinterpret_cast<byte *>(const_cast<void *>(mem)) + size, alignment));                       \
+        return (forward - back) / get_frame_size(lvl);                                                                 \
+    }                                                                                                                  \
+    (__mem, __memsize, __p_lvl)
+#endif
+
 } // namespace hls
 
 #endif
