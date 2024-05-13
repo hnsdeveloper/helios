@@ -26,45 +26,53 @@ SOFTWARE.
 #include "mem/framemanager.hpp"
 #include "mem/mmap.hpp"
 #include "misc/libfdt/libfdt.h"
+#include "misc/new.hpp"
 #include "sys/print.hpp"
+#include "ulib/rb_tree.hpp"
 
 #define FRAMEMANAGEMENT_BEGIN 0x1000
 
 namespace hls {
 
-enum Color {
-    BLACK = 0,
-    RED = 1
-};
+template <> class Hash<frame_info> {
+    SET_USING_CLASS(frame_info, type);
+    SET_USING_CLASS(size_t, hash_result);
 
-struct FrameNode : frame_info {
-    FrameNode *left = nullptr;
-    FrameNode *right = nullptr;
-    FrameNode *parent = nullptr;
-    size_t use_count;
-    Color c;
+  public:
+    hash_result operator()(type_const_reference v) const {
+        return reinterpret_cast<size_t>(v.frame_pointer);
+    }
 };
 
 class FrameNodeAllocator {
     byte *m_nodes_vaddress_begin = nullptr;
     byte *m_nodes_vaddress_current = nullptr;
+    size_t m_node_size;
 
-    FrameNode *m_nodes_list;
     FrameNodeAllocator() = default;
 
+    void *m_nodes_list;
+
   public:
-    FrameNode *get() {
-        if (m_nodes_list == nullptr) {
-            return nullptr;
-        }
-        auto temp = m_nodes_list;
-        m_nodes_list = m_nodes_list->left;
-        return temp;
+    void *get() {
+        return remove_begin();
     }
 
-    void release(FrameNode *f) {
-        f->left = m_nodes_list;
-        m_nodes_list = f;
+    void release(const void *f) {
+        insert_begin(const_cast<void *>(f));
+    }
+
+    void insert_begin(void *p) {
+        uintptr_t &v = *reinterpret_cast<uintptr_t *>(p);
+        v = to_uintptr_t(m_nodes_list);
+        m_nodes_list = p;
+    }
+
+    void *remove_begin() {
+        auto temp = m_nodes_list;
+        uintptr_t &p = *reinterpret_cast<uintptr_t *>(m_nodes_list);
+        m_nodes_list = to_ptr(p);
+        return temp;
     }
 
     void set_nodes_vaddress_begin(byte *vaddress) {
@@ -74,29 +82,40 @@ class FrameNodeAllocator {
         }
     }
 
+    void set_frame_node_size(size_t size) {
+        m_node_size = size;
+    }
+
     size_t map_node_frame(FrameKB *p_frame, FrameKB **frames, size_t count) {
         auto vaddress = m_nodes_vaddress_current;
-        size_t usedframes = kmmap(p_frame, m_nodes_vaddress, get_kernel_pagetable(), FrameLevel::KB_VPN,
-                                  READ | WRITE | ACCESS | DIRTY, frames, *count);
-        m_nodes_vaddress += FrameInfo<FrameLevel::KB_VPN>::s_size;
+        size_t used_frames = kmmap(p_frame, vaddress, get_kernel_pagetable(), FrameLevel::KB_VPN,
+                                   READ | WRITE | ACCESS | DIRTY, frames, count);
 
-        FrameNode *list_first = reinterpret_cast<FrameNode *>(vaddress);
-        FrameNode *list_last = nullptr;
-        for (; vaddress < m_nodes_vaddress; vaddress += sizeof(FrameNode)) {
-            auto frame = reinterpret_cast<FrameNode *>(vaddress);
-            if (vaddress + sizeof(FrameNode) >= m_nodes_vaddress) {
-                list_last = frame;
-                frame->left = nullptr;
-            } else {
-                frame->left = frame + 1;
-            }
+        m_nodes_vaddress_current += FrameInfo<FrameLevel::KB_VPN>::s_size;
+        for (; vaddress < m_nodes_vaddress_current; vaddress += m_node_size) {
+            if (vaddress + m_node_size <= m_nodes_vaddress_current)
+                insert_begin(vaddress);
         }
-
-        list_last->left = m_nodes_list;
-        m_nodes_list = list_first;
-
-        return usedframes;
+        return used_frames;
     };
+
+    size_t node_count(bool print = false) {
+        size_t count = 0;
+        auto next_nd = [](void *p) {
+            uintptr_t &v = *reinterpret_cast<uintptr_t *>(p);
+            return to_ptr(v);
+        };
+
+        void *nd = m_nodes_list;
+        while (nd) {
+            if (print) {
+                kspit(to_uintptr_t(nd));
+            }
+            ++count;
+            nd = next_nd(nd);
+        }
+        return count;
+    }
 
     static FrameNodeAllocator &instance() {
         static FrameNodeAllocator s_allocator;
@@ -104,370 +123,64 @@ class FrameNodeAllocator {
     }
 };
 
-class PageFrameManager {
-    FrameNode *m_free = nullptr;
-    FrameNode *m_used = nullptr;
-    FrameNode *m_nodes_list = nullptr;
-    FrameNode m_null;
+template <typename T> class NodeAllocator {
+    SET_USING_CLASS(T, type);
 
-    FrameNode *null() {
-        return &m_null;
+  public:
+    NodeAllocator() {
+        m_i = 0;
     }
 
-    FrameNode *find_minimum(FrameNode *n) {
-        FrameNode *ret_val = n;
-        while (n != null()) {
-            ret_val = n;
-            n = n->left;
+    size_t m_i;
+
+    template <typename... Args> type_ptr create(Args... args) {
+        type_ptr v = allocate();
+        if (v != nullptr) {
+            new (v) type(hls::forward<Args>(args)...);
         }
-        return ret_val;
+
+        return v;
     }
 
-    void transplant(FrameNode *n, FrameNode *sn, FrameNode **tree) {
-        if (n == null())
+    void destroy(type_const_ptr p) {
+        if (p == nullptr)
             return;
 
-        FrameNode *p = n->parent;
-        if (p != null() && p != nullptr) {
-            if (p->left == n)
-                p->left = (sn);
-            if (p->right == n)
-                p->right = (sn);
-        } else {
-            *tree = sn;
-            sn->parent = n->parent;
-        }
-
-        if (sn) {
-            if (sn != n->left)
-                sn->left = (n->left);
-            if (sn != n->right)
-                sn->right = (n->right);
-            if (sn->left)
-                sn->left->parent = (sn);
-            if (sn->right)
-                sn->right->parent = (sn);
-            sn->parent = (n->parent);
-        }
+        type_ptr p_nc = const_cast<type_ptr>(p);
+        (*p_nc).~type();
+        deallocate(p_nc);
     }
 
-    bool is_left_child(FrameNode *n, FrameNode *p = nullptr) const {
-        if (n != nullptr) {
-            if (n->parent != nullptr) {
-                return n->parent->left == n;
-            }
-        }
-
-        if (p != nullptr) {
-            if (p->left == n)
-                return true;
-        }
-        return false;
+    type_ptr allocate() {
+        void *p = FrameNodeAllocator::instance().get();
+        return reinterpret_cast<type_ptr>(p);
     }
 
-    bool is_right_child(FrameNode *n, FrameNode *p = nullptr) const {
-        if (n != nullptr) {
-            if (n->parent != nullptr) {
-                return n->parent->right == n;
-            }
-        }
-        if (p) {
-            if (n == p->right)
-                return true;
-        }
-        return false;
-    }
-
-    void rotate_left(FrameNode *n, FrameNode **tree) {
-        if (n == nullptr || n == null())
+    void deallocate(type_const_ptr p) {
+        if (p == nullptr)
             return;
-
-        FrameNode *nr = n->right;
-
-        if (nr) {
-            n->right = nr->left;
-
-            if (n->right)
-                n->right->parent = n;
-
-            nr->left = (n);
-            nr->parent = (n->parent);
-            if (is_left_child(n))
-                n->parent->left = (nr);
-            else if (is_right_child(n))
-                n->parent->right = (nr);
-            else
-                *tree = nr;
-
-            n->parent = (nr);
-        }
+        FrameNodeAllocator::instance().release(p);
     }
+};
 
-    void rotate_right(FrameNode *n, FrameNode **tree) {
-        if (n == nullptr || n == null())
-            return;
+class FrameManager {
+    using NodeTree = RedBlackTree<frame_info, Hash, LessComparator, NodeAllocator>;
 
-        FrameNode *nl = n->left;
-        if (nl) {
-            n->left = (nl->right);
-            if (n->left)
-                n->left->parent = (n);
+    NodeTree m_used;
+    NodeTree m_free;
 
-            nl->right = (n);
-            nl->parent = (n->parent);
+    size_t m_initial_count = 0;
 
-            if (is_left_child(n))
-                n->parent->left = (nl);
-            else if (is_right_child(n))
-                n->parent->right = (nl);
-            else
-                *tree = nl;
-
-            n->parent = (nl);
-        }
-    }
-
-    bool is_black(FrameNode *n) {
-        return !is_red(n);
-    }
-
-    bool is_red(FrameNode *n) {
-        if (n == nullptr || n->c == Color::BLACK)
-            return false;
-        return true;
-    }
-
-    FrameNode *find_helper(FrameNode *node, FrameNode **parent_save, FrameNode **tree) {
-        FrameNode *current = *tree;
-        *parent_save = null();
-        while (current != null()) {
-            if (node->frame_pointer < current->frame_pointer) {
-                *parent_save = current;
-                current = current->left;
-                continue;
-            }
-
-            if (node->frame_pointer > current->frame_pointer) {
-                *parent_save = current;
-                current = current->right;
-                continue;
-            }
-            break;
-        }
-        return current;
-    }
-
-    void insert(FrameNode *n, FrameNode **tree) {
-        n->c = Color::RED;
-        n->left = null();
-        n->right = null();
-        n->parent = null();
-
-        if (*tree == null() || *tree == nullptr) {
-            n->c = BLACK;
-            n->parent = nullptr;
-            *tree = n;
-            return;
-        }
-
-        FrameNode *p = nullptr;
-        find_helper(n, &p, tree);
-        if (n->frame_pointer < p->frame_pointer) {
-            p->left = n;
-        } else {
-            p->right = n;
-        }
-        n->parent = p;
-        insert_fix(n, tree);
-
-        (*tree)->parent = nullptr;
-    }
-
-    void insert_fix(FrameNode *n, FrameNode **tree) {
-        FrameNode *p = nullptr;
-        FrameNode *u = nullptr;
-        FrameNode *gp = nullptr;
-
-        if (n == *tree) {
-            n->c = Color::BLACK;
-            return;
-        }
-
-        p = n->parent;
-
-        if (!is_red(n) || !is_red(p))
-            return;
-
-        if (p)
-            gp = p->parent;
-        if (gp)
-            u = gp->left == p ? gp->right : gp->left;
-
-        if (is_red(u)) {
-            gp->c = (Color::RED);
-            u->c = (Color::BLACK);
-            p->c = (Color::BLACK);
-            insert_fix(gp, tree);
-        } else if (is_black(u)) {
-            if (is_right_child(p)) {
-                if (is_right_child(n)) {
-                    rotate_left(gp, tree);
-                    p->c = (Color::BLACK);
-                    gp->c = (Color::RED);
-                } else if (is_left_child(n)) {
-                    n->c = (Color::BLACK);
-                    p->c = (Color::RED);
-                    gp->c = (Color::RED);
-                    rotate_right(n, tree);
-                    rotate_left(p, tree);
-                }
-            } else if (is_left_child(p)) {
-                if (is_left_child(n)) {
-                    rotate_right(gp, tree);
-                    p->c = (Color::BLACK);
-                    gp->c = (Color::RED);
-                } else if (is_right_child(n)) {
-                    n->c = (Color::BLACK);
-                    p->c = (Color::RED);
-                    gp->c = (Color::RED);
-                    rotate_left(n, tree);
-                    rotate_right(p, tree);
-                }
-            }
-        }
-    }
-
-    FrameNode *remove(FrameNode *n, FrameNode **tree) {
-        FrameNode *x = null();
-        Color original_color = n->c;
-
-        if (n->left == null()) {
-            x = n->right;
-            transplant(n, x, tree);
-        } else if (n->right == null()) {
-            x = n->left;
-            transplant(n, x, tree);
-        } else {
-            FrameNode *y = find_minimum(n->right);
-            original_color = y->c;
-            x = y->right;
-            if (y == n->right) {
-                x->parent = (y);
-            } else {
-                transplant(y, x, tree);
-                x->parent = (y->parent);
-            }
-            transplant(n, y, tree);
-            y->c = (original_color);
-        }
-
-        if (original_color == Color::BLACK)
-            remove_fix(x, tree);
-
-        (*tree)->parent = nullptr;
-
-        n->left = null();
-        n->right = null();
-        n->parent = null();
-
-        return n;
-    }
-
-    void remove_fix(FrameNode *n, FrameNode **tree) {
-        while (n != *tree && is_black(n)) {
-            FrameNode *p = n->parent;
-            FrameNode *s;
-            if (is_left_child(n, p)) {
-                s = p->right;
-                if (is_red(s)) {
-                    s->c = (Color::BLACK);
-                    p->c = (Color::RED);
-                    rotate_left(p, tree);
-                    s = p->right;
-                }
-                if (is_black(s->left) && is_black(s->right)) {
-                    s->c = (Color::RED);
-                    n = p;
-                    p = p->parent;
-                } else {
-                    if (is_black(s->right)) {
-                        s->left->c = (Color::BLACK);
-                        s->c = (Color::RED);
-                        rotate_right(s, tree);
-                        s = p->right;
-                    }
-                    s->c = (p->c);
-                    p->c = (Color::BLACK);
-                    s->right->c = (Color::BLACK);
-                    rotate_left(p, tree);
-                    n = *tree;
-                }
-            } else {
-                s = p->left;
-                if (is_red(s)) {
-                    s->c = (Color::BLACK);
-                    p->c = (Color::RED);
-                    rotate_right(p, tree);
-                    s = p->left;
-                }
-                if (is_black(s->right) && is_black(s->left)) {
-                    s->c = (Color::RED);
-                    n = p;
-                    p = p->parent;
-                } else {
-                    if (is_black(s->left)) {
-                        s->right->c = (Color::BLACK);
-                        s->c = (Color::RED);
-                        rotate_left(s, tree);
-                        s = p->left;
-                    }
-                    s->c = (p->c);
-                    p->c = (Color::BLACK);
-                    s->left->c = (Color::BLACK);
-                    rotate_right(p, tree);
-                    n = *tree;
-                }
-            }
-        }
-        if (n)
-            n->c = (Color::BLACK);
-    }
-
-    FrameNode *get_in_order_successor(FrameNode *n) {
-        if (n != null()) {
-            if (n->right != null()) {
-                return find_minimum(n->right);
-            } else {
-                while (n != nullptr && !is_left_child(n)) {
-                    n = n->parent;
-                }
-                if (n != nullptr)
-                    return n->parent;
-            }
-        }
-
-        return null();
-    }
-
-    static PageFrameManager &__internal_instance(void *mem, size_t size, frame_fn f_alloc) {
-        static PageFrameManager m(mem, size, f_alloc);
+    static FrameManager &__internal_instance(void *mem, size_t size) {
+        static FrameManager m(mem, size);
         return m;
     }
 
-    PageFrameManager::PageFrameManager(void *mem, size_t size, frame_fn f_alloc) {
-        m_null.frame_pointer = nullptr;
-        m_null.c = Color::BLACK;
-        m_null.left = nullptr;
-        m_null.right = nullptr;
-        m_null.parent = nullptr;
-
-        m_free = null();
-        m_used = null();
-
+    FrameManager(void *mem, size_t size) {
         void *p_frame_begin = mem;
         void *p_frame_end = align_back(apply_offset(p_frame_begin, size), FrameKB::s_alignment);
 
-        FrameKB *p_begin = reinterpret_cast<FrameNode *>(align_forward(mem, FrameKB::s_alignment));
+        FrameKB *p_begin = reinterpret_cast<FrameKB *>(align_forward(mem, FrameKB::s_alignment));
         FrameKB *p_end = reinterpret_cast<FrameKB *>(p_frame_end);
 
         auto &f_node_alloc = FrameNodeAllocator::instance();
@@ -475,92 +188,264 @@ class PageFrameManager {
         byte *vaddress_begin = nullptr;
         vaddress_begin = vaddress_begin + FRAMEMANAGEMENT_BEGIN;
         f_node_alloc.set_nodes_vaddress_begin(vaddress_begin);
+        f_node_alloc.set_frame_node_size(sizeof(NodeTree::node));
 
-        const size_t f_count = reinterpret_cast<size_t>(FrameLevel::LAST_VPN);
+        const size_t f_count = static_cast<size_t>(FrameLevel::LAST_VPN);
         FrameKB *frames[f_count];
+        for (size_t i = 0; i < f_count; ++i) {
+            frames[i] = p_begin + 1 + i;
+        }
         size_t used_frames = f_node_alloc.map_node_frame(p_begin, frames, f_count);
         p_begin += 1;
         p_begin += used_frames;
 
-        size_t count = p_end - p_begin;
+        frame_info info;
+        info.frame_pointer = p_begin;
+        info.frame_count = p_end - p_begin;
 
-        auto node = f_node_alloc.get();
+        m_initial_count = p_end - p_begin;
 
-        node->frame_pointer = p_begin;
-        node->size = count * FrameKB::s_size;
-        node->use_count = 0;
-        insert(node, &m_free);
+        kprintln("Initializing FrameManager with {} frames for a total of {} kb of physical memory.", info.frame_count,
+                 (info.frame_count * FrameKB::s_size) / 1024);
+        m_free.insert(info);
     }
 
-    void validate_and_fix_node_allocator() {
+    void validate_and_fix_node_allocator(size_t minimum_nodes) {
         auto &allocator = FrameNodeAllocator::instance();
-        auto ptr = allocator.get();
-        if (ptr != nullptr) {
-            allocator.release(ptr);
+        if (allocator.node_count() >= minimum_nodes) {
             return;
         }
 
-        const size_t f_count = reinterpret_cast<size_t>(FrameLevel::LAST_VPN);
+        const size_t f_count = static_cast<size_t>(FrameLevel::LAST_VPN);
         FrameKB *frames[f_count + 1];
+        auto b = frames;
+        const auto e = frames + f_count + 1;
 
-        for (size_t i = 0; i < f_count + 1;) {
-            auto min = find_minimum(m_free);
-            remove(min, &m_free);
-            while (min->size && i < f_count + 1) {
-                frames[i++] = min->frame_pointer;
-                min->size -= FrameKB::s_size;
-                min->frame_pointer += 1;
+        auto it = m_free.begin();
+        while (b < e && it != m_free.end()) {
+            auto f_info = *(it);
+            ++it;
+
+            m_free.remove(f_info);
+            while (b < e && f_info.frame_count) {
+                *b = f_info.frame_pointer;
+                ++b;
+                f_info.frame_pointer += 1;
+                f_info.frame_count -= 1;
             }
 
-            if (min->size) {
-                insert(min, &m_free);
-            } else {
-                allocator.release(min);
+            if (f_info.frame_count) {
+                m_free.insert(f_info);
             }
         }
 
         size_t used = allocator.map_node_frame(frames[0], frames + 1, f_count);
+        b = frames + used - 1;
+        size_t i = 0;
+        while (b - i >= frames) {
+            frame_info f;
+            f.frame_pointer = *(b - i);
+            f.frame_count = 1;
+            f.use_count = 1;
+            f.flags = 0;
+            m_used.insert(f);
+            ++i;
+        }
 
-        while (used < f_count) {
-            auto node = allocator.get();
-            node->frame_pointer = frames[used];
-            node->size = FrameKB::s_size;
-            node->use_count = 1;
-            insert(node, &m_used);
-            // Let the releasing algorithm figure out joining frames.
-            release_frame(frames[used]);
+        i = 0;
+        while (b + i <= e) {
+            frame_info f;
+            f.frame_pointer = *(b + i);
+            f.frame_count = 1;
+            f.use_count = 1;
+            m_used.insert(f);
+            release_frame(f.frame_pointer);
+            ++i;
         }
     }
 
   public:
-    static PageFrameManager &instance() {
-        // TODO: PANIC IF UNITIALIZED
-        return __internal_instance(nullptr, 0, nullptr);
+    void check_count() {
+        size_t count = 0;
+        auto used = m_used.begin();
+        auto free = m_free.begin();
+
+        while (used != m_used.end() && free != m_free.end()) {
+            auto fia = *used;
+            auto fib = *free;
+
+            if (fia.frame_pointer < fib.frame_pointer) {
+                print_frame_info(fia);
+                count += fia.frame_count;
+                ++used;
+            } else if (fib.frame_pointer < fia.frame_pointer) {
+                print_frame_info(fib);
+                count += fib.frame_count;
+                ++free;
+            }
+        }
+
+        while (used != m_used.end()) {
+            print_frame_info(*used);
+            count += used->frame_count;
+            ++used;
+        }
+
+        while (free != m_free.end()) {
+            print_frame_info(*free);
+            count += free->frame_count;
+            ++free;
+        }
+
+        if (count != m_initial_count) {
+            kprintln("Frame count mismatch by {} frames.", m_initial_count - count);
+        } else {
+            kprintln("Expected {} frames. Got {} frames.", m_initial_count, count);
+        }
     }
 
-    static bool init(void *mem, size_t mem_size, frame_fn f_alloc) {
-        __internal_instance(mem, mem_size, f_alloc);
+    static FrameManager &instance() {
+        // TODO: PANIC IF UNITIALIZED
+        return __internal_instance(nullptr, 0);
+    }
+
+    static bool init(void *mem, size_t mem_size) {
+        __internal_instance(mem, mem_size);
         return false;
     }
 
-    bool is_valid_frame(FrameNode *frame, size_t needed_size, size_t needed_alignment) {
+    bool is_valid_frame(frame_info &info, size_t count, size_t alignment) {
+        auto ptr = reinterpret_cast<FrameKB *>(align_forward(info.frame_pointer, alignment));
+        return ptr + count >= info.frame_pointer && ptr + count <= (info.frame_pointer + info.frame_count);
     }
 
-    frame_info *get_frames(size_t size, size_t alignment, uint64_t flags) {
-        // Needed when getting a new frame, given that frames can be split.
-        validate_and_fix_node_allocator();
+    void debug_free() {
+        kprintln("Free nodes: ");
+        for (auto it = m_free.begin(); it != m_free.end(); ++it) {
+            kprintln("--------------");
+            auto &info = *it;
+            kspit(info.frame_pointer);
+            kspit(info.frame_count);
+        }
+    };
 
-        if (m_free == null())
-            return nullptr;
+    void debug_used() {
+        kprintln("Used nodes: ");
+        for (auto it = m_used.begin(); it != m_used.end(); ++it) {
+            kprintln("--------------");
+            auto &info = *it;
+            kspit(info.frame_pointer);
+            kspit(info.frame_count);
+            kspit(info.use_count);
+        }
+    }
 
+    void print_frame_info(frame_info &f) {
+        kspit(f.frame_pointer);
+        kspit(f.frame_count);
+        kspit(f.use_count);
+        kspit(f.flags);
+    }
+
+    frame_info *get_frames(size_t count, size_t alignment, uint64_t flags = 0) {
         bool is_alignment_valid = alignment % FrameKB::s_alignment == 0;
-        if (!is_alignment_valid)
+        if (count == 0 || !is_alignment_valid || m_free.size() == 0)
             return nullptr;
+        // Needed when getting a new frame, given that frames can be split.
+        validate_and_fix_node_allocator(4);
 
-        auto min = find_minimum(m_free);
+        for (auto it = m_free.begin(); it != m_free.end();) {
+            auto info = *(it++);
+            if (is_valid_frame(info, count, alignment)) {
+                frame_info b{.frame_pointer = reinterpret_cast<FrameKB *>(align_forward(info.frame_pointer, alignment)),
+                             .frame_count = count,
+                             .use_count = 1,
+                             .flags = flags};
+
+                frame_info a{.frame_pointer = info.frame_pointer,
+                             .frame_count = b.frame_pointer - info.frame_pointer,
+                             .use_count = 0,
+                             .flags = 0
+
+                };
+
+                frame_info c{.frame_pointer = b.frame_pointer + b.frame_count,
+                             .frame_count = info.frame_count - b.frame_count - a.frame_count,
+                             .use_count = 0,
+                             .flags = 0};
+
+                m_free.remove(info);
+
+                kprintln("a:");
+                print_frame_info(a);
+                kprintln("b:");
+                print_frame_info(b);
+                kprintln("c:");
+                print_frame_info(c);
+
+                if (a.size()) {
+                    if (a.frame_pointer != b.frame_pointer && a.frame_pointer != c.frame_pointer)
+                        m_free.insert(a);
+                }
+
+                if (c.size()) {
+                    kprintln("here1");
+                    if (c.frame_pointer != b.frame_pointer && c.frame_pointer != a.frame_pointer)
+                        m_free.insert(c);
+                    kprintln("here2");
+                }
+
+                for (auto a = m_used.begin(); a != m_used.end(); ++a) {
+                    kprintln("On loop!");
+                    auto i = *a;
+                    print_frame_info(i);
+                }
+                auto nd = m_used.insert(b);
+                kspit(nd);
+                auto x = &(nd->get_data());
+                kprintln("here3");
+                return x;
+            }
+        }
+
+        return nullptr;
     }
 
-    void release_frames(void *frames) {
+    void release_frame(void *ptr) {
+        FrameKB *frame = reinterpret_cast<FrameKB *>(ptr);
+        auto node_b = m_used.get_node(frame_info{.frame_pointer = frame});
+        if (node_b == m_used.null() || node_b == nullptr)
+            return;
+
+        if (node_b->get_data().use_count > 1) {
+            node_b->get_data().use_count -= 1;
+            return;
+        }
+
+        frame_info f = node_b->get_data();
+        m_used.remove(node_b->get_data());
+        // Either it will be null() (end) or a greater value, so getting the predecessor without checking is ok.
+        auto nd = m_free.equal_or_greater(f);
+        nd = m_free.get_in_order_predecessor(nd);
+
+        if (nd != nullptr) {
+            frame_info &finfo = nd->get_data();
+            if (finfo.frame_pointer + finfo.frame_count == f.frame_pointer) {
+                finfo.frame_count += f.frame_count;
+                f = finfo;
+            }
+        }
+
+        nd = m_free.get_in_order_successor(nd);
+
+        if (nd != m_free.null()) {
+            frame_info &finfo = nd->get_data();
+            if (f.frame_pointer + f.frame_count == finfo.frame_pointer) {
+                auto &toextend = m_free.get_node(f)->get_data();
+                toextend.frame_count += finfo.frame_count;
+                m_free.remove(finfo);
+            }
+        }
     }
 };
 
@@ -576,7 +461,7 @@ bool is_memory_node(void *fdt, int node) {
     return false;
 }
 
-void initialize_frame_manager(void *fdt, bootinfo *b_info, frame_fn f_alloc) {
+void initialize_frame_manager(void *fdt, bootinfo *b_info) {
     byte *mem = b_info->p_kernel_physical_end;
     for (auto node = fdt_first_subnode(fdt, 0); node >= 0; node = fdt_next_subnode(fdt, node)) {
         if (is_memory_node(fdt, node)) {
@@ -619,10 +504,16 @@ void initialize_frame_manager(void *fdt, bootinfo *b_info, frame_fn f_alloc) {
 
             mem_size -= (mem - mem_temp);
 
-            PageFrameManager::init(mem, mem_size, f_alloc);
+            FrameManager::init(mem, mem_size);
             break;
         }
     }
+
+    for (size_t i = 0; i < 100; ++i) {
+        FrameManager::instance().get_frames(i, i * FrameKB::s_size, 0);
+    }
+    kprintln("checking count:");
+    FrameManager::instance().check_count();
 }
 
 } // namespace hls

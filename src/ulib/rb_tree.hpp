@@ -120,7 +120,7 @@ template <typename T> class RBTreeNode : protected Node<T, 4> {
         return m_color;
     }
 
-    node_const_ptr t_null() const {
+    node_const_ptr null() const {
         return reinterpret_cast<node_const_ptr>(nd::template get_node<3>());
     }
 };
@@ -256,19 +256,19 @@ class RedBlackTree {
     comparator m_comparator;
 
     void move_helper(RedBlackTree &other, node_ptr n) {
-        if (n->get_left() == other.t_null())
-            n->set_left(t_null());
+        if (n->get_left() == other.null())
+            n->set_left(null());
         else
             move_helper(other, n->get_left());
 
-        if (n->get_right() == other.t_null())
-            n->set_right(t_null());
+        if (n->get_right() == other.null())
+            n->set_right(null());
         else
             move_helper(other, n->get_right());
 
         if (n == m_root) {
-            if (n == other.t_null())
-                m_root = t_null();
+            if (n == other.null())
+                m_root = null();
             else
                 n->set_parent(nullptr);
         }
@@ -278,8 +278,8 @@ class RedBlackTree {
         comparator_const c = get_comparator();
         hsh_const h = get_hasher();
         node_ptr current = m_root;
-        *parent_save = t_null();
-        while (current != t_null()) {
+        *parent_save = null();
+        while (current != null()) {
             if (c(key, h(current->get_data()))) {
                 *parent_save = current;
                 current = current->get_left();
@@ -318,13 +318,15 @@ class RedBlackTree {
 
         p = n->get_parent();
 
-        if (!is_red(n) || !is_red(p))
+        if (!is_red(n) || !is_red(p)) {
             return;
-
-        if (p)
+        }
+        if (p) {
             gp = p->get_parent();
-        if (gp)
+        }
+        if (gp) {
             u = gp->get_left() == p ? gp->get_right() : gp->get_left();
+        }
 
         if (is_red(u)) {
             gp->set_color(Color::RED);
@@ -447,7 +449,7 @@ class RedBlackTree {
     }
 
     void rotate_left(node_ptr n) {
-        if (n == nullptr || n == t_null())
+        if (n == nullptr || n == null())
             return;
 
         node_ptr nr = n->get_right();
@@ -469,10 +471,11 @@ class RedBlackTree {
 
             n->set_parent(nr);
         }
+        m_root->set_parent(nullptr);
     }
 
     void rotate_right(node_ptr n) {
-        if (n == nullptr || n == t_null())
+        if (n == nullptr || n == null())
             return;
 
         node_ptr nl = n->get_left();
@@ -494,6 +497,7 @@ class RedBlackTree {
 
             n->set_parent(nl);
         }
+        m_root->set_parent(nullptr);
     }
 
     inline bool is_red(node_ptr p) {
@@ -513,7 +517,7 @@ class RedBlackTree {
 
     node_const_ptr find_minimum(node_const_ptr n) const {
         node_const_ptr ret_val = n;
-        while (n != t_null()) {
+        while (n != null()) {
             ret_val = n;
             n = n->get_left();
         }
@@ -527,7 +531,7 @@ class RedBlackTree {
 
     node_const_ptr find_maximum(node_const_ptr n) const {
         node_const_ptr ret_val = n;
-        while (n != t_null()) {
+        while (n != null()) {
             ret_val = n;
             n = n->get_right();
         }
@@ -535,11 +539,11 @@ class RedBlackTree {
     }
 
     void transplant(node_ptr n, node_ptr sn) {
-        if (n == t_null())
+        if (n == null())
             return;
 
         node_ptr p = n->get_parent();
-        if (p != t_null()) {
+        if (p != nullptr) {
             if (p->get_left() == n)
                 p->set_left(sn);
             if (p->get_right() == n)
@@ -562,14 +566,14 @@ class RedBlackTree {
     }
 
     void destructor_helper(node_ptr n) {
-        if (n == t_null())
+        if (n == null())
             return;
 
-        if (n->get_left() != t_null()) {
+        if (n->get_left() != null()) {
             destructor_helper(n->get_left());
             m_allocator.destroy(n->get_left());
         }
-        if (n->get_right() != t_null()) {
+        if (n->get_right() != null()) {
             destructor_helper(n->get_right());
             m_allocator.destroy(n->get_right());
         }
@@ -580,12 +584,12 @@ class RedBlackTree {
 
   public:
     RedBlackTree() {
-        m_root = t_null();
+        m_root = null();
         m_size = 0;
     }
 
     ~RedBlackTree() {
-        if (m_root != t_null())
+        if (m_root != null())
             destructor_helper(m_root);
     }
 
@@ -597,20 +601,23 @@ class RedBlackTree {
         *this = hls::move(other);
     }
 
-    void remove(hash_result_const_reference key) {
-        node_ptr p = nullptr;
-        node_ptr n = find_helper(key, &p);
-        node_ptr x = t_null();
-        if (n == t_null())
-            return;
+    void remove(type_const_reference key) {
+        remove(get_hasher()(key));
+    }
 
+    void remove(hash_result_const_reference hash) {
+        node_ptr p = nullptr;
+        node_ptr n = find_helper(hash, &p);
+        node_ptr x = null();
+        if (n == null())
+            return;
         p = n->get_parent();
         Color original_color = n->get_color();
 
-        if (n->get_left() == t_null()) {
+        if (n->get_left() == null()) {
             x = n->get_right();
             transplant(n, x);
-        } else if (n->get_right() == t_null()) {
+        } else if (n->get_right() == null()) {
             x = n->get_left();
             transplant(n, x);
         } else {
@@ -624,6 +631,7 @@ class RedBlackTree {
                 x->set_parent(y->get_parent());
             }
             transplant(n, y);
+
             y->set_color(original_color);
         }
 
@@ -636,54 +644,63 @@ class RedBlackTree {
         --m_size;
     }
 
-    node_ptr insert(type_const_reference key) {
+    node_ptr insert(type_const_reference key, bool dup = false) {
         if (size() == max_size())
-            return t_null();
+            return null();
 
         auto &c = get_comparator();
         auto &h = get_hasher();
 
-        node_ptr n = m_allocator.create(key, Color::RED, t_null());
+        node_ptr n = m_allocator.create(key, Color::RED, null());
 
-        // Handle edge case when we don't have a root node
-        if (m_root == t_null()) {
+        if (m_root != null()) {
+            // Find to which node we are going to insert node n
+            node_ptr p;
+            auto x = find_helper(h(key), &p);
+            if (c(h(key), h(p->get_data()))) {
+                p->set_left(n);
+            } else {
+                p->set_right(n);
+            }
+
+            n->set_parent(p);
+            insert_fix(n);
+        } else {
             m_root = n;
             n->set_color(Color::BLACK);
-            return n;
         }
-
-        // Find to which node we are going to insert node n
-        node_ptr p;
-        find_helper(h(n->get_data()), &p);
-
-        if (c(h(key), h(p->get_data()))) {
-            p->set_left(n);
-        } else {
-            p->set_right(n);
-        }
-
-        n->set_parent(p);
-        insert_fix(n);
 
         m_root->set_parent(nullptr);
         ++m_size;
-
         return n;
     }
 
-    bool contains(hash_result_const_reference key) const {
-        node_const_ptr p;
-        return find_helper(key, &p) != t_null();
+    bool contains(type_const_reference key) const {
+        return contains(get_hasher()(key));
     }
 
-    node_ptr get_node(hash_result_const_reference key) {
+    bool contains(hash_result_const_reference hash) const {
+        node_const_ptr p;
+        return find_helper(hash, &p) != null();
+    }
+
+    node_ptr get_node(hash_result_const_reference hash) {
+        const auto &c = *this;
+        return const_cast<node_ptr>(c.get_node(hash));
+    }
+
+    node_const_ptr get_node(hash_result_const_reference hash) const {
+        node_const_ptr p = nullptr;
+        return find_helper(hash, &p);
+    }
+
+    node_ptr get_node(type_const_reference key) {
         const auto &c = *this;
         return const_cast<node_ptr>(c.get_node(key));
     }
 
-    node_const_ptr get_node(hash_result_const_reference key) const {
-        node_const_ptr p = nullptr;
-        return find_helper(key, &p);
+    node_const_ptr get_node(type_const_reference key) const {
+        return get_node(get_hasher()(key));
     }
 
     node_ptr get_in_order_successor(node_ptr n) {
@@ -692,15 +709,15 @@ class RedBlackTree {
     }
 
     node_const_ptr get_in_order_successor(node_const_ptr n) const {
-        if (m_root == t_null())
-            return t_null();
+        if (m_root == null())
+            return null();
 
         if (n == nullptr) {
             return find_minimum(m_root);
         }
 
-        if (n != t_null()) {
-            if (n->get_right() != t_null()) {
+        if (n != null()) {
+            if (n->get_right() != null()) {
                 return find_minimum(n->get_right());
             } else {
                 while (n != nullptr && !is_left_child(n)) {
@@ -711,7 +728,7 @@ class RedBlackTree {
             }
         }
 
-        return t_null();
+        return null();
     }
 
     node_ptr get_in_order_predecessor(node_ptr n) {
@@ -720,24 +737,21 @@ class RedBlackTree {
     }
 
     node_const_ptr get_in_order_predecessor(node_const_ptr n) const {
-        if (m_root == t_null())
-            return t_null();
+        if (m_root == null())
+            return nullptr;
 
         if (n != nullptr) {
-            if (n == t_null())
+            if (n == null())
                 return find_maximum(m_root);
-
-            if (n->get_left() != t_null())
+            if (n->get_left() != null())
                 return find_maximum(n->get_left());
-
             if (is_right_child(n))
                 return n->get_parent();
-
             while (n != nullptr && !is_right_child(n)) {
                 n = n->get_parent();
             }
 
-            if (n != t_null())
+            if (n != nullptr)
                 return n->get_parent();
         }
 
@@ -748,19 +762,33 @@ class RedBlackTree {
         return m_root;
     }
 
-    node_ptr t_null() {
+    node_ptr null() {
         const auto &c = *this;
-        return const_cast<node_ptr>(c.t_null());
+        return const_cast<node_ptr>(c.null());
     }
 
-    node_const_ptr t_null() const {
+    node_const_ptr null() const {
         return &m_t_null;
     }
 
+    node_ptr equal_or_greater(type_const_reference key) {
+        const auto &c = *this;
+        return const_cast<node_ptr>(c.equal_or_greater(key));
+    }
+
+    node_const_ptr equal_or_greater(type_const_reference key) const {
+        return equal_or_greater(get_hasher()(key));
+    }
+
+    node_ptr equal_or_greater(hash_result_const_reference hash) {
+        const auto &c = *this;
+        return const_cast<node_ptr>(c.equal_or_greater(hash));
+    }
+
     node_const_ptr equal_or_greater(hash_result_const_reference k) const {
-        node_const_ptr p = t_null();
+        node_const_ptr p = nullptr;
         node_const_ptr n = find_helper(k, &p);
-        return n ? n : p;
+        return null() != n ? n : p;
     }
 
     iterator begin() {
@@ -768,11 +796,11 @@ class RedBlackTree {
     }
 
     iterator end() {
-        return iterator(this, t_null());
+        return iterator(this, null());
     }
 
     reverse_iterator rbegin() {
-        return reverse_iterator(this, get_in_order_predecessor(t_null()));
+        return reverse_iterator(this, get_in_order_predecessor(null()));
     }
 
     reverse_iterator rend() {
@@ -784,11 +812,11 @@ class RedBlackTree {
     }
 
     const_iterator end() const {
-        return const_iterator(this, t_null());
+        return const_iterator(this, null());
     }
 
     const_reverse_iterator rbegin() const {
-        return const_reverse_iterator(this, get_in_order_predecessor(t_null()));
+        return const_reverse_iterator(this, get_in_order_predecessor(null()));
     }
 
     const_reverse_iterator rend() const {
@@ -813,7 +841,7 @@ class RedBlackTree {
 
     template <typename IteratorType> IteratorType build_iterator(node_const_ptr n) const {
         if (n) {
-            if (n->t_null() == t_null())
+            if (n->null() == null())
                 return IteratorType(this, n);
         }
 
@@ -867,7 +895,7 @@ class RedBlackTree {
         if (&other != this) {
             this->clear();
             this->m_root = other.m_root;
-            other.m_root = other.t_null();
+            other.m_root = other.null();
             m_size = other.size();
             other.m_size = 0;
             move_helper(other, m_root);

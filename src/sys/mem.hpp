@@ -224,13 +224,9 @@ namespace hls {
 #define align_forward(__ptr, __alignment)                                                                              \
     [](const void *ptr, size_t alignment) -> void *__attribute__((always_inline)) {                                    \
         uintptr_t p = to_uintptr_t(ptr);                                                                               \
-        if (alignment == 1 || is_aligned(ptr, alignment))                                                              \
+        if (alignment <= 1 || is_aligned(ptr, alignment))                                                              \
             return to_ptr(p);                                                                                          \
-        if (!((alignment - 1) & alignment)) {                                                                          \
-            p = (p / alignment) * alignment + alignment;                                                               \
-            return to_ptr(p);                                                                                          \
-        }                                                                                                              \
-        return nullptr;                                                                                                \
+        return to_ptr(p + p % alignment);                                                                              \
     }                                                                                                                  \
     (__ptr, __alignment)
 #endif
@@ -249,7 +245,7 @@ namespace hls {
 #define align_back(__ptr, __alignment)                                                                                 \
     [](const void *ptr, size_t alignment) -> void *__attribute__((always_inline)) {                                    \
         uintptr_t p = to_uintptr_t(ptr);                                                                               \
-        if (alignment == 1 || is_aligned(ptr, alignment))                                                              \
+        if (alignment <= 1 || is_aligned(ptr, alignment))                                                              \
             return to_ptr(p);                                                                                          \
         p = (p / alignment) * alignment;                                                                               \
         return to_ptr(p);                                                                                              \
@@ -340,7 +336,7 @@ namespace hls {
 #ifndef __GETNEEDEDPAGES
 #define __GETNEEDEDPAGES
 #define get_needed_pages(__mem, __memsize, __p_lvl)                                                                    \
-    [](const void *mem, size_t size, FrameLevel lvl) -> auto __attribute__((always_inline)) {                           \
+    [](const void *mem, size_t size, FrameLevel lvl) -> auto __attribute__((always_inline)) {                          \
         size_t alignment = get_frame_alignment(lvl);                                                                   \
         byte *p = reinterpret_cast<byte *>(const_cast<void *>(mem));                                                   \
         byte *back = reinterpret_cast<byte *>(align_back(p, alignment));                                               \

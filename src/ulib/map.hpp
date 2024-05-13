@@ -141,7 +141,7 @@ class Map : RedBlackTree<hls::Pair<Key, Value>, MapHash, LessComparator, Allocat
 
         node_const_ptr n = rb_tree::equal_or_greater(h(k));
 
-        if (n == rb_tree::t_null() || c(h_pair(n->get_data()), h(k)))
+        if (n == rb_tree::null() || c(h_pair(n->get_data()), h(k)))
             return rb_tree::template build_iterator<iterator>(n);
 
         return rb_tree::template build_iterator<iterator>(rb_tree::get_in_order_successor(n));
@@ -151,7 +151,7 @@ class Map : RedBlackTree<hls::Pair<Key, Value>, MapHash, LessComparator, Allocat
         auto &h = rb_tree::get_hasher().get_T_hasher();
         node_const_ptr n = rb_tree::get_node(h(k));
 
-        if (n == rb_tree::t_null()) {
+        if (n == rb_tree::null()) {
             // FAIL MISERABLY
         }
         return n->get_data().second;

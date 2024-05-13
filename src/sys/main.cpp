@@ -153,7 +153,8 @@ __attribute__((noreturn)) void kernel_main(bootinfo *b_info) {
 
     void *device_tree = get_device_tree_from_options(options, buffer);
     device_tree = mapfdt(device_tree);
-    initialize_frame_manager(device_tree, b_info, dirtyfallocator);
+    initialize_frame_manager(device_tree, b_info);
+
     while (true)
         ;
 }

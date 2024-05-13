@@ -722,7 +722,7 @@ int liballoc_unlock() {
 }
 
 void *liballoc_alloc(size_t frames) {
-    auto &f_manager = PageFrameManager::instance();
+    auto &f_manager = FrameManager::instance();
     auto result = f_manager.get_frames(frames);
     if (result.is_error()) {
         // TODO: HANDLE ERROR
@@ -739,7 +739,7 @@ void *liballoc_alloc(size_t frames) {
 }
 
 int liballoc_free(void *p, size_t frames) {
-    auto &f_manager = PageFrameManager::instance();
+    auto &f_manager = FrameManager::instance();
 
     for (size_t i = 0; i < frames; ++i) {
         kmunmap(apply_offset(p, i * PAGE_FRAME_SIZE), kernel_page_table);

@@ -45,6 +45,10 @@ using namespace hls;
 LKERNELBSS alignas(PAGE_FRAME_SIZE) byte INITIAL_FRAMES[PAGE_FRAME_SIZE * BOOTPAGES];
 LKERNELBSS alignas(PAGE_FRAME_SIZE) byte ARGCV[PAGE_FRAME_SIZE * ARGPAGES];
 LKERNELDATA static size_t s_used = 0;
+LKERNELRODATA const char HERE[] = "HERE";
+LKERNELRODATA const char NEEDPAGES[] = "Not enough pages. Please, compile kernel with higher BOOTPAGES option.";
+LKERNELRODATA const char NEEDARGCV[] =
+    "Not enough pages for arguments. Please, compile kernel with higher ARGPAGES option.";
 LKERNELDATA byte *kvaddress = reinterpret_cast<byte *>(uintptr_t(0) - uintptr_t(0x40000000));
 
 #define nvpn(__v) __v == FrameLevel::KB_VPN ? FrameLevel::KB_VPN : static_cast<FrameLevel>(static_cast<size_t>(__v) - 1)

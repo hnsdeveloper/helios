@@ -287,7 +287,7 @@ size_t kmmap(const void *paddress, const void *vaddress, PageTable *table, const
 
 bool kmunmap(const void *vaddress, PageTable *ptable, FrameKB **f_dst, const size_t &limit) {
     if (vaddress == nullptr || ptable == nullptr)
-        return;
+        return false;
 
     // We assume we are using the highest possible page level.
     FrameLevel current_level = FrameLevel::LAST_VPN;
@@ -306,8 +306,10 @@ bool kmunmap(const void *vaddress, PageTable *ptable, FrameKB **f_dst, const siz
         size_t idx = get_page_entry_index(vaddress, current_level);
         TableEntry &entry = vtable->get_entry(idx);
 
-        if (!entry.is_valid())
-            return;
+        if (!entry.is_valid()) {
+            // HANDLE SWAPPED PAGES?
+            return false;
+        }
 
         if (entry.is_leaf())
             break;

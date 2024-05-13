@@ -63,9 +63,9 @@ template <typename Data, size_t N> class Node : protected Node<Data, N - 1> {
 
     template <size_t M> void set_node(node_ptr n) {
         static_assert(M <= N, "Invalid M template argument. Should be smaller than N.");
-        if constexpr (M == N - 1)
+        if constexpr (M == N - 1) {
             m_p = n;
-        else if constexpr (true)
+        } else if constexpr (true)
             nd::template set_node<M>(n);
     }
 };
@@ -74,8 +74,8 @@ template <typename T> class Node<T, 1> {
     SET_USING_CLASS(T, type);
     SET_USING_CLASS(Node, node);
 
-    char m_data[sizeof(type)];
     const void *m_p;
+    char m_data[sizeof(type)];
     bool m_initialized;
 
   public:

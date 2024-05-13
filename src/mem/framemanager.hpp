@@ -34,9 +34,13 @@ namespace hls {
 
 struct frame_info {
     FrameKB *frame_pointer = nullptr;
-    size_t size;
-    uint64_t flags;
-    size_t frame_count;
+    size_t frame_count = 0;
+    size_t use_count = 0;
+    uint64_t flags = 0;
+
+    size_t size() {
+        return FrameKB::s_size * frame_count;
+    }
 };
 
 const frame_info *get_frame(uint64_t flags);
@@ -48,6 +52,6 @@ void *release_frames(void *);
 void *get_frame_management_begin_vaddress();
 void *get_frame_management_end_vaddress();
 
-void initialize_frame_manager(void *fdt, bootinfo *b_info, frame_fn);
+void initialize_frame_manager(void *fdt, bootinfo *b_info);
 
 } // namespace hls
