@@ -134,7 +134,8 @@ template <typename T> class LessComparator {
     }
 };
 
-template <typename T, template <typename> class Hash, template <typename> class Cmp, template <typename> class Alloc>
+template <typename T, template <typename> class Hash, template <typename> class Cmp, template <typename> class Alloc,
+          bool dup = false>
 class RedBlackTree {
     EXTRACT_SUB_USING_T_CLASS(RBTreeNode<T>, node, node);
     EXTRACT_SUB_USING_T_CLASS(node, type, type);
@@ -343,8 +344,8 @@ class RedBlackTree {
                     n->set_color(Color::BLACK);
                     p->set_color(Color::RED);
                     gp->set_color(Color::RED);
-                    rotate_right(n);
-                    rotate_left(p);
+                    rotate_right(p);
+                    rotate_left(gp);
                 }
             } else if (is_left_child(p)) {
                 if (is_left_child(n)) {
@@ -355,8 +356,8 @@ class RedBlackTree {
                     n->set_color(Color::BLACK);
                     p->set_color(Color::RED);
                     gp->set_color(Color::RED);
-                    rotate_left(n);
-                    rotate_right(p);
+                    rotate_left(p);
+                    rotate_right(gp);
                 }
             }
         }
@@ -449,55 +450,42 @@ class RedBlackTree {
     }
 
     void rotate_left(node_ptr n) {
-        if (n == nullptr || n == null())
-            return;
+        auto parent = n->get_parent();
+        auto newparent = n->get_right();
+        auto new_right = n->get_right()->get_left();
+        n->set_parent(newparent);
+        n->set_right(new_right);
+        new_right->set_parent(n);
+        newparent->set_left(n);
+        newparent->set_parent(parent);
 
-        node_ptr nr = n->get_right();
-
-        if (nr) {
-            n->set_right(nr->get_left());
-
-            if (n->get_right())
-                n->get_right()->set_parent(n);
-
-            nr->set_left(n);
-            nr->set_parent(n->get_parent());
-            if (is_left_child(n))
-                n->get_parent()->set_left(nr);
-            else if (is_right_child(n))
-                n->get_parent()->set_right(nr);
+        if (parent != nullptr) {
+            if (n == parent->get_left())
+                parent->set_left(newparent);
             else
-                m_root = nr;
-
-            n->set_parent(nr);
-        }
-        m_root->set_parent(nullptr);
+                parent->set_right(newparent);
+        } else
+            m_root = newparent;
     }
 
     void rotate_right(node_ptr n) {
-        if (n == nullptr || n == null())
-            return;
+        auto parent = n->get_parent();
+        auto newparent = n->get_left();
+        auto new_left = n->get_left()->get_right();
 
-        node_ptr nl = n->get_left();
+        n->set_parent(newparent);
+        n->set_left(new_left);
+        new_left->set_parent(n);
+        newparent->set_right(n);
+        newparent->set_parent(parent);
 
-        if (nl) {
-            n->set_left(nl->get_right());
-            if (n->get_left())
-                n->get_left()->set_parent(n);
-
-            nl->set_right(n);
-            nl->set_parent(n->get_parent());
-
-            if (is_left_child(n))
-                n->get_parent()->set_left(nl);
-            else if (is_right_child(n))
-                n->get_parent()->set_right(nl);
+        if (parent != nullptr) {
+            if (n == parent->get_left())
+                parent->set_left(newparent);
             else
-                m_root = nl;
-
-            n->set_parent(nl);
-        }
-        m_root->set_parent(nullptr);
+                parent->set_right(newparent);
+        } else
+            m_root = newparent;
     }
 
     inline bool is_red(node_ptr p) {
@@ -644,28 +632,58 @@ class RedBlackTree {
         --m_size;
     }
 
-    node_ptr insert(type_const_reference key, bool dup = false) {
+    node_ptr insert(type_const_reference key, bool print = false) {
         if (size() == max_size())
             return null();
+
+        if (print) {
+            kspit(key.frame_pointer);
+        }
 
         auto &c = get_comparator();
         auto &h = get_hasher();
 
         node_ptr n = m_allocator.create(key, Color::RED, null());
 
+        if (print) {
+            kspit(n);
+        }
+
         if (m_root != null()) {
+            if (print) {
+                kprint("Here!");
+            }
             // Find to which node we are going to insert node n
             node_ptr p;
-            auto x = find_helper(h(key), &p);
+            find_helper(h(key), &p);
+            if (print) {
+                kspit(p);
+                kprint("Here2!");
+            }
             if (c(h(key), h(p->get_data()))) {
                 p->set_left(n);
+                if (print) {
+                    kprint("Here3!");
+                }
             } else {
+                if (print) {
+                    kprint("Here4!");
+                }
                 p->set_right(n);
             }
 
             n->set_parent(p);
+            if (print) {
+                kprint("Here5!");
+            }
             insert_fix(n);
+            if (print) {
+                kprint("Here6!");
+            }
         } else {
+            if (print) {
+                kprint("Here7!");
+            }
             m_root = n;
             n->set_color(Color::BLACK);
         }
