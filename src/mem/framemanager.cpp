@@ -99,7 +99,7 @@ class FrameNodeAllocator {
         return used_frames;
     };
 
-    size_t node_count(bool print = false) {
+    size_t node_count() {
         size_t count = 0;
         auto next_nd = [](void *p) {
             uintptr_t &v = *reinterpret_cast<uintptr_t *>(p);
@@ -108,9 +108,6 @@ class FrameNodeAllocator {
 
         void *nd = m_nodes_list;
         while (nd) {
-            if (print) {
-                kspit(to_uintptr_t(nd));
-            }
             ++count;
             nd = next_nd(nd);
         }
@@ -169,7 +166,7 @@ class FrameManager {
     NodeTree m_used;
     NodeTree m_free;
 
-    size_t m_initial_count = 0;
+    size_t m_frame_count = 0;
 
     static FrameManager &__internal_instance(void *mem, size_t size) {
         static FrameManager m(mem, size);
@@ -204,7 +201,7 @@ class FrameManager {
         info.frame_pointer = p_begin;
         info.frame_count = p_end - p_begin;
 
-        m_initial_count = p_end - p_begin;
+        m_frame_count = p_end - p_begin;
 
         kprintln("Initializing FrameManager with {} frames for a total of {} kb of physical memory.", info.frame_count,
                  (info.frame_count * FrameKB::s_size) / 1024);
@@ -216,10 +213,6 @@ class FrameManager {
         if (allocator.node_count() >= minimum_nodes) {
             return;
         }
-
-        static int s = 0;
-
-        kspit(++s);
 
         // We need 1 for mapping and at maximum LAST_VPN frames, given that the root table is always available.
         const size_t f_count = static_cast<size_t>(FrameLevel::LAST_VPN) + 1;
@@ -239,12 +232,6 @@ class FrameManager {
                 ++i;
             }
 
-            kspit(f_info_old.frame_pointer);
-            kspit(f_info_old.frame_count);
-
-            kspit(f_info_new.frame_pointer);
-            kspit(f_info_new.frame_count);
-
             m_free.remove(f_info_old);
             // Should be safe, we have at least one node available
             if (f_info_new.frame_count > 0) {
@@ -253,35 +240,25 @@ class FrameManager {
         }
 
         auto used = allocator.map_node_frame(frames[0], frames + 1, f_count - 1);
-        // This will always be used, given that it is mapping the nodes.
-        frame_info f_nodes{.frame_pointer = frames[0], .frame_count = 1, .use_count = 1, .flags = 0};
-        m_used.insert(f_nodes);
-        print_frame_info(f_nodes);
-        if (!m_used.contains(f_nodes)) {
-            kprintln("Missing frame.");
-            print_frame_info(f_nodes);
-        }
-
-        kspit(m_used.contains(f_nodes));
-
-        for (size_t i = 1; i < f_count; ++i) {
-            frame_info f{.frame_pointer = frames[i], .frame_count = 1, .use_count = 1, .flags = 0};
-            if (!m_used.contains(f)) {
-                m_used.insert(f);
-
-                if (!m_used.contains(f)) {
-                    kprintln("Missing frame.");
-                    print_frame_info(f);
-                }
-
-                release_frame(f.frame_pointer, true);
-            } else {
-                kprintln("Here2");
+        used = 1;
+        for (size_t i = 0; i < f_count; ++i) {
+            frame_info f_nodes{.frame_pointer = frames[0], .frame_count = 1, .use_count = 1, .flags = 0};
+            m_used.insert(f_nodes);
+            // This will always be used, given that it is mapping the nodes.
+            if (i > 0 && i != used) {
+                kprintln("Here");
+                release_frame(frames[i]);
             }
         }
     }
 
+    bool is_valid_frame(frame_info &info, size_t count, size_t alignment) {
+        auto ptr = reinterpret_cast<FrameKB *>(align_forward(info.frame_pointer, alignment));
+        return ptr + count >= info.frame_pointer && ptr + count <= (info.frame_pointer + info.frame_count);
+    }
+
   public:
+#ifdef DEBUG
     void check_count() {
         size_t count = 0;
         auto used = m_used.begin();
@@ -314,26 +291,11 @@ class FrameManager {
             ++free;
         }
 
-        if (count != m_initial_count) {
-            kprintln("Frame count mismatch by {} frames.", m_initial_count - count);
+        if (count != m_frame_count) {
+            kprintln("Frame count mismatch by {} frames.", m_frame_count - count);
         } else {
-            kprintln("Expected {} frames. Got {} frames.", m_initial_count, count);
+            kprintln("Expected {} frames. Got {} frames.", m_frame_count, count);
         }
-    }
-
-    static FrameManager &instance() {
-        // TODO: PANIC IF UNITIALIZED
-        return __internal_instance(nullptr, 0);
-    }
-
-    static bool init(void *mem, size_t mem_size) {
-        __internal_instance(mem, mem_size);
-        return false;
-    }
-
-    bool is_valid_frame(frame_info &info, size_t count, size_t alignment) {
-        auto ptr = reinterpret_cast<FrameKB *>(align_forward(info.frame_pointer, alignment));
-        return ptr + count >= info.frame_pointer && ptr + count <= (info.frame_pointer + info.frame_count);
     }
 
     void debug_free() {
@@ -363,6 +325,17 @@ class FrameManager {
         kspit(f.use_count);
         kspit(f.flags);
     }
+#endif
+
+    static FrameManager &instance() {
+        // TODO: PANIC IF UNITIALIZED
+        return __internal_instance(nullptr, 0);
+    }
+
+    static bool init(void *mem, size_t mem_size) {
+        __internal_instance(mem, mem_size);
+        return false;
+    }
 
     frame_info *get_frames(size_t count, size_t alignment, uint64_t flags = 0) {
         bool is_alignment_valid = alignment % FrameKB::s_alignment == 0;
@@ -384,27 +357,14 @@ class FrameManager {
                              .frame_count =
                                  (to_uintptr_t(b.frame_pointer) - to_uintptr_t(info.frame_pointer)) / FrameKB::s_size,
                              .use_count = 0,
-                             .flags = 0
-
-                };
+                             .flags = 0};
 
                 frame_info c{.frame_pointer = b.frame_pointer + b.frame_count,
                              .frame_count = info.frame_count - b.frame_count - a.frame_count,
                              .use_count = 0,
                              .flags = 0};
 
-                if (info.frame_count != (a.frame_count + b.frame_count + c.frame_count)) {
-                    kprintln("Frame count not matching!");
-                }
-
                 m_free.remove(info);
-
-                // kprintln("a:");
-                // print_frame_info(a);
-                // kprintln("b:");
-                // print_frame_info(b);
-                // kprintln("c:");
-                // print_frame_info(c);
 
                 if (a.size()) {
                     if (a.frame_pointer != b.frame_pointer && a.frame_pointer != c.frame_pointer)
@@ -425,13 +385,8 @@ class FrameManager {
         return nullptr;
     }
 
-    void release_frame(void *ptr, bool print = false) {
+    void release_frame(void *ptr) {
         FrameKB *frame = reinterpret_cast<FrameKB *>(ptr);
-
-        if (!m_used.contains(frame_info{.frame_pointer = frame})) {
-            kprintln("HERE! contains");
-            return;
-        }
 
         auto node_b = m_used.get_node(frame_info{.frame_pointer = frame});
         if (node_b->get_data().use_count != 1) {
@@ -466,6 +421,10 @@ class FrameManager {
         }
         f.flags = 0;
         m_free.insert(f);
+    }
+
+    size_t get_frame_count() {
+        return m_frame_count;
     }
 };
 
@@ -532,8 +491,15 @@ void initialize_frame_manager(void *fdt, bootinfo *b_info) {
     for (size_t i = 0; i < 100; ++i) {
         FrameManager::instance().get_frames(i, i * FrameKB::s_size, 0);
     }
-    kprintln("checking count:");
-    FrameManager::instance().check_count();
+}
+
+void *get_frame_management_begin_vaddress() {
+    return to_ptr(FRAMEMANAGEMENT_BEGIN);
+}
+void *get_frame_management_end_vaddress() {
+    void *p = get_frame_management_begin_vaddress();
+    p = apply_offset(p, FrameManager::instance().get_frame_count() * FrameKB::s_size);
+    return align_forward(p, 0x40000000);
 }
 
 } // namespace hls
