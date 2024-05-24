@@ -28,6 +28,7 @@ SOFTWARE.
 #include "sys/mem.hpp"
 #include "sys/opensbi.hpp"
 #include "sys/print.hpp"
+
 namespace hls {
 
 static PageTable *s_scratch_page_table;
@@ -347,6 +348,19 @@ bool kmunmap(const void *vaddress, PageTable *ptable, FrameKB **f_dst, const siz
     }
 
     return true;
+}
+
+void setup_kernel_memory_map(bootinfo *b_info) {
+    set_kernel_pagetable(b_info->p_kernel_table);
+    set_scratch_pagetable(b_info->v_scratch);
+    set_kernel_v_free_address(b_info->v_highkernel_end);
+}
+
+void unmap_low_kernel(byte *begin, byte *end) {
+    PageTable *kernel_table = get_kernel_pagetable();
+    for (auto it = begin; it < end; it += PAGE_FRAME_SIZE) {
+        kmunmap(it, kernel_table, initffree);
+    }
 }
 
 } // namespace hls

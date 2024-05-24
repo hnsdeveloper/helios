@@ -181,7 +181,6 @@ class FrameManager {
         FrameKB *p_end = reinterpret_cast<FrameKB *>(p_frame_end);
 
         auto &f_node_alloc = FrameNodeAllocator::instance();
-
         byte *vaddress_begin = nullptr;
         vaddress_begin = vaddress_begin + FRAMEMANAGEMENT_BEGIN;
         f_node_alloc.set_nodes_vaddress_begin(vaddress_begin);
@@ -193,6 +192,7 @@ class FrameManager {
         for (size_t i = 0; i < f_count; ++i) {
             frames[i] = p_begin + 1 + i;
         }
+
         size_t used_frames = f_node_alloc.map_node_frame(p_begin, frames, f_count);
         p_begin += 1;
         p_begin += used_frames;
@@ -246,7 +246,6 @@ class FrameManager {
             m_used.insert(f_nodes);
             // This will always be used, given that it is mapping the nodes.
             if (i > 0 && i != used) {
-                kprintln("Here");
                 release_frame(frames[i]);
             }
         }
@@ -500,6 +499,25 @@ void *get_frame_management_end_vaddress() {
     void *p = get_frame_management_begin_vaddress();
     p = apply_offset(p, FrameManager::instance().get_frame_count() * FrameKB::s_size);
     return align_forward(p, 0x40000000);
+}
+
+PageTable *init_initfalloc(size_t used, PageTable *tables) {
+    static size_t g_usedpages = used;
+    static PageTable *g_tables = tables;
+
+    if (used == 0) {
+        if (g_usedpages < BOOTPAGES)
+            return g_tables + g_usedpages++;
+    }
+
+    return nullptr;
+}
+
+void *initfalloc() {
+    return init_initfalloc(0, nullptr);
+}
+
+void initffree(void *) {
 }
 
 } // namespace hls

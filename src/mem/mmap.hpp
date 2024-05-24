@@ -1,6 +1,7 @@
 #include "arch/riscv64gc/plat_def.hpp"
 #include "misc/macros.hpp"
 #include "misc/types.hpp"
+#include "sys/bootdata.hpp"
 #include "sys/cpu.hpp"
 
 namespace hls {
@@ -27,5 +28,9 @@ PageTable *get_kernel_pagetable();
 
 void set_kernel_v_free_address(byte *vaddress);
 byte *get_kernel_v_free_address();
+
+void setup_kernel_memory_map(bootinfo *b_info);
+
+void unmap_low_kernel(byte *begin, byte *end);
 
 } // namespace hls
