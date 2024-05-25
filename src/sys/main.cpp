@@ -40,17 +40,6 @@ SOFTWARE.
 
 namespace hls {
 
-void strcprint(const char *str, size_t n) {
-    while (n--) {
-        opensbi_putchar(*(str++));
-    }
-}
-
-void die() {
-    while (true)
-        ;
-}
-
 void display_initial_info() {
     // Prints the splash logo
     strprint(splash);
@@ -69,21 +58,7 @@ __attribute__((noreturn)) void kernel_main(bootinfo *b_info) {
 
     unmap_low_kernel(b_info->p_lowkernel_start, b_info->p_lowkernel_end);
 
-    option::Stats stats(usage, b_info->argc - 1, b_info->argv + 1);
-    option::Option options[stats.options_max], buffer[stats.buffer_max];
-    option::Parser parse(usage, b_info->argc - 1, b_info->argv + 1, options, buffer);
-
-    if (parse.error()) {
-        kprintln("Failed to parse boot options.");
-        die();
-    }
-
-    if (b_info->argc == 1 || options[OptionIndex::HELP]) {
-        option::printUsage(&strcprint, usage);
-        die();
-    }
-
-    void *device_tree = get_device_tree_from_options(options, buffer);
+    void *device_tree = get_device_tree_from_options(b_info->argc, b_info->argv);
     device_tree = mapfdt(device_tree);
     initialize_frame_manager(device_tree, b_info);
     while (true)

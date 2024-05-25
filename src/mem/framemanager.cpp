@@ -518,6 +518,19 @@ void *initfalloc() {
 }
 
 void initffree(void *) {
+    (void)(0);
+}
+
+const frame_info *framealloc(size_t count, uint64_t flags) {
+    return FrameManager::instance().get_frames(count, FrameInfo<FrameLevel::KB_VPN>::s_alignment, flags);
+}
+
+const frame_info *framealloc(uint64_t flags) {
+    return framealloc(1, flags);
+}
+
+void framefree(void *ptr) {
+    FrameManager::instance().release_frame(ptr);
 }
 
 } // namespace hls

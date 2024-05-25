@@ -22,22 +22,47 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
+
+#include "sys/bootoptions.hpp"
 #include "sys/cpu.hpp"
-#include "arch/riscv64gc/plat_def.hpp"
+
 namespace hls {
 
-size_t get_cpu_id() {
-    // TODO: IMPLEMENT
-    return 0;
+void strcprint(const char *str, size_t n) {
+    while (n--) {
+        opensbi_putchar(*(str++));
+    }
 }
 
-void flush_tlb() {
-    _flush_tlb();
-}
+void *get_device_tree_from_options(int argc, const char **argv) {
+    option::Stats stats(usage, argc - 1, argv + 1);
+    option::Option options[stats.options_max], buffer[stats.buffer_max];
+    option::Parser parse(usage, argc - 1, argv + 1, options, buffer);
 
-void die() {
-    while (true)
-        ;
-}
+    if (parse.error()) {
+        kprintln("Failed to parse boot options.");
+        die();
+    }
 
+    if (argc == 1 || options[OptionIndex::HELP]) {
+        option::printUsage(&strcprint, usage);
+        die();
+    }
+
+    if (options[OptionIndex::FDT].count() == 1) {
+        char *p = nullptr;
+        uintptr_t addr = strtoul(options[OptionIndex::FDT].arg, &p, 16);
+
+        if (addr == 0 && p == nullptr) {
+            kprintln("Invalid FDT address. Please reboot and provide a valid one (FDT needed for booting).");
+            die();
+        }
+
+        return to_ptr(addr);
+    } else {
+        kprintln("Invalid fdt option.");
+    }
+
+    return nullptr;
+}
 } // namespace hls

@@ -78,26 +78,7 @@ const option::Descriptor usage[] = {{UNKNOWN, 0, "", "", ArgVal::None, "USAGE: e
                                      "  --fdt, -f \t Flattened device tree address as hex value (e.g. FFFFFFFF "
                                      "or 0xFFFFFFF)."}};
 
-void *get_device_tree_from_options(option::Option *options, option::Option *) {
-
-    if (options[OptionIndex::FDT].count() == 1) {
-        char *p = nullptr;
-        uintptr_t addr = strtoul(options[OptionIndex::FDT].arg, &p, 16);
-
-        if (addr == 0 && p == nullptr) {
-            kprintln("Invalid FDT address. Please reboot and provide a valid one (FDT needed for booting).");
-            // TODO: die
-            while (true)
-                ;
-        }
-
-        return to_ptr(addr);
-    } else {
-        kprintln("Invalid fdt option.");
-    }
-
-    return nullptr;
-}
+void *get_device_tree_from_options(int argc, const char **argv);
 
 } // namespace hls
 
