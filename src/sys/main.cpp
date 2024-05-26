@@ -34,6 +34,7 @@ SOFTWARE.
 #include "sys/bootoptions.hpp"
 #include "sys/cpu.hpp"
 #include "sys/devicetree.hpp"
+#include "sys/kmalloc.hpp"
 #include "sys/mem.hpp"
 #include "sys/print.hpp"
 #include "sys/string.hpp"
@@ -53,14 +54,12 @@ __attribute__((noreturn)) void kernel_main(bootinfo *b_info) {
     display_initial_info();
 
     setup_kernel_memory_map(b_info);
-
     init_initfalloc(b_info->used_bootpages, get_kernel_pagetable());
-
     unmap_low_kernel(b_info->p_lowkernel_start, b_info->p_lowkernel_end);
+    mapfdt(get_device_tree_from_options(b_info->argc, b_info->argv));
+    initialize_frame_manager(get_fdt(), b_info);
+    initialize_kmalloc();
 
-    void *device_tree = get_device_tree_from_options(b_info->argc, b_info->argv);
-    device_tree = mapfdt(device_tree);
-    initialize_frame_manager(device_tree, b_info);
     while (true)
         ;
 }

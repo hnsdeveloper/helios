@@ -28,8 +28,10 @@ SOFTWARE.
 
 namespace hls {
 
-void *mapfdt(void *fdt);
+void mapfdt(void *fdt);
 
-}
+void *get_fdt();
+
+} // namespace hls
 
 #endif

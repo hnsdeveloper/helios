@@ -60,46 +60,6 @@ extern void PREFIX(free)(void *);             ///< The standard function.
 
 namespace hls {
 
-template <typename T> class KMAllocator {
-    SET_USING_CLASS(T, type);
-
-  public:
-    KMAllocator() {
-        m_i = 0;
-    }
-
-    size_t m_i;
-
-    template <typename... Args> type_ptr create(Args... args) {
-        type_ptr v = allocate();
-        if (v != nullptr) {
-            new (v) type(hls::forward<Args>(args)...);
-        }
-
-        return v;
-    }
-
-    void destroy(type_const_ptr p) {
-        if (p == nullptr)
-            return;
-
-        type_ptr p_nc = const_cast<type_ptr>(p);
-        (*p_nc).~type();
-        deallocate(p_nc);
-    }
-
-    type_ptr allocate() {
-        return reinterpret_cast<type_ptr>(kmalloc(sizeof(type)));
-    }
-
-    void deallocate(type_const_ptr p) {
-        if (p == nullptr)
-            return;
-        type_ptr p_nc = const_cast<type_ptr>(p);
-        kfree(p_nc);
-    }
-};
-
 void initialize_kmalloc();
 
 } // namespace hls

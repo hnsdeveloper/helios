@@ -1,9 +1,6 @@
 #include "sys/kmalloc.hpp"
-#include "arch/riscv64gc/plat_def.hpp"
-#include "mem/common.hpp"
-#include "mem/memmap.hpp"
-#include "mem/paging.hpp"
-#include "sys/print.hpp"
+#include "mem/framemanager.hpp"
+#include "sys/panic.hpp"
 
 using namespace hls;
 
@@ -722,29 +719,7 @@ int liballoc_unlock() {
 }
 
 void *liballoc_alloc(size_t frames) {
-    auto &f_manager = FrameManager::instance();
-    auto result = f_manager.get_frames(frames);
-    if (result.is_error()) {
-        // TODO: HANDLE ERROR
-    }
-
-    for (size_t i = 0; i < frames; ++i) {
-        void *x = result.get_value();
-        // All pages are identity mapped, so we can use kmalloc pointers when using virtual addressing.
-        kmmap(apply_offset(x, i * PAGE_FRAME_SIZE), apply_offset(x, i * PAGE_FRAME_SIZE), kernel_page_table,
-              FrameLevel::KB_VPN, true, false, true, true);
-    }
-
-    return result.get_value();
 }
 
 int liballoc_free(void *p, size_t frames) {
-    auto &f_manager = FrameManager::instance();
-
-    for (size_t i = 0; i < frames; ++i) {
-        kmunmap(apply_offset(p, i * PAGE_FRAME_SIZE), kernel_page_table);
-    }
-
-    f_manager.release_frames(p, frames);
-    return 0;
 }
