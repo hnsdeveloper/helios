@@ -80,22 +80,15 @@ uintptr_t get_vaddress_offset(const void *vaddress) {
 }
 
 void walk_table(const void *vaddress, PageTable **table, FrameLevel *lvl) {
-    if (table == nullptr || lvl == nullptr)
-        return;
-    if (*lvl == FrameLevel::FIRST_VPN)
+    if (table == nullptr || lvl == nullptr || *lvl == FrameLevel::FIRST_VPN)
         return;
 
-    FrameLevel l = *lvl;
-    PageTable *t = translated_page_vaddress(*table);
+    size_t idx = get_page_entry_index(vaddress, *lvl);
+    auto &entry = translated_page_vaddress(*table)->get_entry(idx);
 
-    size_t idx = get_page_entry_index(vaddress, l);
-    auto &entry = t->get_entry(idx);
-
-    if (entry.is_valid()) {
-        if (!entry.is_leaf()) {
-            *table = entry.as_table_pointer();
-            *lvl = next_vpn(*lvl);
-        }
+    if (entry.is_valid() && !entry.is_leaf()) {
+        *table = entry.as_table_pointer();
+        *lvl = next_vpn(*lvl);
     }
 }
 
