@@ -28,20 +28,27 @@ SOFTWARE.
 
 #include "misc/typetraits.hpp"
 
-namespace hls {
+namespace hls
+{
 
-template <typename T> constexpr hls::remove_reference_t<T> &&move(T &&arg) {
-    return static_cast<hls::remove_reference_t<T> &&>(arg);
-}
+    template <typename T>
+    constexpr hls::remove_reference_t<T> &&move(T &&arg)
+    {
+        return static_cast<hls::remove_reference_t<T> &&>(arg);
+    }
 
-template <class T> inline T &&forward(typename hls::remove_reference<T>::type &t) noexcept {
-    return static_cast<T &&>(t);
-}
+    template <class T>
+    inline T &&forward(typename hls::remove_reference<T>::type &t) noexcept
+    {
+        return static_cast<T &&>(t);
+    }
 
-template <class T> inline T &&forward(typename hls::remove_reference<T>::type &&t) noexcept {
-    static_assert(!hls::is_lvalue_reference<T>::value, "Can not forward an rvalue as an lvalue.");
-    return static_cast<T &&>(t);
-}
+    template <class T>
+    inline T &&forward(typename hls::remove_reference<T>::type &&t) noexcept
+    {
+        static_assert(!hls::is_lvalue_reference<T>::value, "Can not forward an rvalue as an lvalue.");
+        return static_cast<T &&>(t);
+    }
 
 } // namespace hls
 

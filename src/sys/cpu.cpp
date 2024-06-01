@@ -24,20 +24,24 @@ SOFTWARE.
 ---------------------------------------------------------------------------------*/
 #include "sys/cpu.hpp"
 #include "arch/riscv64gc/plat_def.hpp"
-namespace hls {
+namespace hls
+{
 
-size_t get_cpu_id() {
-    // TODO: IMPLEMENT
-    return 0;
-}
+    size_t get_cpu_id()
+    {
+        // TODO: IMPLEMENT
+        return 0;
+    }
 
-void flush_tlb() {
-    _flush_tlb();
-}
+    void flush_tlb()
+    {
+        _flush_tlb();
+    }
 
-void die() {
-    while (true)
-        ;
-}
+    void die()
+    {
+        while (true)
+            ;
+    }
 
 } // namespace hls

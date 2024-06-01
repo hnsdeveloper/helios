@@ -26,11 +26,12 @@ SOFTWARE.
 #ifndef __DEVICETREE_HPP_
 #define __DEVICETREE_HPP_
 
-namespace hls {
+namespace hls
+{
 
-void mapfdt(void *fdt);
+    void mapfdt(void *fdt);
 
-void *get_fdt();
+    void *get_fdt();
 
 } // namespace hls
 

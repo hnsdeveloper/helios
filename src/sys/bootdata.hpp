@@ -27,24 +27,26 @@ SOFTWARE.
 
 #include "misc/types.hpp"
 
-namespace hls {
+namespace hls
+{
 
-struct PageTable;
+    struct PageTable;
 
-struct bootinfo {
-    size_t argc;
-    const char **argv;
-    size_t used_bootpages;
-    PageTable *p_kernel_table;
-    PageTable *v_scratch;
-    byte *p_lowkernel_start;
-    byte *p_lowkernel_end;
-    byte *v_highkernel_start;
-    byte *v_highkernel_end;
-    byte *p_kernel_physical_end;
-    byte *v_device_drivers_begin;
-    byte *v_device_drivers_end;
-};
+    struct bootinfo
+    {
+        size_t argc;
+        const char **argv;
+        size_t used_bootpages;
+        PageTable *p_kernel_table;
+        PageTable *v_scratch;
+        byte *p_lowkernel_start;
+        byte *p_lowkernel_end;
+        byte *v_highkernel_start;
+        byte *v_highkernel_end;
+        byte *p_kernel_physical_end;
+        byte *v_device_drivers_begin;
+        byte *v_device_drivers_end;
+    };
 } // namespace hls
 
 #endif

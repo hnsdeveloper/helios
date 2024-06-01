@@ -4,17 +4,20 @@
 
 using namespace hls;
 
-namespace hls {
-void initialize_kmalloc() {
-    void *allocated = nullptr;
-    allocated = kmalloc(8);
-    if (allocated == nullptr) {
-        // TODO : HANDLE WHY IT FAILED
-        PANIC("kmalloc initialization failed.");
-    }
+namespace hls
+{
+    void initialize_kmalloc()
+    {
+        void *allocated = nullptr;
+        allocated = kmalloc(8);
+        if (allocated == nullptr)
+        {
+            // TODO : HANDLE WHY IT FAILED
+            PANIC("kmalloc initialization failed.");
+        }
 
-    kfree(allocated);
-}
+        kfree(allocated);
+    }
 } // namespace hls
 
 /**  Durand's Amazing Super Duper Memory functions.  */
@@ -37,11 +40,13 @@ void initialize_kmalloc() {
 
 /** This macro will conveniently align our pointer upwards */
 #define ALIGN(ptr)                                                                                                     \
-    if (ALIGNMENT > 1) {                                                                                               \
+    if (ALIGNMENT > 1)                                                                                                 \
+    {                                                                                                                  \
         uintptr_t diff;                                                                                                \
         ptr = (void *)((uintptr_t)ptr + ALIGN_INFO);                                                                   \
         diff = (uintptr_t)ptr & (ALIGNMENT - 1);                                                                       \
-        if (diff != 0) {                                                                                               \
+        if (diff != 0)                                                                                                 \
+        {                                                                                                              \
             diff = ALIGNMENT - diff;                                                                                   \
             ptr = (void *)((uintptr_t)ptr + diff);                                                                     \
         }                                                                                                              \
@@ -49,9 +54,11 @@ void initialize_kmalloc() {
     }
 
 #define UNALIGN(ptr)                                                                                                   \
-    if (ALIGNMENT > 1) {                                                                                               \
+    if (ALIGNMENT > 1)                                                                                                 \
+    {                                                                                                                  \
         uintptr_t diff = *((ALIGN_TYPE *)((uintptr_t)ptr - ALIGN_INFO));                                               \
-        if (diff < (ALIGNMENT + ALIGN_INFO)) {                                                                         \
+        if (diff < (ALIGNMENT + ALIGN_INFO))                                                                           \
+        {                                                                                                              \
             ptr = (void *)((uintptr_t)ptr - diff);                                                                     \
         }                                                                                                              \
     }
@@ -62,7 +69,8 @@ void initialize_kmalloc() {
 /** A structure found at the top of all system allocated
  * memory blocks. It details the usage of the memory block.
  */
-struct liballoc_major {
+struct liballoc_major
+{
     struct liballoc_major *prev;  ///< Linked list information.
     struct liballoc_major *next;  ///< Linked list information.
     unsigned int pages;           ///< The number of pages in the block.
@@ -75,7 +83,8 @@ struct liballoc_major {
  * sections in a major block which were allocated by a
  * malloc, calloc, realloc call.
  */
-struct liballoc_minor {
+struct liballoc_minor
+{
     struct liballoc_minor *prev;  ///< Linked list information.
     struct liballoc_minor *next;  ///< Linked list information.
     struct liballoc_major *block; ///< The owning block. A pointer to the major structure.
@@ -99,20 +108,23 @@ static long long l_possibleOverruns = 0; ///< Number of possible overruns
 
 // ***********   HELPER FUNCTIONS  *******************************
 
-static void *liballoc_memset(void *s, int c, size_t n) {
+static void *liballoc_memset(void *s, int c, size_t n)
+{
     unsigned int i;
     for (i = 0; i < n; i++)
         ((char *)s)[i] = c;
 
     return s;
 }
-static void *liballoc_memcpy(void *s1, const void *s2, size_t n) {
+static void *liballoc_memcpy(void *s1, const void *s2, size_t n)
+{
     char *cdest;
     char *csrc;
     unsigned int *ldest = (unsigned int *)s1;
     unsigned int *lsrc = (unsigned int *)s2;
 
-    while (n >= sizeof(unsigned int)) {
+    while (n >= sizeof(unsigned int))
+    {
         *ldest++ = *lsrc++;
         n -= sizeof(unsigned int);
     }
@@ -120,7 +132,8 @@ static void *liballoc_memcpy(void *s1, const void *s2, size_t n) {
     cdest = (char *)ldest;
     csrc = (char *)lsrc;
 
-    while (n > 0) {
+    while (n > 0)
+    {
         *cdest++ = *csrc++;
         n -= 1;
     }
@@ -129,7 +142,8 @@ static void *liballoc_memcpy(void *s1, const void *s2, size_t n) {
 }
 
 #if defined DEBUG || defined INFO
-static void liballoc_dump() {
+static void liballoc_dump()
+{
 #ifdef DEBUG
     struct liballoc_major *maj = l_memRoot;
     struct liballoc_minor *min = NULL;
@@ -143,11 +157,13 @@ static void liballoc_dump() {
     kdebug("liballoc: Possible overruns: {}", l_possibleOverruns);
 
 #ifdef DEBUG
-    while (maj != NULL) {
+    while (maj != NULL)
+    {
         kdebug("liballoc: {}: total = {}, used = {}", maj, maj->size, maj->usage);
 
         min = maj->first;
-        while (min != NULL) {
+        while (min != NULL)
+        {
             kdebug("liballoc:    {}: {} bytes", min, min->size);
             min = min->next;
         }
@@ -160,7 +176,8 @@ static void liballoc_dump() {
 
 // ***************************************************************
 
-static struct liballoc_major *allocate_new_page(unsigned int size) {
+static struct liballoc_major *allocate_new_page(unsigned int size)
+{
     unsigned int st;
     struct liballoc_major *maj;
 
@@ -181,7 +198,8 @@ static struct liballoc_major *allocate_new_page(unsigned int size) {
 
     maj = (struct liballoc_major *)liballoc_alloc(st);
 
-    if (maj == NULL) {
+    if (maj == NULL)
+    {
         l_warningCount += 1;
 #if defined DEBUG || defined INFO
         kdebug("liballoc: WARNING: liballoc_alloc( {} ) return NULL", st);
@@ -209,7 +227,8 @@ static struct liballoc_major *allocate_new_page(unsigned int size) {
     return maj;
 }
 
-void *PREFIX(malloc)(size_t req_size) {
+void *PREFIX(malloc)(size_t req_size)
+{
     int startedBet = 0;
     unsigned long long bestSize = 0;
     void *p = NULL;
@@ -220,7 +239,8 @@ void *PREFIX(malloc)(size_t req_size) {
     unsigned long size = req_size;
 
     // For alignment, we adjust size so there's enough space to align.
-    if (ALIGNMENT > 1) {
+    if (ALIGNMENT > 1)
+    {
         size += ALIGNMENT + ALIGN_INFO;
     }
     // So, ideally, we really want an alignment of 0 or 1 in order
@@ -228,7 +248,8 @@ void *PREFIX(malloc)(size_t req_size) {
 
     liballoc_lock();
 
-    if (size == 0) {
+    if (size == 0)
+    {
         l_warningCount += 1;
 #if defined DEBUG || defined INFO
         kdebug("liballoc: WARNING: alloc( 0 ) called from {}", __builtin_return_address(0));
@@ -238,7 +259,8 @@ void *PREFIX(malloc)(size_t req_size) {
         return PREFIX(malloc)(1);
     }
 
-    if (l_memRoot == NULL) {
+    if (l_memRoot == NULL)
+    {
 #if defined DEBUG || defined INFO
 #ifdef DEBUG
         kdebug("liballoc: initialization of liballoc " VERSION);
@@ -248,7 +270,8 @@ void *PREFIX(malloc)(size_t req_size) {
 
         // This is the first time we are being used.
         l_memRoot = allocate_new_page(size);
-        if (l_memRoot == NULL) {
+        if (l_memRoot == NULL)
+        {
             liballoc_unlock();
 #ifdef DEBUG
             kdebug("liballoc: initial l_memRoot initialization failed", p);
@@ -274,20 +297,24 @@ void *PREFIX(malloc)(size_t req_size) {
     startedBet = 0;
 
     // Start at the best bet....
-    if (l_bestBet != NULL) {
+    if (l_bestBet != NULL)
+    {
         bestSize = l_bestBet->size - l_bestBet->usage;
 
-        if (bestSize > (size + sizeof(struct liballoc_minor))) {
+        if (bestSize > (size + sizeof(struct liballoc_minor)))
+        {
             maj = l_bestBet;
             startedBet = 1;
         }
     }
 
-    while (maj != NULL) {
+    while (maj != NULL)
+    {
         diff = maj->size - maj->usage;
         // free memory in the block
 
-        if (bestSize < diff) {
+        if (bestSize < diff)
+        {
             // Hmm.. this one has more memory then our bestBet. Remember!
             l_bestBet = maj;
             bestSize = diff;
@@ -296,14 +323,16 @@ void *PREFIX(malloc)(size_t req_size) {
 #ifdef USE_CASE1
 
         // CASE 1:  There is not enough space in this major block.
-        if (diff < (size + sizeof(struct liballoc_minor))) {
+        if (diff < (size + sizeof(struct liballoc_minor)))
+        {
 #ifdef DEBUG
             kdebug("CASE 1: Insufficient space in block {}", maj);
             ;
 #endif
 
             // Another major block next to this one?
-            if (maj->next != NULL) {
+            if (maj->next != NULL)
+            {
                 maj = maj->next; // Hop to that one.
                 continue;
             }
@@ -330,7 +359,8 @@ void *PREFIX(malloc)(size_t req_size) {
 #ifdef USE_CASE2
 
         // CASE 2: It's a brand new block.
-        if (maj->first == NULL) {
+        if (maj->first == NULL)
+        {
             maj->first = (struct liballoc_minor *)((uintptr_t)maj + sizeof(struct liballoc_major));
 
             maj->first->magic = LIBALLOC_MAGIC;
@@ -364,7 +394,8 @@ void *PREFIX(malloc)(size_t req_size) {
         diff -= (uintptr_t)maj;
         diff -= sizeof(struct liballoc_major);
 
-        if (diff >= (size + sizeof(struct liballoc_minor))) {
+        if (diff >= (size + sizeof(struct liballoc_minor)))
+        {
             // Yes, space in front. Squeeze in.
             maj->first->prev = (struct liballoc_minor *)((uintptr_t)maj + sizeof(struct liballoc_major));
             maj->first->prev->next = maj->first;
@@ -398,9 +429,11 @@ void *PREFIX(malloc)(size_t req_size) {
         min = maj->first;
 
         // Looping within the block now...
-        while (min != NULL) {
+        while (min != NULL)
+        {
             // CASE 4.1: End of minors in a block. Space from last and end?
-            if (min->next == NULL) {
+            if (min->next == NULL)
+            {
                 // the rest of this block is free...  is it big enough?
                 diff = (uintptr_t)(maj) + maj->size;
                 diff -= (uintptr_t)min;
@@ -408,7 +441,8 @@ void *PREFIX(malloc)(size_t req_size) {
                 diff -= min->size;
                 // minus already existing usage..
 
-                if (diff >= (size + sizeof(struct liballoc_minor))) {
+                if (diff >= (size + sizeof(struct liballoc_minor)))
+                {
                     // yay....
                     min->next = (struct liballoc_minor *)((uintptr_t)min + sizeof(struct liballoc_minor) + min->size);
                     min->next->prev = min;
@@ -435,7 +469,8 @@ void *PREFIX(malloc)(size_t req_size) {
             }
 
             // CASE 4.2: Is there space between two minors?
-            if (min->next != NULL) {
+            if (min->next != NULL)
+            {
                 // is the difference between here and next big enough?
                 diff = (uintptr_t)(min->next);
                 diff -= (uintptr_t)min;
@@ -443,7 +478,8 @@ void *PREFIX(malloc)(size_t req_size) {
                 diff -= min->size;
                 // minus our existing usage.
 
-                if (diff >= (size + sizeof(struct liballoc_minor))) {
+                if (diff >= (size + sizeof(struct liballoc_minor)))
+                {
                     // yay......
                     new_min = (struct liballoc_minor *)((uintptr_t)min + sizeof(struct liballoc_minor) + min->size);
 
@@ -480,13 +516,15 @@ void *PREFIX(malloc)(size_t req_size) {
 #ifdef USE_CASE5
 
         // CASE 5: Block full! Ensure next block and loop.
-        if (maj->next == NULL) {
+        if (maj->next == NULL)
+        {
 #ifdef DEBUG
             kdebug("CASE 5: block full");
             ;
 #endif
 
-            if (startedBet == 1) {
+            if (startedBet == 1)
+            {
                 maj = l_memRoot;
                 startedBet = 0;
                 continue;
@@ -518,11 +556,13 @@ void *PREFIX(malloc)(size_t req_size) {
     return NULL;
 }
 
-void PREFIX(free)(void *ptr) {
+void PREFIX(free)(void *ptr)
+{
     struct liballoc_minor *min;
     struct liballoc_major *maj;
 
-    if (ptr == NULL) {
+    if (ptr == NULL)
+    {
         l_warningCount += 1;
 #if defined DEBUG || defined INFO
         kdebug("liballoc: WARNING: PREFIX(free)( NULL ) called from {}", __builtin_return_address(0));
@@ -537,12 +577,14 @@ void PREFIX(free)(void *ptr) {
 
     min = (struct liballoc_minor *)((uintptr_t)ptr - sizeof(struct liballoc_minor));
 
-    if (min->magic != LIBALLOC_MAGIC) {
+    if (min->magic != LIBALLOC_MAGIC)
+    {
         l_errorCount += 1;
 
         // Check for overrun errors. For all bytes of LIBALLOC_MAGIC
         if (((min->magic & 0xFFFFFF) == (LIBALLOC_MAGIC & 0xFFFFFF)) ||
-            ((min->magic & 0xFFFF) == (LIBALLOC_MAGIC & 0xFFFF)) || ((min->magic & 0xFF) == (LIBALLOC_MAGIC & 0xFF))) {
+            ((min->magic & 0xFFFF) == (LIBALLOC_MAGIC & 0xFFFF)) || ((min->magic & 0xFF) == (LIBALLOC_MAGIC & 0xFF)))
+        {
             l_possibleOverruns += 1;
 #if defined DEBUG || defined INFO
             kdebug("liballoc: ERROR: Possible 1-3 byte overrun for magic {} != {}", min->magic, LIBALLOC_MAGIC);
@@ -550,13 +592,16 @@ void PREFIX(free)(void *ptr) {
 #endif
         }
 
-        if (min->magic == LIBALLOC_DEAD) {
+        if (min->magic == LIBALLOC_DEAD)
+        {
 #if defined DEBUG || defined INFO
             kdebug("liballoc: ERROR: multiple PREFIX(free)() attempt on {} from {}.\n", ptr,
                    __builtin_return_address(0));
             ;
 #endif
-        } else {
+        }
+        else
+        {
 #if defined DEBUG || defined INFO
             kdebug("liballoc: ERROR: Bad PREFIX(free)( {} ) called from {}", ptr, __builtin_return_address(0));
             ;
@@ -605,8 +650,11 @@ void PREFIX(free)(void *ptr) {
         l_allocated -= maj->size;
 
         liballoc_free(maj, maj->pages);
-    } else {
-        if (l_bestBet != NULL) {
+    }
+    else
+    {
+        if (l_bestBet != NULL)
+        {
             int bestSize = l_bestBet->size - l_bestBet->usage;
             int majSize = maj->size - maj->usage;
 
@@ -623,7 +671,8 @@ void PREFIX(free)(void *ptr) {
     liballoc_unlock(); // release the lock
 }
 
-void *PREFIX(calloc)(size_t nobj, size_t size) {
+void *PREFIX(calloc)(size_t nobj, size_t size)
+{
     int real_size;
     void *p;
 
@@ -636,13 +685,15 @@ void *PREFIX(calloc)(size_t nobj, size_t size) {
     return p;
 }
 
-void *PREFIX(realloc)(void *p, size_t size) {
+void *PREFIX(realloc)(void *p, size_t size)
+{
     void *ptr;
     struct liballoc_minor *min;
     unsigned int real_size;
 
     // Honour the case of size == 0 => free old and return NULL
-    if (size == 0) {
+    if (size == 0)
+    {
         PREFIX(free)(p);
         return NULL;
     }
@@ -660,12 +711,14 @@ void *PREFIX(realloc)(void *p, size_t size) {
     min = (struct liballoc_minor *)((uintptr_t)ptr - sizeof(struct liballoc_minor));
 
     // Ensure it is a valid structure.
-    if (min->magic != LIBALLOC_MAGIC) {
+    if (min->magic != LIBALLOC_MAGIC)
+    {
         l_errorCount += 1;
 
         // Check for overrun errors. For all bytes of LIBALLOC_MAGIC
         if (((min->magic & 0xFFFFFF) == (LIBALLOC_MAGIC & 0xFFFFFF)) ||
-            ((min->magic & 0xFFFF) == (LIBALLOC_MAGIC & 0xFFFF)) || ((min->magic & 0xFF) == (LIBALLOC_MAGIC & 0xFF))) {
+            ((min->magic & 0xFFFF) == (LIBALLOC_MAGIC & 0xFFFF)) || ((min->magic & 0xFF) == (LIBALLOC_MAGIC & 0xFF)))
+        {
             l_possibleOverruns += 1;
 #if defined DEBUG || defined INFO
             kdebug("liballoc: ERROR: Possible 1-3 byte overrun for magic {} != {}", min->magic, LIBALLOC_MAGIC);
@@ -673,12 +726,15 @@ void *PREFIX(realloc)(void *p, size_t size) {
 #endif
         }
 
-        if (min->magic == LIBALLOC_DEAD) {
+        if (min->magic == LIBALLOC_DEAD)
+        {
 #if defined DEBUG || defined INFO
             kdebug("liballoc: ERROR: multiple PREFIX(free)() attempt on {} from {}.", ptr, __builtin_return_address(0));
             ;
 #endif
-        } else {
+        }
+        else
+        {
 #if defined DEBUG || defined INFO
             kdebug("liballoc: ERROR: Bad PREFIX(free)( {} ) called from {}.", ptr, __builtin_return_address(0));
             ;
@@ -694,7 +750,8 @@ void *PREFIX(realloc)(void *p, size_t size) {
 
     real_size = min->req_size;
 
-    if (real_size >= size) {
+    if (real_size >= size)
+    {
         min->req_size = size;
         liballoc_unlock();
         return p;
@@ -710,16 +767,20 @@ void *PREFIX(realloc)(void *p, size_t size) {
     return ptr;
 }
 
-int liballoc_lock() {
+int liballoc_lock()
+{
     return 0;
 }
 
-int liballoc_unlock() {
+int liballoc_unlock()
+{
     return 0;
 }
 
-void *liballoc_alloc(size_t frames) {
+void *liballoc_alloc(size_t frames)
+{
 }
 
-int liballoc_free(void *p, size_t frames) {
+int liballoc_free(void *p, size_t frames)
+{
 }

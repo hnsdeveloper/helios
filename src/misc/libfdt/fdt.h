@@ -9,7 +9,8 @@
 
 #ifndef __ASSEMBLY__
 
-struct fdt_header {
+struct fdt_header
+{
     fdt32_t magic;             /* magic word FDT_MAGIC */
     fdt32_t totalsize;         /* total size of DT block */
     fdt32_t off_dt_struct;     /* offset to structure */
@@ -28,17 +29,20 @@ struct fdt_header {
     fdt32_t size_dt_struct; /* size of the structure block */
 };
 
-struct fdt_reserve_entry {
+struct fdt_reserve_entry
+{
     fdt64_t address;
     fdt64_t size;
 };
 
-struct fdt_node_header {
+struct fdt_node_header
+{
     fdt32_t tag;
     char name[];
 };
 
-struct fdt_property {
+struct fdt_property
+{
     fdt32_t tag;
     fdt32_t len;
     fdt32_t nameoff;

@@ -29,27 +29,34 @@ SOFTWARE.
 #include "misc/macros.hpp"
 #include "misc/types.hpp"
 
-namespace hls {
+namespace hls
+{
 
-template <typename T> class Hash {
-    SET_USING_CLASS(T, type);
-    SET_USING_CLASS(size_t, hash_result);
+    template <typename T>
+    class Hash
+    {
+        SET_USING_CLASS(T, type);
+        SET_USING_CLASS(size_t, hash_result);
 
-  public:
-    hash_result operator()(type_const_reference v) const {
-        return v;
-    }
-};
+      public:
+        hash_result operator()(type_const_reference v) const
+        {
+            return v;
+        }
+    };
 
-template <typename T> class Hash<T *> {
-    SET_USING_CLASS(T *, type);
-    SET_USING_CLASS(uintptr_t, hash_result);
+    template <typename T>
+    class Hash<T *>
+    {
+        SET_USING_CLASS(T *, type);
+        SET_USING_CLASS(uintptr_t, hash_result);
 
-  public:
-    hash_result operator()(type_const_reference v) const {
-        return reinterpret_cast<hash_result>(v);
-    }
-};
+      public:
+        hash_result operator()(type_const_reference v) const
+        {
+            return reinterpret_cast<hash_result>(v);
+        }
+    };
 
 } // namespace hls
 

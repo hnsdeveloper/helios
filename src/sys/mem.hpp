@@ -28,7 +28,8 @@ SOFTWARE.
 
 #include "misc/types.hpp"
 
-namespace hls {
+namespace hls
+{
 
 /**
  * @brief memcpy. Copies **bytes** bytes from src to dest.
@@ -40,10 +41,12 @@ namespace hls {
 #ifndef __MEMCPY
 #define __MEMCPY
 #define memcpy(__dest, __src, __bytes)                                                                                 \
-    [](void *dest, const void *src, size_t bytes) __attribute__((always_inline)) {                                     \
+    [](void *dest, const void *src, size_t bytes) __attribute__((always_inline))                                       \
+    {                                                                                                                  \
         const char *src_c = reinterpret_cast<const char *>(src);                                                       \
         char *dest_c = reinterpret_cast<char *>(dest);                                                                 \
-        while (bytes--) {                                                                                              \
+        while (bytes--)                                                                                                \
+        {                                                                                                              \
             *dest_c = *src_c;                                                                                          \
             ++src_c;                                                                                                   \
             ++dest_c;                                                                                                  \
@@ -64,16 +67,19 @@ namespace hls {
 #ifndef __MEMMOVE
 #define __MEMMOVE
 #define memmove(__dest, __src, __bytes)                                                                                \
-    [](void *dest, const void *src, size_t bytes) -> void *__attribute__((always_inline)) {                            \
+    [](void *dest, const void *src, size_t bytes) -> void *__attribute__((always_inline))                              \
+    {                                                                                                                  \
         const char *src_c = reinterpret_cast<const char *>(src);                                                       \
         char *dest_c = reinterpret_cast<char *>(dest);                                                                 \
         size_t i = 0;                                                                                                  \
         char *buffer = nullptr;                                                                                        \
         asm("add %0, x0, sp" : "=r"(buffer) : "r"(buffer));                                                            \
         buffer = buffer - bytes;                                                                                       \
-        for (; i < bytes; ++i) {                                                                                       \
+        for (; i < bytes; ++i)                                                                                         \
+        {                                                                                                              \
             buffer[i] = src_c[i];                                                                                      \
-            for (; i < bytes; ++i) {                                                                                   \
+            for (; i < bytes; ++i)                                                                                     \
+            {                                                                                                          \
                 dest_c[i] = buffer[i];                                                                                 \
             }                                                                                                          \
         }                                                                                                              \
@@ -92,9 +98,11 @@ namespace hls {
 #ifndef __MEMSET
 #define __MEMSET
 #define memset(__src, __c, __sz)                                                                                       \
-    [](void *dst, char c, size_t size) __attribute__((always_inline)) {                                                \
+    [](void *dst, char c, size_t size) __attribute__((always_inline))                                                  \
+    {                                                                                                                  \
         byte *p = reinterpret_cast<byte *>(dst);                                                                       \
-        for (size_t i = 0; i < size; ++i) {                                                                            \
+        for (size_t i = 0; i < size; ++i)                                                                              \
+        {                                                                                                              \
             *p = c;                                                                                                    \
         }                                                                                                              \
     }                                                                                                                  \
@@ -114,10 +122,12 @@ namespace hls {
 #ifndef __MEMCMP
 #define __MEMCMP
 #define memcmp(__ptr1, __ptr2, __num)                                                                                  \
-    [](const void *ptr1, const void *ptr2, size_t num) -> int __attribute__((always_inline)) {                         \
+    [](const void *ptr1, const void *ptr2, size_t num) -> int __attribute__((always_inline))                           \
+    {                                                                                                                  \
         const byte *p1 = reinterpret_cast<const byte *>(ptr1);                                                         \
         const byte *p2 = reinterpret_cast<const byte *>(ptr2);                                                         \
-        for (size_t i = 0; i < num; ++i) {                                                                             \
+        for (size_t i = 0; i < num; ++i)                                                                               \
+        {                                                                                                              \
             byte a = *(p1 + i);                                                                                        \
             byte b = *(p2 + i);                                                                                        \
             if (a < b)                                                                                                 \
@@ -133,10 +143,13 @@ namespace hls {
 #ifndef __MEMCHR
 #define __MEMCHR
 #define memchr(__ptr, __ch, __count)                                                                                   \
-    [](const void *ptr, byte ch, size_t count) -> const void *__attribute__((always_inline)) {                         \
-        if (ptr != nullptr) {                                                                                          \
+    [](const void *ptr, byte ch, size_t count) -> const void *__attribute__((always_inline))                           \
+    {                                                                                                                  \
+        if (ptr != nullptr)                                                                                            \
+        {                                                                                                              \
             const char *p = reinterpret_cast<const char *>(ptr);                                                       \
-            for (size_t i = 0; i < count; ++i) {                                                                       \
+            for (size_t i = 0; i < count; ++i)                                                                         \
+            {                                                                                                          \
                 if (*(p + i) == ch)                                                                                    \
                     return (p + i);                                                                                    \
             }                                                                                                          \
@@ -155,7 +168,8 @@ namespace hls {
 #ifndef __TO_UINTPTR
 #define __TO_UINTPTR
 #define to_uintptr_t(__r)                                                                                              \
-    [](const void *p) -> uintptr_t __attribute__((always_inline)) {                                                    \
+    [](const void *p) -> uintptr_t __attribute__((always_inline))                                                      \
+    {                                                                                                                  \
         return reinterpret_cast<uintptr_t>(p);                                                                         \
     }                                                                                                                  \
     (__r)
@@ -170,7 +184,8 @@ namespace hls {
 #ifndef __TO_PTR
 #define __TO_PTR
 #define to_ptr(__q)                                                                                                    \
-    [](uintptr_t v) -> void *__attribute__((always_inline)) {                                                          \
+    [](uintptr_t v) -> void *__attribute__((always_inline))                                                            \
+    {                                                                                                                  \
         return reinterpret_cast<void *>(v);                                                                            \
     }                                                                                                                  \
     (__q)
@@ -186,7 +201,8 @@ namespace hls {
 #ifndef __A_OFFSET
 #define __A_OFFSET
 #define apply_offset(__p, __off)                                                                                       \
-    [](void *p, uintptr_t offset) -> void *__attribute__((always_inline)) {                                            \
+    [](void *p, uintptr_t offset) -> void *__attribute__((always_inline))                                              \
+    {                                                                                                                  \
         uintptr_t x = reinterpret_cast<uintptr_t>(p) + offset;                                                         \
         return reinterpret_cast<void *>(x);                                                                            \
     }                                                                                                                  \
@@ -204,7 +220,8 @@ namespace hls {
 #ifndef __ISALIGNED
 #define __ISALIGNED
 #define is_aligned(__ptr, __alignment)                                                                                 \
-    [](const void *ptr, size_t alignment) -> bool __attribute__((always_inline)) {                                     \
+    [](const void *ptr, size_t alignment) -> bool __attribute__((always_inline))                                       \
+    {                                                                                                                  \
         uintptr_t p = to_uintptr_t(ptr);                                                                               \
         return (p / alignment * alignment) == p;                                                                       \
     }                                                                                                                  \
@@ -222,7 +239,8 @@ namespace hls {
 #ifndef __AFORWARD
 #define __AFORWARD
 #define align_forward(__ptr, __alignment)                                                                              \
-    [](const void *ptr, size_t alignment) -> void *__attribute__((always_inline)) {                                    \
+    [](const void *ptr, size_t alignment) -> void *__attribute__((always_inline))                                      \
+    {                                                                                                                  \
         uintptr_t p = to_uintptr_t(ptr);                                                                               \
         if (alignment <= 1 || is_aligned(ptr, alignment))                                                              \
             return to_ptr(p);                                                                                          \
@@ -243,7 +261,8 @@ namespace hls {
 #ifndef __ABACK
 #define __ABACK
 #define align_back(__ptr, __alignment)                                                                                 \
-    [](const void *ptr, size_t alignment) -> void *__attribute__((always_inline)) {                                    \
+    [](const void *ptr, size_t alignment) -> void *__attribute__((always_inline))                                      \
+    {                                                                                                                  \
         uintptr_t p = to_uintptr_t(ptr);                                                                               \
         if (alignment <= 1 || is_aligned(ptr, alignment))                                                              \
             return to_ptr(p);                                                                                          \
@@ -256,7 +275,8 @@ namespace hls {
 #ifndef __BSWAP16
 #define __BSWAP16
 #define byteswap16(__x)                                                                                                \
-    [](uint16_t v) -> uint16_t __attribute__((always_inline)) {                                                        \
+    [](uint16_t v) -> uint16_t __attribute__((always_inline))                                                          \
+    {                                                                                                                  \
         return (v >> 8 | v << 8);                                                                                      \
     }                                                                                                                  \
     (__x)
@@ -265,7 +285,8 @@ namespace hls {
 #ifndef __BSWAP32
 #define __BSWAP32
 #define byteswap32(__v)                                                                                                \
-    [](uint32_t v) -> uint32_t __attribute__((always_inline)) {                                                        \
+    [](uint32_t v) -> uint32_t __attribute__((always_inline))                                                          \
+    {                                                                                                                  \
         return ((v & 0xFF) << 24) | ((v & 0xFF00) << 8) | ((v >> 8) & 0xFF00) | ((v >> 24) | 0xFF);                    \
     };
 #endif
@@ -273,7 +294,8 @@ namespace hls {
 #ifndef __BSWAP64
 #define __BSWAP64
 #define byteswap64(__v)                                                                                                \
-    [](uint64_t v) -> uint64_t __attribute__((always_inline)) {                                                        \
+    [](uint64_t v) -> uint64_t __attribute__((always_inline))                                                          \
+    {                                                                                                                  \
         return v;                                                                                                      \
     }                                                                                                                  \
     (__v)
@@ -288,8 +310,10 @@ namespace hls {
 #ifndef _U16RBE
 #define _U16RBE
 #define uint16_read_be(__data)                                                                                         \
-    [](uint16_t data) -> uint16_t __attribute__((always_inline)) {                                                     \
-        if constexpr (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) {                                                     \
+    [](uint16_t data) -> uint16_t __attribute__((always_inline))                                                       \
+    {                                                                                                                  \
+        if constexpr (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)                                                       \
+        {                                                                                                              \
             return byteswap16(data);                                                                                   \
         }                                                                                                              \
         return data;                                                                                                   \
@@ -306,8 +330,10 @@ namespace hls {
 #ifndef _U32RBE
 #define _U32RBE
 #define uint32_read_be(__data)                                                                                         \
-    [](uint32_t data) -> uint32_t __attribute__((always_inline)) {                                                     \
-        if constexpr (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) {                                                     \
+    [](uint32_t data) -> uint32_t __attribute__((always_inline))                                                       \
+    {                                                                                                                  \
+        if constexpr (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)                                                       \
+        {                                                                                                              \
             return byteswap32(data);                                                                                   \
         }                                                                                                              \
         return data;                                                                                                   \
@@ -324,8 +350,10 @@ namespace hls {
 #ifndef _U64RBE
 #define _U64RBE
 #define uint64_read_be(__data)                                                                                         \
-    [](uint64_t data) -> uint64_t __attribute__((always_inline)) {                                                     \
-        if constexpr (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) {                                                     \
+    [](uint64_t data) -> uint64_t __attribute__((always_inline))                                                       \
+    {                                                                                                                  \
+        if constexpr (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)                                                       \
+        {                                                                                                              \
             return byteswap16(data);                                                                                   \
         }                                                                                                              \
         return data;                                                                                                   \
@@ -336,7 +364,8 @@ namespace hls {
 #ifndef __GETNEEDEDPAGES
 #define __GETNEEDEDPAGES
 #define get_needed_pages(__mem, __memsize, __p_lvl)                                                                    \
-    [](const void *mem, size_t size, FrameLevel lvl) -> auto __attribute__((always_inline)) {                          \
+    [](const void *mem, size_t size, FrameLevel lvl) -> auto __attribute__((always_inline))                            \
+    {                                                                                                                  \
         size_t alignment = get_frame_alignment(lvl);                                                                   \
         byte *p = reinterpret_cast<byte *>(const_cast<void *>(mem));                                                   \
         byte *back = reinterpret_cast<byte *>(align_back(p, alignment));                                               \

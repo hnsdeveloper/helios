@@ -28,44 +28,55 @@ SOFTWARE.
 
 #include "misc/macros.hpp"
 
-namespace hls {
-template <typename T> class Ref {
-    SET_USING_CLASS(T, value);
+namespace hls
+{
+    template <typename T>
+    class Ref
+    {
+        SET_USING_CLASS(T, value);
 
-    value_ptr m_value;
+        value_ptr m_value;
 
-  public:
-    Ref(value_reference v) {
-        m_value = &v;
+      public:
+        Ref(value_reference v)
+        {
+            m_value = &v;
+        }
+        Ref(const Ref &other)
+        {
+            m_value = other.m_value;
+        }
+        ~Ref() = default;
+
+        operator value_reference()
+        {
+            const auto &as_const = *this;
+            value_const_reference v = as_const;
+            return const_cast<value_reference>(v);
+        }
+
+        operator value_const_reference() const
+        {
+            return *m_value();
+        }
+
+        value_reference get()
+        {
+            const auto &c = *this;
+            return const_cast<value_reference>(c.get());
+        }
+
+        value_const_reference get() const
+        {
+            return *m_value;
+        }
+    };
+
+    template <typename T>
+    Ref<T> make_ref(T &v)
+    {
+        return Ref<T>(v);
     }
-    Ref(const Ref &other) {
-        m_value = other.m_value;
-    }
-    ~Ref() = default;
-
-    operator value_reference() {
-        const auto &as_const = *this;
-        value_const_reference v = as_const;
-        return const_cast<value_reference>(v);
-    }
-
-    operator value_const_reference() const {
-        return *m_value();
-    }
-
-    value_reference get() {
-        const auto &c = *this;
-        return const_cast<value_reference>(c.get());
-    }
-
-    value_const_reference get() const {
-        return *m_value;
-    }
-};
-
-template <typename T> Ref<T> make_ref(T &v) {
-    return Ref<T>(v);
-}
 
 }; // namespace hls
 

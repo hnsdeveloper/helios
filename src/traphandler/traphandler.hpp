@@ -23,8 +23,9 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-namespace hls {
+namespace hls
+{
 
-void setup_trap_handling();
+    void setup_trap_handling();
 
 }; // namespace hls

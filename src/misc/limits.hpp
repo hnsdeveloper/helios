@@ -29,19 +29,25 @@ SOFTWARE.
 #include "misc/concepts.hpp"
 #include "misc/types.hpp"
 
-namespace hls {
+namespace hls
+{
 
-template <typename T> struct limit;
+    template <typename T>
+    struct limit;
 
-template <SignedIntegral T> struct limit<T> {
-    static constexpr T max = (((T(1) << (sizeof(T) * 8 - 2)) - 1) * 2) + 1;
-    static constexpr T min = -max - 1;
-};
+    template <SignedIntegral T>
+    struct limit<T>
+    {
+        static constexpr T max = (((T(1) << (sizeof(T) * 8 - 2)) - 1) * 2) + 1;
+        static constexpr T min = -max - 1;
+    };
 
-template <UnsignedIntegral T> struct limit<T> {
-    static constexpr T max = T(0) - T(1);
-    static constexpr T min = T(0);
-};
+    template <UnsignedIntegral T>
+    struct limit<T>
+    {
+        static constexpr T max = T(0) - T(1);
+        static constexpr T min = T(0);
+    };
 
 }; // namespace hls
 

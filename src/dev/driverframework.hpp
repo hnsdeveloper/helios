@@ -31,26 +31,29 @@ SOFTWARE.
 #include "sys/kmalloc.hpp"
 #include "ulib/double_list.hpp"
 
-namespace hls {
-using driver_load_point = void (*)(void *);
-using driver_exit_point = void (*)(void *);
+namespace hls
+{
+    using driver_load_point = void (*)(void *);
+    using driver_exit_point = void (*)(void *);
 
-struct driver_info {
-    const char *driver_name;
-    const char *compatible_devices;
+    struct driver_info
+    {
+        const char *driver_name;
+        const char *compatible_devices;
 
-    driver_load_point on_load;
-    driver_exit_point on_exit;
-};
+        driver_load_point on_load;
+        driver_exit_point on_exit;
+    };
 
-using driver_list = DoubleList<driver_info *, KMAllocator>;
-extern driver_list *device_drivers;
+    using driver_list = DoubleList<driver_info *, KMAllocator>;
+    extern driver_list *device_drivers;
 
-void initialize_driver_framework();
+    void initialize_driver_framework();
 } // namespace hls
 
 #define REGISTER_DRIVER(driver_name, c_devices, on_load, on_exit)                                                      \
-    __attribute__((section(.driverinfo))) const driver_info driver_name {                                              \
+    __attribute__((section(.driverinfo))) const driver_info driver_name                                                \
+    {                                                                                                                  \
         .driver_name = STRINGFY(driver_name), .compatible_devices = c_devices, .on_load = on_load.on_exit = on_exit    \
     }
 

@@ -11,7 +11,8 @@
 
 #include "misc/libfdt/libfdt_internal.h"
 
-struct fdt_errtabent {
+struct fdt_errtabent
+{
     const char *str;
 };
 
@@ -41,12 +42,14 @@ static struct fdt_errtabent fdt_errtable[] = {[0] = {.str = ""},
                                               FDT_ERRTABENT(FDT_ERR_ALIGNMENT)};
 #define FDT_ERRTABSIZE ((int)(sizeof(fdt_errtable) / sizeof(fdt_errtable[0])))
 
-const char *fdt_strerror(int errval) {
+const char *fdt_strerror(int errval)
+{
     if (errval > 0)
         return "<valid offset/length>";
     else if (errval == 0)
         return "<no error>";
-    else if (-errval < FDT_ERRTABSIZE) {
+    else if (-errval < FDT_ERRTABSIZE)
+    {
         const char *s = fdt_errtable[-errval].str;
 
         if (s)

@@ -10,7 +10,8 @@
 
 #include "misc/libfdt/libfdt_internal.h"
 
-int fdt_create_empty_tree(void *buf, int bufsize) {
+int fdt_create_empty_tree(void *buf, int bufsize)
+{
     int err;
 
     err = fdt_create(buf, bufsize);

@@ -26,16 +26,19 @@ SOFTWARE.
 #include "dev/driverframework.hpp"
 #include "misc/symbols.hpp"
 
-namespace hls {
+namespace hls
+{
 
-void initialize_driver_framework() {
-    device_drivers = reinterpret_cast<driver_list *>(kmalloc(sizeof(driver_list)));
-    driver_info *begin = reinterpret_cast<driver_info *>(&_driverinfo_start);
-    driver_info *end = reinterpret_cast<driver_info *>(&_driverinfo_end);
+    void initialize_driver_framework()
+    {
+        device_drivers = reinterpret_cast<driver_list *>(kmalloc(sizeof(driver_list)));
+        driver_info *begin = reinterpret_cast<driver_info *>(&_driverinfo_start);
+        driver_info *end = reinterpret_cast<driver_info *>(&_driverinfo_end);
 
-    for (auto it = begin; it < end; ++it) {
-        device_drivers->push_back(it);
+        for (auto it = begin; it < end; ++it)
+        {
+            device_drivers->push_back(it);
+        }
     }
-}
 
 } // namespace hls

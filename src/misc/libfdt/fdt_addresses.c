@@ -11,7 +11,8 @@
 
 #include "misc/libfdt/libfdt_internal.h"
 
-static int fdt_cells(const void *fdt, int nodeoffset, const char *name) {
+static int fdt_cells(const void *fdt, int nodeoffset, const char *name)
+{
     const fdt32_t *c;
     uint32_t val;
     int len;
@@ -30,7 +31,8 @@ static int fdt_cells(const void *fdt, int nodeoffset, const char *name) {
     return (int)val;
 }
 
-int fdt_address_cells(const void *fdt, int nodeoffset) {
+int fdt_address_cells(const void *fdt, int nodeoffset)
+{
     int val;
 
     val = fdt_cells(fdt, nodeoffset, "#address-cells");
@@ -41,7 +43,8 @@ int fdt_address_cells(const void *fdt, int nodeoffset) {
     return val;
 }
 
-int fdt_size_cells(const void *fdt, int nodeoffset) {
+int fdt_size_cells(const void *fdt, int nodeoffset)
+{
     int val;
 
     val = fdt_cells(fdt, nodeoffset, "#size-cells");
@@ -51,7 +54,8 @@ int fdt_size_cells(const void *fdt, int nodeoffset) {
 }
 
 /* This function assumes that [address|size]_cells is 1 or 2 */
-int fdt_appendprop_addrrange(void *fdt, int parent, int nodeoffset, const char *name, uint64_t addr, uint64_t size) {
+int fdt_appendprop_addrrange(void *fdt, int parent, int nodeoffset, const char *name, uint64_t addr, uint64_t size)
+{
     int addr_cells, size_cells, ret;
     uint8_t data[sizeof(fdt64_t) * 2], *prop;
 
@@ -67,27 +71,37 @@ int fdt_appendprop_addrrange(void *fdt, int parent, int nodeoffset, const char *
 
     /* check validity of address */
     prop = data;
-    if (addr_cells == 1) {
+    if (addr_cells == 1)
+    {
         if ((addr > hls::limit<uint32_t>::max) || (((uint64_t)hls::limit<uint32_t>::max + 1 - addr) < size))
             return -FDT_ERR_BADVALUE;
 
         fdt32_st(prop, (uint32_t)addr);
-    } else if (addr_cells == 2) {
+    }
+    else if (addr_cells == 2)
+    {
         fdt64_st(prop, addr);
-    } else {
+    }
+    else
+    {
         return -FDT_ERR_BADNCELLS;
     }
 
     /* check validity of size */
     prop += addr_cells * sizeof(fdt32_t);
-    if (size_cells == 1) {
+    if (size_cells == 1)
+    {
         if (size > hls::limit<uint32_t>::max)
             return -FDT_ERR_BADVALUE;
 
         fdt32_st(prop, (uint32_t)size);
-    } else if (size_cells == 2) {
+    }
+    else if (size_cells == 2)
+    {
         fdt64_st(prop, size);
-    } else {
+    }
+    else
+    {
         return -FDT_ERR_BADNCELLS;
     }
 

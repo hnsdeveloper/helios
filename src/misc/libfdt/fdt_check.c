@@ -10,7 +10,8 @@
 
 #include "misc/libfdt/libfdt_internal.h"
 
-int fdt_check_full(const void *fdt, size_t bufsize) {
+int fdt_check_full(const void *fdt, size_t bufsize)
+{
     int err;
     int num_memrsv;
     int offset, nextoffset = 0;
@@ -34,7 +35,8 @@ int fdt_check_full(const void *fdt, size_t bufsize) {
     if (num_memrsv < 0)
         return num_memrsv;
 
-    while (1) {
+    while (1)
+    {
         offset = nextoffset;
         tag = fdt_next_tag(fdt, offset, &nextoffset);
 
@@ -45,7 +47,8 @@ int fdt_check_full(const void *fdt, size_t bufsize) {
         if (expect_end && tag != FDT_END)
             return -FDT_ERR_BADSTRUCTURE;
 
-        switch (tag) {
+        switch (tag)
+        {
         case FDT_NOP:
             break;
 
@@ -60,7 +63,8 @@ int fdt_check_full(const void *fdt, size_t bufsize) {
                 return -FDT_ERR_BADSTRUCTURE;
 
             /* The root node must have an empty name */
-            if (depth == 1) {
+            if (depth == 1)
+            {
                 const char *name;
                 int len;
 

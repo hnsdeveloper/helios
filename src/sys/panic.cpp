@@ -3,14 +3,17 @@
 
 using namespace hls;
 
-void print_stack_trace(void *address, size_t level) {
+void print_stack_trace(void *address, size_t level)
+{
     auto print_space = [](size_t level) {
-        for (size_t i = 0; i < level; ++i) {
+        for (size_t i = 0; i < level; ++i)
+        {
             kprint(" ");
         }
     };
 
-    if (level) {
+    if (level)
+    {
         print_space(level);
         kprintln("|");
         print_space(level);
@@ -20,17 +23,21 @@ void print_stack_trace(void *address, size_t level) {
     kprintln(" Called from {}.", address);
 }
 
-extern "C" void print_registers(registers *h) {
-    for (size_t i = 0; i < 32; ++i) {
+extern "C" void print_registers(registers *h)
+{
+    for (size_t i = 0; i < 32; ++i)
+    {
         kprint("x{}: {} ", i, reinterpret_cast<void *>(h->reg.array[i]));
-        if ((i + 1) % 4 == 0) {
+        if ((i + 1) % 4 == 0)
+        {
             strprintln("");
         }
     }
     kprintln("pc: {}", reinterpret_cast<void *>(h->reg.data.pc));
 }
 
-extern "C" void stack_trace() {
+extern "C" void stack_trace()
+{
     void *fp = nullptr;
     size_t level = 0;
 
@@ -52,7 +59,8 @@ extern "C" void stack_trace() {
     // stack_trace
     fp = read_fp(fp);
 
-    while (fp != nullptr) {
+    while (fp != nullptr)
+    {
         print_stack_trace(read_ra(fp), level);
         ++level;
         fp = read_fp(fp);
@@ -63,12 +71,14 @@ extern "C" void stack_trace() {
  * @todo Implement properly
  *
  */
-extern "C" void die() {
+extern "C" void die()
+{
     kprintln("Please, manually reboot the machine.");
     while (true)
         ;
 }
 
-extern "C" void panic_message_print(const char *msg) {
+extern "C" void panic_message_print(const char *msg)
+{
     kprintln(msg);
 }

@@ -29,41 +29,48 @@ SOFTWARE.
 #include "misc/typetraits.hpp"
 #include "misc/utilities.hpp"
 
-namespace hls {
+namespace hls
+{
 
-template <typename T, typename U> class Pair {
+    template <typename T, typename U>
+    class Pair
+    {
 
-    SET_USING_CLASS(T, first_type);
-    SET_USING_CLASS(U, second_type);
+        SET_USING_CLASS(T, first_type);
+        SET_USING_CLASS(U, second_type);
 
-  public:
-    Pair() = default;
-    Pair(T &&a, U &&b) : first(hls::move(a)), second(hls::move(b)) {};
-    Pair(const T &a, const U &b) : first(a), second(b) {};
-    Pair(Pair &&p) : first(hls::move(p.first)), second(hls::move(p.second)) {};
-    Pair(const Pair &p) : first(p.first), second(p.second) {};
-    ~Pair() = default;
+      public:
+        Pair() = default;
+        Pair(T &&a, U &&b) : first(hls::move(a)), second(hls::move(b)) {};
+        Pair(const T &a, const U &b) : first(a), second(b) {};
+        Pair(Pair &&p) : first(hls::move(p.first)), second(hls::move(p.second)) {};
+        Pair(const Pair &p) : first(p.first), second(p.second) {};
+        ~Pair() = default;
 
-    first_type first;
-    second_type second;
+        first_type first;
+        second_type second;
 
-    Pair &operator=(Pair &other) {
-        first = other.first;
-        second = other.second;
-    }
+        Pair &operator=(Pair &other)
+        {
+            first = other.first;
+            second = other.second;
+        }
 
-    Pair &operator=(Pair &&other) {
-        first = hls::move(other.first);
-        second = hls::move(other.second);
-    }
-};
+        Pair &operator=(Pair &&other)
+        {
+            first = hls::move(other.first);
+            second = hls::move(other.second);
+        }
+    };
 
-template <typename T, typename U> auto make_pair(T &&first, U &&second) {
-    using first_type = hls::remove_cvref_t<decltype(first)>;
-    using second_type = hls::remove_cvref_t<decltype(second)>;
+    template <typename T, typename U>
+    auto make_pair(T &&first, U &&second)
+    {
+        using first_type = hls::remove_cvref_t<decltype(first)>;
+        using second_type = hls::remove_cvref_t<decltype(second)>;
 
-    return Pair<first_type, second_type>(hls::move(first), hls::move(second));
-};
+        return Pair<first_type, second_type>(hls::move(first), hls::move(second));
+    };
 
 } // namespace hls
 

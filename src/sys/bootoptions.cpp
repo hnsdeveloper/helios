@@ -26,43 +26,53 @@ SOFTWARE.
 #include "sys/bootoptions.hpp"
 #include "sys/cpu.hpp"
 
-namespace hls {
+namespace hls
+{
 
-void strcprint(const char *str, size_t n) {
-    while (n--) {
-        opensbi_putchar(*(str++));
-    }
-}
-
-void *get_device_tree_from_options(int argc, const char **argv) {
-    option::Stats stats(usage, argc - 1, argv + 1);
-    option::Option options[stats.options_max], buffer[stats.buffer_max];
-    option::Parser parse(usage, argc - 1, argv + 1, options, buffer);
-
-    if (parse.error()) {
-        kprintln("Failed to parse boot options.");
-        die();
+    void strcprint(const char *str, size_t n)
+    {
+        while (n--)
+        {
+            opensbi_putchar(*(str++));
+        }
     }
 
-    if (argc == 1 || options[OptionIndex::HELP]) {
-        option::printUsage(&strcprint, usage);
-        die();
-    }
+    void *get_device_tree_from_options(int argc, const char **argv)
+    {
+        option::Stats stats(usage, argc - 1, argv + 1);
+        option::Option options[stats.options_max], buffer[stats.buffer_max];
+        option::Parser parse(usage, argc - 1, argv + 1, options, buffer);
 
-    if (options[OptionIndex::FDT].count() == 1) {
-        char *p = nullptr;
-        uintptr_t addr = strtoul(options[OptionIndex::FDT].arg, &p, 16);
-
-        if (addr == 0 && p == nullptr) {
-            kprintln("Invalid FDT address. Please reboot and provide a valid one (FDT needed for booting).");
+        if (parse.error())
+        {
+            kprintln("Failed to parse boot options.");
             die();
         }
 
-        return to_ptr(addr);
-    } else {
-        kprintln("Invalid fdt option.");
-    }
+        if (argc == 1 || options[OptionIndex::HELP])
+        {
+            option::printUsage(&strcprint, usage);
+            die();
+        }
 
-    return nullptr;
-}
+        if (options[OptionIndex::FDT].count() == 1)
+        {
+            char *p = nullptr;
+            uintptr_t addr = strtoul(options[OptionIndex::FDT].arg, &p, 16);
+
+            if (addr == 0 && p == nullptr)
+            {
+                kprintln("Invalid FDT address. Please reboot and provide a valid one (FDT needed for booting).");
+                die();
+            }
+
+            return to_ptr(addr);
+        }
+        else
+        {
+            kprintln("Invalid fdt option.");
+        }
+
+        return nullptr;
+    }
 } // namespace hls

@@ -28,11 +28,13 @@ SOFTWARE.
 #ifndef _OPENSBI_HPP_
 #define _OPENSBI_HPP_
 
-namespace hls {
+namespace hls
+{
 
 #define sbi_call(__x, __fid, __a1, __a2, __a3, __a4, __a5, __a6, __err, __val)                                         \
     [](uint64_t extension, uint64_t function_id, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4,           \
-       uint64_t arg5, uint64_t arg6, uint64_t & error, uint64_t & value) __attribute__((always_inline)) {              \
+       uint64_t arg5, uint64_t arg6, uint64_t & error, uint64_t & value) __attribute__((always_inline))                \
+    {                                                                                                                  \
         register uint64_t a0 asm("a0") = arg1;                                                                         \
         register uint64_t a1 asm("a1") = arg2;                                                                         \
         register uint64_t a2 asm("a2") = arg3;                                                                         \
@@ -48,7 +50,8 @@ namespace hls {
     (__x, __fid, __a1, __a2, __a3, __a4, __a5, __a6, __err, __val)
 
 #define opensbi_putchar(__c)                                                                                           \
-    [](char c) __attribute__((always_inline)) {                                                                        \
+    [](char c) __attribute__((always_inline))                                                                          \
+    {                                                                                                                  \
         uint64_t a = 0;                                                                                                \
         sbi_call(0x1u, 0x0, c, 0, 0, 0, 0, 0, a, a);                                                                   \
     }                                                                                                                  \

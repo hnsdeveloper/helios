@@ -28,11 +28,12 @@ SOFTWARE.
 
 #include "misc/types.hpp"
 
-namespace hls {
+namespace hls
+{
 
-size_t get_cpu_id();
-void flush_tlb();
-void die();
+    size_t get_cpu_id();
+    void flush_tlb();
+    void die();
 
 }; // namespace hls
 

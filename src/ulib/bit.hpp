@@ -33,123 +33,148 @@ SOFTWARE.
 
 extern "C" size_t _popcount(size_t);
 
-namespace hls {
+namespace hls
+{
 
-template <typename T>
-    requires(is_integral_v<T> && !is_signed_v<T>)
-Result<size_t> msb_set(T data) {
-    if (data == 0) {
-        return error<size_t>(Error::INVALID_ARGUMENT);
-    }
-
-    uint64_t blk_idx = 0;
-    uint64_t bit_idx = 0;
-    for (size_t i = 0; i < sizeof(data); ++i) {
-        uint64_t v = (data >> (i * 8)) & 0xFF;
-        size_t j = 0;
-        while (v) {
-            blk_idx = i;
-            v = v >> 1;
-            ++j;
-        }
-        bit_idx = j;
-    }
-
-    return value((size_t)(blk_idx * 8 + bit_idx));
-}
-
-template <typename T> inline T set_bit(T data, size_t n, bool val) {
-    static_assert(is_integral_v<T> && !is_signed_v<T>, "Operation supported only on unsigned integrals.");
-
-    if (n < sizeof(T) * 8) {
-        if (val)
-            data = data | (T)(1) << n;
-        else
-            data = (data | (T)(1) << n) ^ ((T)(1) << n);
-    }
-    return data;
-}
-
-template <typename T> inline Result<bool> get_bit(T data, size_t n) {
-    static_assert(is_integral_v<T> && !is_signed_v<T>, "Operation supported only on unsigned integrals.");
-
-    if (n >= sizeof(T) * 8)
-        error<bool>(Error::OUT_OF_BOUNDS);
-
-    return value((bool)((data >> n) & (T)(1)));
-}
-
-namespace __detail {
-template <size_t N> struct CalculateSize {
-
-    static constexpr size_t value =
-        N < sizeof(byte) * 8 ? 1 : N / (sizeof(byte) * 8) + (N % (sizeof(byte) * 8) ? 1 : 0);
-};
-
-} // namespace __detail
-
-template <size_t N> class Bit {
-    static constexpr size_t s_data_size = __detail::CalculateSize<N>::value;
-
-    byte data[s_data_size];
-
-    size_t calculate_buffer_index(size_t n) const {
-        size_t result = (N - n) / 8;
-
-        return result;
-    }
-
-  public:
-    Bit() {
-        memset(data, 0, s_data_size);
-    }
-
-    ~Bit() = default;
-
-    size_t popcount() const {
-        size_t accumulator = 0;
-
-        // TODO: IMPLEMENT MORE EFFICIENT VERSION
-        for (size_t i = 0; i < s_data_size; ++i) {
-            accumulator += _popcount(data[i]);
+    template <typename T>
+        requires(is_integral_v<T> && !is_signed_v<T>)
+    Result<size_t> msb_set(T data)
+    {
+        if (data == 0)
+        {
+            return error<size_t>(Error::INVALID_ARGUMENT);
         }
 
-        return accumulator;
-    }
-
-    Result<bool> get_bit(size_t n) const {
-        if (n >= s_data_size * 8) {
-            return error<bool>(Error::OUT_OF_BOUNDS);
+        uint64_t blk_idx = 0;
+        uint64_t bit_idx = 0;
+        for (size_t i = 0; i < sizeof(data); ++i)
+        {
+            uint64_t v = (data >> (i * 8)) & 0xFF;
+            size_t j = 0;
+            while (v)
+            {
+                blk_idx = i;
+                v = v >> 1;
+                ++j;
+            }
+            bit_idx = j;
         }
 
-        size_t i = calculate_buffer_index(n);
-        size_t j = n % 8;
-        const byte &b = data[i];
-
-        return hls::get_bit(b, j);
+        return value((size_t)(blk_idx * 8 + bit_idx));
     }
 
-    void set_bit(size_t n, bool val) {
-        if (n >= s_data_size * 8)
-            return;
+    template <typename T>
+    inline T set_bit(T data, size_t n, bool val)
+    {
+        static_assert(is_integral_v<T> && !is_signed_v<T>, "Operation supported only on unsigned integrals.");
 
-        size_t i = calculate_buffer_index(n);
-        size_t j = n % 8;
-        byte &b = data[i];
-
-        b = hls::set_bit(b, j, val);
-    }
-
-    void flip() {
-        for (size_t i = 0; i < s_data_size; ++i) {
-            data[i] = ~data[i];
+        if (n < sizeof(T) * 8)
+        {
+            if (val)
+                data = data | (T)(1) << n;
+            else
+                data = (data | (T)(1) << n) ^ ((T)(1) << n);
         }
+        return data;
     }
 
-    static size_t size() {
-        return N;
+    template <typename T>
+    inline Result<bool> get_bit(T data, size_t n)
+    {
+        static_assert(is_integral_v<T> && !is_signed_v<T>, "Operation supported only on unsigned integrals.");
+
+        if (n >= sizeof(T) * 8)
+            error<bool>(Error::OUT_OF_BOUNDS);
+
+        return value((bool)((data >> n) & (T)(1)));
     }
-};
+
+    namespace __detail
+    {
+        template <size_t N>
+        struct CalculateSize
+        {
+
+            static constexpr size_t value =
+                N < sizeof(byte) * 8 ? 1 : N / (sizeof(byte) * 8) + (N % (sizeof(byte) * 8) ? 1 : 0);
+        };
+
+    } // namespace __detail
+
+    template <size_t N>
+    class Bit
+    {
+        static constexpr size_t s_data_size = __detail::CalculateSize<N>::value;
+
+        byte data[s_data_size];
+
+        size_t calculate_buffer_index(size_t n) const
+        {
+            size_t result = (N - n) / 8;
+
+            return result;
+        }
+
+      public:
+        Bit()
+        {
+            memset(data, 0, s_data_size);
+        }
+
+        ~Bit() = default;
+
+        size_t popcount() const
+        {
+            size_t accumulator = 0;
+
+            // TODO: IMPLEMENT MORE EFFICIENT VERSION
+            for (size_t i = 0; i < s_data_size; ++i)
+            {
+                accumulator += _popcount(data[i]);
+            }
+
+            return accumulator;
+        }
+
+        Result<bool> get_bit(size_t n) const
+        {
+            if (n >= s_data_size * 8)
+            {
+                return error<bool>(Error::OUT_OF_BOUNDS);
+            }
+
+            size_t i = calculate_buffer_index(n);
+            size_t j = n % 8;
+            const byte &b = data[i];
+
+            return hls::get_bit(b, j);
+        }
+
+        void set_bit(size_t n, bool val)
+        {
+            if (n >= s_data_size * 8)
+                return;
+
+            size_t i = calculate_buffer_index(n);
+            size_t j = n % 8;
+            byte &b = data[i];
+
+            b = hls::set_bit(b, j, val);
+        }
+
+        void flip()
+        {
+            for (size_t i = 0; i < s_data_size; ++i)
+            {
+                data[i] = ~data[i];
+            }
+        }
+
+        static size_t size()
+        {
+            return N;
+        }
+    };
 
 } // namespace hls
 

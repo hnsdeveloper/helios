@@ -29,33 +29,41 @@ using namespace hls;
 
 extern "C" void _setup_trap_handling();
 
-namespace hls {
+namespace hls
+{
 
-void setup_trap_handling() {
-    _setup_trap_handling();
-}
+    void setup_trap_handling()
+    {
+        _setup_trap_handling();
+    }
 
-extern "C" void traphandler(registers *) {
+    extern "C" void traphandler(registers *)
+    {
 
-    uintreg_t scause = 0;
-    asm volatile("csrrw %1, scause, %0" : "=r"(scause) : "r"(scause));
+        uintreg_t scause = 0;
+        asm volatile("csrrw %1, scause, %0" : "=r"(scause) : "r"(scause));
 
-    const bool is_sync = (scause >> 63);
-    const uintreg_t cause = (scause << 1) >> 1; // Discards the MSB
+        const bool is_sync = (scause >> 63);
+        const uintreg_t cause = (scause << 1) >> 1; // Discards the MSB
 
-    if (is_sync) {
-        switch (cause) {
+        if (is_sync)
+        {
+            switch (cause)
+            {
 
-        default:
-            PANIC("Unhandled synchronous trap cause.");
+            default:
+                PANIC("Unhandled synchronous trap cause.");
+            }
         }
-    } else {
-        switch (cause) {
+        else
+        {
+            switch (cause)
+            {
 
-        default:
-            PANIC("Unhandled asynchronous trap cause.");
+            default:
+                PANIC("Unhandled asynchronous trap cause.");
+            }
         }
     }
-}
 
 } // namespace hls

@@ -28,15 +28,16 @@ SOFTWARE.
 
 #include "misc/typetraits.hpp"
 
-namespace hls {
-template <typename T>
-concept Integral = is_integral_v<T>;
+namespace hls
+{
+    template <typename T>
+    concept Integral = is_integral_v<T>;
 
-template <typename T>
-concept SignedIntegral = is_integral_v<T> && is_signed_v<T>;
+    template <typename T>
+    concept SignedIntegral = is_integral_v<T> && is_signed_v<T>;
 
-template <typename T>
-concept UnsignedIntegral = is_integral_v<T> && !is_signed_v<T>;
+    template <typename T>
+    concept UnsignedIntegral = is_integral_v<T> && !is_signed_v<T>;
 
 }; // namespace hls
 

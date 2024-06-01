@@ -28,7 +28,8 @@ SOFTWARE.
 
 #include "misc/types.hpp"
 
-namespace hls {
+namespace hls
+{
 
 /**
  * @brief Checks if character is same as ' ' (ASCII 32).
@@ -40,7 +41,8 @@ namespace hls {
 #ifndef __ISSPACE
 #define __ISSPACE
 #define isspace(__c)                                                                                                   \
-    [](char c) -> bool __attribute__((always_inline)) {                                                                \
+    [](char c) -> bool __attribute__((always_inline))                                                                  \
+    {                                                                                                                  \
         return c == ' ';                                                                                               \
     }                                                                                                                  \
     (__c)
@@ -56,7 +58,8 @@ namespace hls {
 #ifndef __ISUPPER
 #define __ISUPPER
 #define isupper(__c)                                                                                                   \
-    [](char c) -> bool __attribute__((always_inline)) {                                                                \
+    [](char c) -> bool __attribute__((always_inline))                                                                  \
+    {                                                                                                                  \
         return c >= 'A' && c <= 'Z';                                                                                   \
     }                                                                                                                  \
     (__c)
@@ -72,7 +75,8 @@ namespace hls {
 #ifndef __ISLOWER
 #define __ISLOWER
 #define islower(__c)                                                                                                   \
-    [](char c) -> bool __attribute__((always_inline)) {                                                                \
+    [](char c) -> bool __attribute__((always_inline))                                                                  \
+    {                                                                                                                  \
         return c >= 'a' && c <= 'z';                                                                                   \
     }                                                                                                                  \
     (__c)
@@ -87,7 +91,8 @@ namespace hls {
 #ifndef __TOUPPER
 #define __TOUPPER
 #define toupper(__c)                                                                                                   \
-    [](char c) -> char __attribute__((always_inline)) {                                                                \
+    [](char c) -> char __attribute__((always_inline))                                                                  \
+    {                                                                                                                  \
         if (islower(c))                                                                                                \
             return c - 'a' + 'A';                                                                                      \
         return c;                                                                                                      \
@@ -104,7 +109,8 @@ namespace hls {
 #ifndef __TOLOWER
 #define __TOLOWER
 #define tolower(__c)                                                                                                   \
-    [](char c) -> char __attribute__((always_inline)) {                                                                \
+    [](char c) -> char __attribute__((always_inline))                                                                  \
+    {                                                                                                                  \
         if (isupper(c))                                                                                                \
             return c - 'A' + 'a';                                                                                      \
         return c;                                                                                                      \
@@ -122,7 +128,8 @@ namespace hls {
 #ifndef __ISDEC
 #define __ISDEC
 #define isdec(__c)                                                                                                     \
-    [](char c) -> bool __attribute__((always_inline)) {                                                                \
+    [](char c) -> bool __attribute__((always_inline))                                                                  \
+    {                                                                                                                  \
         return c >= '0' && c <= '9';                                                                                   \
     }                                                                                                                  \
     (__c)
@@ -138,7 +145,8 @@ namespace hls {
 #ifndef __ISOCT
 #define __ISOCT
 #define isoct(__c)                                                                                                     \
-    [](char c) -> bool __attribute__((always_inline)) {                                                                \
+    [](char c) -> bool __attribute__((always_inline))                                                                  \
+    {                                                                                                                  \
         return c >= '0' && c <= '7';                                                                                   \
     }                                                                                                                  \
     (__c)
@@ -155,7 +163,8 @@ namespace hls {
 #ifndef __ISHEX
 #define __ISHEX
 #define ishex(__c)                                                                                                     \
-    [](char c) -> bool __attribute__((always_inline)) {                                                                \
+    [](char c) -> bool __attribute__((always_inline))                                                                  \
+    {                                                                                                                  \
         c = tolower(c);                                                                                                \
         return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');                                                       \
     }                                                                                                                  \
@@ -173,7 +182,8 @@ namespace hls {
 #ifndef __ISALPHA
 #define __ISALPHA
 #define isalpha(__c)                                                                                                   \
-    [](char c) -> bool __attribute__((always_inline)) {                                                                \
+    [](char c) -> bool __attribute__((always_inline))                                                                  \
+    {                                                                                                                  \
         return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');                                                       \
     }                                                                                                                  \
     (__c)
@@ -189,7 +199,8 @@ namespace hls {
 #ifndef __ISALPHANUM
 #define __ISALPHANUM
 #define isalphanumeric(__c)                                                                                            \
-    [](char c) -> bool __attribute__((always_inline)) {                                                                \
+    [](char c) -> bool __attribute__((always_inline))                                                                  \
+    {                                                                                                                  \
         return isdec(c) || isalpha(c);                                                                                 \
     }                                                                                                                  \
     (__c)
@@ -206,8 +217,10 @@ namespace hls {
 #ifndef __STRCMP
 #define __STRCMP
 #define strcmp(__str1, __str2)                                                                                         \
-    [](const char *str1, const char *str2) -> int __attribute__((always_inline)) {                                     \
-        while (*str1 && *str2) {                                                                                       \
+    [](const char *str1, const char *str2) -> int __attribute__((always_inline))                                       \
+    {                                                                                                                  \
+        while (*str1 && *str2)                                                                                         \
+        {                                                                                                              \
             if (*str1 < *str2)                                                                                         \
                 return -1;                                                                                             \
             if (*str1 > *str2)                                                                                         \
@@ -232,15 +245,22 @@ namespace hls {
 #ifndef __STRNCMP
 #define __STRNCMP
 #define strncmp(__str1, __str2, __n)                                                                                   \
-    [](const char *str1, const char *str2, size_t n) -> int __attribute__((always_inline)) {                           \
-        for (size_t i = 0; i < n; ++i) {                                                                               \
+    [](const char *str1, const char *str2, size_t n) -> int __attribute__((always_inline))                             \
+    {                                                                                                                  \
+        for (size_t i = 0; i < n; ++i)                                                                                 \
+        {                                                                                                              \
             auto a = *reinterpret_cast<const unsigned char *>(str1 + i);                                               \
             auto b = *reinterpret_cast<const unsigned char *>(str2 + i);                                               \
-            if (a == 0 && b == 0) {                                                                                    \
+            if (a == 0 && b == 0)                                                                                      \
+            {                                                                                                          \
                 break;                                                                                                 \
-            } else if (a < b) {                                                                                        \
+            }                                                                                                          \
+            else if (a < b)                                                                                            \
+            {                                                                                                          \
                 return -1;                                                                                             \
-            } else if (a > b) {                                                                                        \
+            }                                                                                                          \
+            else if (a > b)                                                                                            \
+            {                                                                                                          \
                 return 1;                                                                                              \
             }                                                                                                          \
         }                                                                                                              \
@@ -259,7 +279,8 @@ namespace hls {
 #ifndef __STRLEN
 #define __STRLEN
 #define strlen(__str)                                                                                                  \
-    [](const char *str) -> size_t __attribute__((always_inline)) {                                                     \
+    [](const char *str) -> size_t __attribute__((always_inline))                                                       \
+    {                                                                                                                  \
         size_t i = 0;                                                                                                  \
         if (str)                                                                                                       \
             for (; str[i] != '\0'; ++i)                                                                                \
@@ -280,10 +301,13 @@ namespace hls {
 #ifndef __STRNLEN
 #define __STRNLEN
 #define strnlen(__str, __maxlen)                                                                                       \
-    [](const char *str, size_t maxlen) -> size_t __attribute__((always_inline)) {                                      \
+    [](const char *str, size_t maxlen) -> size_t __attribute__((always_inline))                                        \
+    {                                                                                                                  \
         size_t i = 0;                                                                                                  \
-        if (str) {                                                                                                     \
-            while (i < maxlen && *str != '\0') {                                                                       \
+        if (str)                                                                                                       \
+        {                                                                                                              \
+            while (i < maxlen && *str != '\0')                                                                         \
+            {                                                                                                          \
                 ++i;                                                                                                   \
             }                                                                                                          \
         }                                                                                                              \
@@ -303,8 +327,10 @@ namespace hls {
 #ifndef __STRCHR
 #define __STRCHR
 #define strchr(__str, __c)                                                                                             \
-    [](const char *str, char c) -> const char *__attribute__((always_inline)) {                                        \
-        while (true) {                                                                                                 \
+    [](const char *str, char c) -> const char *__attribute__((always_inline))                                          \
+    {                                                                                                                  \
+        while (true)                                                                                                   \
+        {                                                                                                              \
             char v = *str;                                                                                             \
             if (v == '\0')                                                                                             \
                 return nullptr;                                                                                        \
@@ -328,10 +354,13 @@ namespace hls {
 #ifndef __STRRCHR
 #define __STRRCHR
 #define strrchr(__str, __c)                                                                                            \
-    [](const char *str, char c) -> const char *__attribute__((always_inline)) {                                        \
-        if (str) {                                                                                                     \
+    [](const char *str, char c) -> const char *__attribute__((always_inline))                                          \
+    {                                                                                                                  \
+        if (str)                                                                                                       \
+        {                                                                                                              \
             size_t idx = 0;                                                                                            \
-            for (size_t i; *(str + i); ++i) {                                                                          \
+            for (size_t i; *(str + i); ++i)                                                                            \
+            {                                                                                                          \
                 char z = *(str + i);                                                                                   \
                 if (z == c)                                                                                            \
                     idx = i;                                                                                           \
@@ -357,25 +386,31 @@ namespace hls {
 #ifndef __STRTOUL
 #define __STRTOUL
 #define strtoul(__nptr, __endptr, __base)                                                                              \
-    [](const char *nptr, char **endptr, int base) -> unsigned long __attribute__((always_inline)) {                    \
+    [](const char *nptr, char **endptr, int base) -> unsigned long __attribute__((always_inline))                      \
+    {                                                                                                                  \
         const unsigned long ULONG_MAX = (0ul - 1ul);                                                                   \
         const char *s;                                                                                                 \
         unsigned long acc, cutoff;                                                                                     \
         int c;                                                                                                         \
         int neg, any, cutlim;                                                                                          \
         s = nptr;                                                                                                      \
-        do {                                                                                                           \
+        do                                                                                                             \
+        {                                                                                                              \
             c = (unsigned char)*s++;                                                                                   \
         } while (isspace(c));                                                                                          \
-        if (c == '-') {                                                                                                \
+        if (c == '-')                                                                                                  \
+        {                                                                                                              \
             neg = 1;                                                                                                   \
             c = *s++;                                                                                                  \
-        } else {                                                                                                       \
+        }                                                                                                              \
+        else                                                                                                           \
+        {                                                                                                              \
             neg = 0;                                                                                                   \
             if (c == '+')                                                                                              \
                 c = *s++;                                                                                              \
         }                                                                                                              \
-        if ((base == 0 || base == 16) && c == '0' && (*s == 'x' || *s == 'X')) {                                       \
+        if ((base == 0 || base == 16) && c == '0' && (*s == 'x' || *s == 'X'))                                         \
+        {                                                                                                              \
             c = s[1];                                                                                                  \
             s += 2;                                                                                                    \
             base = 16;                                                                                                 \
@@ -384,7 +419,8 @@ namespace hls {
             base = c == '0' ? 8 : 10;                                                                                  \
         cutoff = ULONG_MAX / (unsigned long)base;                                                                      \
         cutlim = ULONG_MAX % (unsigned long)base;                                                                      \
-        for (acc = 0, any = 0;; c = (unsigned char)*s++) {                                                             \
+        for (acc = 0, any = 0;; c = (unsigned char)*s++)                                                               \
+        {                                                                                                              \
             if (isdec(c))                                                                                              \
                 c -= '0';                                                                                              \
             else if (isalpha(c))                                                                                       \
@@ -395,10 +431,13 @@ namespace hls {
                 break;                                                                                                 \
             if (any < 0)                                                                                               \
                 continue;                                                                                              \
-            if (acc > cutoff || (acc == cutoff && c > cutlim)) {                                                       \
+            if (acc > cutoff || (acc == cutoff && c > cutlim))                                                         \
+            {                                                                                                          \
                 any = -1;                                                                                              \
                 acc = ULONG_MAX;                                                                                       \
-            } else {                                                                                                   \
+            }                                                                                                          \
+            else                                                                                                       \
+            {                                                                                                          \
                 any = 1;                                                                                               \
                 acc *= (unsigned long)base;                                                                            \
                 acc += c;                                                                                              \

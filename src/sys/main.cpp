@@ -39,34 +39,38 @@ SOFTWARE.
 #include "sys/print.hpp"
 #include "sys/string.hpp"
 
-namespace hls {
+namespace hls
+{
 
-void display_initial_info() {
-    // Prints the splash logo
-    strprint(splash);
-    // Prints copyright notice, the year and the commit which this build was based
-    // at.
+    void display_initial_info()
+    {
+        // Prints the splash logo
+        strprint(splash);
+        // Prints copyright notice, the year and the commit which this build was based
+        // at.
 
-    kprintln("Copyright (C) {}. Built from {}.", __DATE__ + 7, GIT_HASH);
-}
+        kprintln("Copyright (C) {}. Built from {}.", __DATE__ + 7, GIT_HASH);
+    }
 
-__attribute__((noreturn)) void kernel_main(bootinfo *b_info) {
-    display_initial_info();
+    __attribute__((noreturn)) void kernel_main(bootinfo *b_info)
+    {
+        display_initial_info();
 
-    setup_kernel_memory_map(b_info);
-    init_initfalloc(b_info->used_bootpages, get_kernel_pagetable());
-    unmap_low_kernel(b_info->p_lowkernel_start, b_info->p_lowkernel_end);
-    mapfdt(get_device_tree_from_options(b_info->argc, b_info->argv));
-    initialize_frame_manager(get_fdt(), b_info);
-    initialize_kmalloc();
+        setup_kernel_memory_map(b_info);
+        init_initfalloc(b_info->used_bootpages, get_kernel_pagetable());
+        unmap_low_kernel(b_info->p_lowkernel_start, b_info->p_lowkernel_end);
+        mapfdt(get_device_tree_from_options(b_info->argc, b_info->argv));
+        initialize_frame_manager(get_fdt(), b_info);
+        initialize_kmalloc();
 
-    while (true)
-        ;
-}
+        while (true)
+            ;
+    }
 
 }; // namespace hls
 
-extern "C" void _main(hls::bootinfo *info) {
+extern "C" void _main(hls::bootinfo *info)
+{
     auto info_cp = *info;
     hls::kernel_main(&info_cp);
 }
