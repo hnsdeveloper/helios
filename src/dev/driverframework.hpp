@@ -42,7 +42,7 @@ namespace hls
         const char *compatible_devices;
 
         driver_load_point on_load;
-        driver_exit_point on_exit;
+        driver_exit_point on_unload;
     };
 
     using driver_list = DoubleList<driver_info *, KMAllocator>;
@@ -51,10 +51,11 @@ namespace hls
     void initialize_driver_framework();
 } // namespace hls
 
-#define REGISTER_DRIVER(driver_name, c_devices, on_load, on_exit)                                                      \
+#define REGISTER_DRIVER(driver_name, c_devices, on_load, on_unload)                                                    \
     __attribute__((section(.driverinfo))) const driver_info driver_name                                                \
     {                                                                                                                  \
-        .driver_name = STRINGFY(driver_name), .compatible_devices = c_devices, .on_load = on_load.on_exit = on_exit    \
+        .driver_name = STRINGFY(driver_name), .compatible_devices = c_devices, .on_load = on_load,                     \
+        .on_unload = on_unload                                                                                         \
     }
 
 #endif
