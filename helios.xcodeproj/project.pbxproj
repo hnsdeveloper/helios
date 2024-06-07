@@ -121,6 +121,8 @@
 		99180E4A2C128D1D00C05182 /* script.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = script.sh; sourceTree = "<group>"; };
 		99180E4B2C128D1D00C05182 /* u-boot-dtb.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = "u-boot-dtb.bin"; sourceTree = "<group>"; };
 		99180E502C128E6800C05182 /* dummy */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = dummy; sourceTree = BUILT_PRODUCTS_DIR; };
+		99180E742C12949900C05182 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		99180E762C12F67400C05182 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -140,6 +142,7 @@
 				99180E4A2C128D1D00C05182 /* script.sh */,
 				99180E492C128D1D00C05182 /* src */,
 				99180E4B2C128D1D00C05182 /* u-boot-dtb.bin */,
+				99180E742C12949900C05182 /* Makefile */,
 				99180E512C128E6800C05182 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -231,6 +234,7 @@
 				99180E152C128D1D00C05182 /* fdt_sw.c */,
 				99180E162C128D1D00C05182 /* fdt_wip.c */,
 				99180E172C128D1D00C05182 /* fdt.c */,
+				99180E762C12F67400C05182 /* Makefile */,
 				99180E182C128D1D00C05182 /* fdt.h */,
 				99180E192C128D1D00C05182 /* libfdt_env.h */,
 				99180E1A2C128D1D00C05182 /* libfdt_internal.h */,
