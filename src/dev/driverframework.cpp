@@ -25,7 +25,7 @@ SOFTWARE.
 
 #include "dev/driverframework.hpp"
 #include "misc/symbols.hpp"
-
+/*
 namespace hls
 {
 
@@ -42,3 +42,4 @@ namespace hls
     }
 
 } // namespace hls
+*/

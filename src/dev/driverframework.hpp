@@ -31,6 +31,7 @@ SOFTWARE.
 #include "sys/kmalloc.hpp"
 #include "ulib/double_list.hpp"
 
+/*
 namespace hls
 {
     using driver_load_point = void (*)(void *);
@@ -50,6 +51,7 @@ namespace hls
 
     void initialize_driver_framework();
 } // namespace hls
+*/
 
 #define REGISTER_DRIVER(driver_name, c_devices, on_load, on_unload)                                                    \
     __attribute__((section(.driverinfo))) const driver_info driver_name                                                \

@@ -35,6 +35,10 @@
 		99180E712C128EB400C05182 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E322C128D1D00C05182 /* main.cpp */; };
 		99180E722C128EB400C05182 /* panic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E352C128D1D00C05182 /* panic.cpp */; };
 		99180E732C128EB400C05182 /* traphandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E3A2C128D1D00C05182 /* traphandler.cpp */; };
+		99180E782C13DDDB00C05182 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 99180E772C13DDDB00C05182 /* Makefile */; };
+		99180E7A2C14D95A00C05182 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 99180E792C14D95A00C05182 /* Makefile */; };
+		99180E7C2C14DEFF00C05182 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 99180E7B2C14DEFF00C05182 /* Makefile */; };
+		99180E7E2C14E07F00C05182 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 99180E7D2C14E07F00C05182 /* Makefile */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -123,6 +127,10 @@
 		99180E502C128E6800C05182 /* dummy */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = dummy; sourceTree = BUILT_PRODUCTS_DIR; };
 		99180E742C12949900C05182 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		99180E762C12F67400C05182 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		99180E772C13DDDB00C05182 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		99180E792C14D95A00C05182 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		99180E7B2C14DEFF00C05182 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		99180E7D2C14E07F00C05182 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -179,6 +187,7 @@
 				99180DFC2C128D1D00C05182 /* panic */,
 				99180DFE2C128D1D00C05182 /* trap */,
 				99180DFF2C128D1D00C05182 /* link.lds */,
+				99180E7D2C14E07F00C05182 /* Makefile */,
 				99180E002C128D1D00C05182 /* plat_def.cpp */,
 				99180E012C128D1D00C05182 /* plat_def.hpp */,
 			);
@@ -207,6 +216,7 @@
 			children = (
 				99180E072C128D1D00C05182 /* framemanager.cpp */,
 				99180E082C128D1D00C05182 /* framemanager.hpp */,
+				99180E772C13DDDB00C05182 /* Makefile */,
 				99180E092C128D1D00C05182 /* mmap.cpp */,
 				99180E0A2C128D1D00C05182 /* mmap.hpp */,
 			);
@@ -252,6 +262,7 @@
 				99180E1E2C128D1D00C05182 /* githash.hpp */,
 				99180E1F2C128D1D00C05182 /* limits.hpp */,
 				99180E202C128D1D00C05182 /* macros.hpp */,
+				99180E792C14D95A00C05182 /* Makefile */,
 				99180E212C128D1D00C05182 /* new.cpp */,
 				99180E222C128D1D00C05182 /* new.hpp */,
 				99180E232C128D1D00C05182 /* splash.hpp */,
@@ -273,6 +284,7 @@
 				99180E2D2C128D1D00C05182 /* cpu.hpp */,
 				99180E2E2C128D1D00C05182 /* devicetree.cpp */,
 				99180E2F2C128D1D00C05182 /* devicetree.hpp */,
+				99180E7B2C14DEFF00C05182 /* Makefile */,
 				99180E302C128D1D00C05182 /* kmalloc.cpp */,
 				99180E312C128D1D00C05182 /* kmalloc.hpp */,
 				99180E322C128D1D00C05182 /* main.cpp */,
@@ -412,11 +424,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				99180E7A2C14D95A00C05182 /* Makefile in Sources */,
 				99180E582C128EB400C05182 /* asm.S in Sources */,
 				99180E592C128EB400C05182 /* boot.cpp in Sources */,
 				99180E5A2C128EB400C05182 /* panic.S in Sources */,
 				99180E5B2C128EB400C05182 /* trap.s in Sources */,
 				99180E5C2C128EB400C05182 /* link.lds in Sources */,
+				99180E7E2C14E07F00C05182 /* Makefile in Sources */,
 				99180E5D2C128EB400C05182 /* plat_def.cpp in Sources */,
 				99180E5E2C128EB400C05182 /* plat_def.hpp in Sources */,
 				99180E5F2C128EB400C05182 /* driverframework.cpp in Sources */,
@@ -439,7 +453,9 @@
 				99180E702C128EB400C05182 /* kmalloc.cpp in Sources */,
 				99180E712C128EB400C05182 /* main.cpp in Sources */,
 				99180E722C128EB400C05182 /* panic.cpp in Sources */,
+				99180E7C2C14DEFF00C05182 /* Makefile in Sources */,
 				99180E732C128EB400C05182 /* traphandler.cpp in Sources */,
+				99180E782C13DDDB00C05182 /* Makefile in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
