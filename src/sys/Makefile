@@ -1,6 +1,12 @@
 SYS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-$(BUILD_DIR)devicetree.o: $(INCLUDE_DIR)devicetree.cpp devicetree.hpp \
+
+.PHONY: all
+
+all: $(BUILD_DIR)devicetree.o $(BUILD_DIR)bootoptions.o $(BUILD_DIR)panic.o $(BUILD_DIR)cpu.o $(BUILD_DIR)kmalloc.o \
+  $(BUILD_DIR)main.o
+  
+$(BUILD_DIR)devicetree.o: devicetree.cpp devicetree.hpp \
   $(INCLUDE_DIR)arch/riscv64gc/plat_def.hpp $(INCLUDE_DIR)misc/macros.hpp $(INCLUDE_DIR)misc/types.hpp \
   $(INCLUDE_DIR)mem/framemanager.hpp bootdata.hpp $(INCLUDE_DIR)mem/mmap.hpp \
   cpu.hpp $(INCLUDE_DIR)misc/libfdt/libfdt.h $(INCLUDE_DIR)misc/libfdt/libfdt_env.h \

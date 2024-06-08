@@ -3,6 +3,13 @@ SRC_DIR := $(PROJECT_ROOT)src/
 INCLUDE_DIR := $(SRC_DIR)
 BUILD_DIR := $(PROJECT_ROOT)build/
 SUBDIRS := $(wildcard */.)
+MAKES := $(shell find ./src -name "Makefile" | xargs dirname )
+CPPFLAGS := -ffreestanding -nostdlib -fno-exceptions -fno-rtti -mabi=lp64d -mcmodel=medany -fno-use-cxa-atexit -std=c++20
+EXTRAFLAGS := -c -DBOOTPAGES=32
+
+CXX := $(CXXPREFIX)g++
+LD	:= $(CXXPREFIX)ld
+
 
 export BUILD_DIR
 export INCLUDE_DIR
@@ -12,13 +19,20 @@ export CPPFLAGS
 export EXTRAFLAGS
 export CXX
 
-.PHONY: test
+.PHONY: dep
 
-$(BUILD_DIR)helios : $(BUILD_DIR)boot.o $(BUILD_DIR)plat_def.o $(BUILD_DIR)mmap.o $(BUILD_DIR)framemanager.o \
-	$(BUILD_DIR)fdt_empty_tree.o $(BUILD_DIR)fdt_overlay.o $(BUILD_DIR)fdt.o $(BUILD_DIR)fdt_strerror.o \
-	$(BUILD_DIR)fdt_wip.o $(BUILD_DIR)fdt_rw.o $(BUILD_DIR)fdt_addresses.o $(BUILD_DIR)fdt_ro.o $(BUILD_DIR)fdt_sw.o \
-	$(BUILD_DIR)fdt_check.o $(BUILD_DIR)new.o $(BUILD_DIR)devicetree.o $(BUILD_DIR)bootoptions.o $(BUILD_DIR)panic.o \
-	$(BUILD_DIR)cpu.o $(BUILD_DIR)kmalloc.o  $(BUILD_DIR)main.o
+dep :
+	#mkdir build
+	for folder in $(MAKES); do $(MAKE) -C $$folder; done
+	
+helios : dep
+	$(CXX) $(BUILD_DIR)*.o $(CPPFLAGS) -T./src/arch/riscv64gc/link.lds -o helios
+	
+clean :
+	$(RM) build/*.o
+
+fclean :
+	$(RM) -rf build/
 
 
 
