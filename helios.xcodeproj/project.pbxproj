@@ -63,7 +63,7 @@
 		99180E012C128D1D00C05182 /* plat_def.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = plat_def.hpp; sourceTree = "<group>"; };
 		99180E042C128D1D00C05182 /* driverframework.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = driverframework.cpp; sourceTree = "<group>"; };
 		99180E052C128D1D00C05182 /* driverframework.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = driverframework.hpp; sourceTree = "<group>"; };
-		99180E072C128D1D00C05182 /* framemanager.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = framemanager.cpp; sourceTree = "<group>"; };
+		99180E072C128D1D00C05182 /* framemanager.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = framemanager.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		99180E082C128D1D00C05182 /* framemanager.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = framemanager.hpp; sourceTree = "<group>"; };
 		99180E092C128D1D00C05182 /* mmap.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = mmap.cpp; sourceTree = "<group>"; };
 		99180E0A2C128D1D00C05182 /* mmap.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = mmap.hpp; sourceTree = "<group>"; };

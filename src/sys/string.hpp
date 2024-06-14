@@ -247,24 +247,16 @@ namespace hls
 #define strncmp(__str1, __str2, __n)                                                                                   \
     [](const char *str1, const char *str2, size_t n) -> int __attribute__((always_inline))                             \
     {                                                                                                                  \
-        for (size_t i = 0; i < n; ++i)                                                                                 \
+        char a = 0, b = 0;                                                                                             \
+        size_t i = 0;                                                                                                  \
+        while (str1 && str2 && i++ < n)                                                                                \
         {                                                                                                              \
-            auto a = *reinterpret_cast<const unsigned char *>(str1 + i);                                               \
-            auto b = *reinterpret_cast<const unsigned char *>(str2 + i);                                               \
-            if (a == 0 && b == 0)                                                                                      \
-            {                                                                                                          \
+            if (*str1 != *str2 || !(*str1) || !(*str2))                                                                \
                 break;                                                                                                 \
-            }                                                                                                          \
-            else if (a < b)                                                                                            \
-            {                                                                                                          \
-                return -1;                                                                                             \
-            }                                                                                                          \
-            else if (a > b)                                                                                            \
-            {                                                                                                          \
-                return 1;                                                                                              \
-            }                                                                                                          \
+            ++str1;                                                                                                    \
+            ++str2;                                                                                                    \
         }                                                                                                              \
-        return 0;                                                                                                      \
+        return a - b;                                                                                                  \
     }                                                                                                                  \
     (__str1, __str2, __n)
 #endif
