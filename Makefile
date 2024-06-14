@@ -4,10 +4,15 @@ INCLUDE_DIR := $(SRC_DIR)
 BUILD_DIR := $(PROJECT_ROOT)build/
 SUBDIRS := $(wildcard */.)
 MAKES := $(shell find ./src -name "Makefile" | xargs dirname )
-CPPFLAGS := -ffreestanding -nostdlib -fno-exceptions -fno-rtti -mabi=lp64d -mcmodel=medany -fno-use-cxa-atexit -std=c++20
-EXTRAFLAGS := -c -DBOOTPAGES=32
+CPPFLAGS := -pie -ffunction-sections -fdata-sections -fno-omit-frame-pointer -march=rv64gc -mabi=lp64 -std=c++20 \
+-ffreestanding -nostdlib -fno-exceptions -fno-rtti -mabi=lp64d -mcmodel=medany -fno-asynchronous-unwind-tables \
+-fno-use-cxa-atexit -Wall -Wextra \
+-T./src/arch/riscv64gc/link.lds
+
+EXTRAFLAGS := -c -DBOOTPAGES=32 -Wall -Wextra
 
 CXX := $(CXXPREFIX)g++
+AR  := $(CXXPREFIX)ar
 LD	:= $(CXXPREFIX)ld
 
 
@@ -21,18 +26,18 @@ export CXX
 
 .PHONY: dep
 
-dep :
-	#mkdir build
-	for folder in $(MAKES); do $(MAKE) -C $$folder; done
-	
 helios : dep
-	$(CXX) $(BUILD_DIR)*.o $(CPPFLAGS) -T./src/arch/riscv64gc/link.lds -o helios
-	
+	$(LD) $(BUILD_DIR)*.o -nostdlib -static -T./src/arch/riscv64gc/link.lds -o $(BUILD_DIR)helios
+
+dep :
+	@mkdir -p build
+	@for folder in $(MAKES); do $(MAKE) -C $$folder; done
+		
 clean :
-	$(RM) build/*.o
+	@$(RM) build/*.o
 
 fclean :
-	$(RM) -rf build/
+	@$(RM) -rf build/
 
 
 
