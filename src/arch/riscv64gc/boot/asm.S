@@ -4,7 +4,7 @@
 .section .data.low
 
  
-.section .text.low
+.section .text.start
 
 .global _start
 _start:

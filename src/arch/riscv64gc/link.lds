@@ -22,6 +22,7 @@ SECTIONS
 
 	.text.low : {
 		. = ALIGN(4);
+        *(.text.start)
 		*(.text.low)
 		*(.text.clss)
 		*(.text.low.*)

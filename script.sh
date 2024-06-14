@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-kernel_image=$1
+kernel_image=./build/helios
 hdd_image_name=hdd
 
 echo $kernel_image

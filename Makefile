@@ -4,12 +4,11 @@ INCLUDE_DIR := $(SRC_DIR)
 BUILD_DIR := $(PROJECT_ROOT)build/
 SUBDIRS := $(wildcard */.)
 MAKES := $(shell find ./src -name "Makefile" | xargs dirname )
-CPPFLAGS := -pie -ffunction-sections -fdata-sections -fno-omit-frame-pointer -march=rv64gc -mabi=lp64 -std=c++20 \
--ffreestanding -nostdlib -fno-exceptions -fno-rtti -mabi=lp64d -mcmodel=medany -fno-asynchronous-unwind-tables \
--fno-use-cxa-atexit -Wall -Wextra \
--T./src/arch/riscv64gc/link.lds
+CPPFLAGS := -c -fno-omit-frame-pointer -march=rv64gc -mabi=lp64 -std=c++20  -ffreestanding -nostdlib \
+-fno-exceptions -fno-rtti -mabi=lp64d -mcmodel=medany -fno-asynchronous-unwind-tables -fno-use-cxa-atexit \
+-Wall -Wextra -T./src/arch/riscv64gc/link.lds
 
-EXTRAFLAGS := -c -DBOOTPAGES=32 -Wall -Wextra
+EXTRAFLAGS := -DBOOTPAGES=32 -Wall -Wextra
 
 CXX := $(CXXPREFIX)g++
 AR  := $(CXXPREFIX)ar
@@ -27,7 +26,8 @@ export CXX
 .PHONY: dep
 
 helios : dep
-	$(LD) $(BUILD_DIR)*.o -nostdlib -static -T./src/arch/riscv64gc/link.lds -o $(BUILD_DIR)helios
+	$(LD) $(BUILD_DIR)*.o -nostdlib --gc-sections -Bdynamic -T./src/arch/riscv64gc/link.lds -o $(BUILD_DIR)helios
+	$(CXXPREFIX)objcopy -O binary $(BUILD_DIR)helios $(BUILD_DIR)helios.bin
 
 dep :
 	@mkdir -p build
