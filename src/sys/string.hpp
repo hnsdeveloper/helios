@@ -212,7 +212,7 @@ namespace hls
  * @param str1 Null terminated string
  * @param str2 Null terminated string to compare against.
  * @return int 0 if both strings are equal (either lexicographically or both
- * nullptr), -1 if str1 < str2, 1 if str1 > str2.
+ * nullptr), negative value if str1 < str2, positive value if str1 > str2.
  */
 #ifndef __STRCMP
 #define __STRCMP
@@ -221,14 +221,12 @@ namespace hls
     {                                                                                                                  \
         while (*str1 && *str2)                                                                                         \
         {                                                                                                              \
-            if (*str1 < *str2)                                                                                         \
-                return -1;                                                                                             \
-            if (*str1 > *str2)                                                                                         \
-                return 1;                                                                                              \
+            if (*str1 != *str2)                                                                                        \
+                break;                                                                                                 \
             ++str1;                                                                                                    \
             ++str2;                                                                                                    \
         }                                                                                                              \
-        return (0 - (*str1 < *str2)) + (*str1 > *str2);                                                                \
+        return *str1 - *str2;                                                                                          \
     }                                                                                                                  \
     (__str1, __str2)
 #endif

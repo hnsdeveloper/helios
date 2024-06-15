@@ -69,18 +69,24 @@ namespace hls
 #define memmove(__dest, __src, __bytes)                                                                                \
     [](void *dest, const void *src, size_t bytes) -> void *__attribute__((always_inline))                              \
     {                                                                                                                  \
-        const char *src_c = reinterpret_cast<const char *>(src);                                                       \
-        char *dest_c = reinterpret_cast<char *>(dest);                                                                 \
-        size_t i = 0;                                                                                                  \
-        char *buffer = nullptr;                                                                                        \
-        asm("add %0, x0, sp" : "=r"(buffer) : "r"(buffer));                                                            \
-        buffer = buffer - bytes;                                                                                       \
-        for (; i < bytes; ++i)                                                                                         \
+        const char *_src = reinterpret_cast<const char *>(src);                                                        \
+        char *_dest = reinterpret_cast<char *>(dest);                                                                  \
+                                                                                                                       \
+        _dest = _dest + ((bytes - 1) * (_dest > _src));                                                                \
+        _src = _src + ((bytes - 1) * (_dest > _src));                                                                  \
+                                                                                                                       \
+        for (size_t i = 0; i < bytes; ++i)                                                                             \
         {                                                                                                              \
-            buffer[i] = src_c[i];                                                                                      \
-            for (; i < bytes; ++i)                                                                                     \
+            *_dest = *_src;                                                                                            \
+            if (_dest > _src)                                                                                          \
             {                                                                                                          \
-                dest_c[i] = buffer[i];                                                                                 \
+                --_dest;                                                                                               \
+                --_src;                                                                                                \
+            }                                                                                                          \
+            else                                                                                                       \
+            {                                                                                                          \
+                ++_dest;                                                                                               \
+                ++_src;                                                                                                \
             }                                                                                                          \
         }                                                                                                              \
         return dest;                                                                                                   \
@@ -126,16 +132,16 @@ namespace hls
     {                                                                                                                  \
         const byte *p1 = reinterpret_cast<const byte *>(ptr1);                                                         \
         const byte *p2 = reinterpret_cast<const byte *>(ptr2);                                                         \
+        byte a = 0;                                                                                                    \
+        byte b = 0;                                                                                                    \
         for (size_t i = 0; i < num; ++i)                                                                               \
         {                                                                                                              \
-            byte a = *(p1 + i);                                                                                        \
-            byte b = *(p2 + i);                                                                                        \
-            if (a < b)                                                                                                 \
-                return -1;                                                                                             \
-            if (a > b)                                                                                                 \
-                return 1;                                                                                              \
+            a = *(p1 + i);                                                                                             \
+            b = *(p2 + i);                                                                                             \
+            if (a != b)                                                                                                \
+                break;                                                                                                 \
         }                                                                                                              \
-        return 0;                                                                                                      \
+        return a - b;                                                                                                  \
     }                                                                                                                  \
     (__ptr1, __ptr2, __num)
 #endif
