@@ -40,7 +40,7 @@ namespace hls
  */
 #ifndef __MEMCPY
 #define __MEMCPY
-#define memcpy(__dest, __src, __bytes)                                                                                 \
+#define memcpy(__destmmcpy, __srcmmcpy, __bytesmmcpy)                                                                  \
     [](void *dest, const void *src, size_t bytes) __attribute__((always_inline))                                       \
     {                                                                                                                  \
         const char *src_c = reinterpret_cast<const char *>(src);                                                       \
@@ -52,7 +52,7 @@ namespace hls
             ++dest_c;                                                                                                  \
         }                                                                                                              \
     }                                                                                                                  \
-    (__dest, __src, __bytes)
+    (__destmmcpy, __srcmmcpy, __bytesmmcpy)
 #endif
 
 /**
@@ -66,7 +66,7 @@ namespace hls
  */
 #ifndef __MEMMOVE
 #define __MEMMOVE
-#define memmove(__dest, __src, __bytes)                                                                                \
+#define memmove(__destmmov, __srcmmov, __bytesmmov)                                                                    \
     [](void *dest, const void *src, size_t bytes) -> void *__attribute__((always_inline))                              \
     {                                                                                                                  \
         const char *_src = reinterpret_cast<const char *>(src);                                                        \
@@ -91,7 +91,7 @@ namespace hls
         }                                                                                                              \
         return dest;                                                                                                   \
     }                                                                                                                  \
-    (__dest, __src, __bytes)
+    (__destmmov, __srcmmov, __bytesmmov)
 #endif
 
 /**
@@ -103,7 +103,7 @@ namespace hls
  */
 #ifndef __MEMSET
 #define __MEMSET
-#define memset(__src, __c, __sz)                                                                                       \
+#define memset(__srcmset, __cmset, __szmset)                                                                           \
     [](void *dst, char c, size_t size) __attribute__((always_inline))                                                  \
     {                                                                                                                  \
         byte *p = reinterpret_cast<byte *>(dst);                                                                       \
@@ -112,7 +112,7 @@ namespace hls
             *p = c;                                                                                                    \
         }                                                                                                              \
     }                                                                                                                  \
-    (__src, __c, __sz)
+    (__srcmset, __cmset, __szmset)
 #endif
 
 /**
@@ -121,13 +121,13 @@ namespace hls
  *
  * @param ptr1 Pointer to memory region to be compared
  * @param ptr2 Pointer to memory region to be compared
- * @param n Length in bytes to compare
+ * @param num Length in bytes to compare
  * @return int 0 if both regions have the same data, -1 if the data at ptr1 <
  * ptr2, 1 if the data at ptr1 > ptr2
  */
 #ifndef __MEMCMP
 #define __MEMCMP
-#define memcmp(__ptr1, __ptr2, __num)                                                                                  \
+#define memcmp(__ptr1mcmp, __ptr2mcmp, __nummcmp)                                                                      \
     [](const void *ptr1, const void *ptr2, size_t num) -> int __attribute__((always_inline))                           \
     {                                                                                                                  \
         const byte *p1 = reinterpret_cast<const byte *>(ptr1);                                                         \
@@ -143,12 +143,12 @@ namespace hls
         }                                                                                                              \
         return a - b;                                                                                                  \
     }                                                                                                                  \
-    (__ptr1, __ptr2, __num)
+    (__ptr1mcmp, __ptr2mcmp, __nummcmp)
 #endif
 
 #ifndef __MEMCHR
 #define __MEMCHR
-#define memchr(__ptr, __ch, __count)                                                                                   \
+#define memchr(__ptrmchr, __chmchr, __countmchr)                                                                       \
     [](const void *ptr, byte ch, size_t count) -> const void *__attribute__((always_inline))                           \
     {                                                                                                                  \
         if (ptr != nullptr)                                                                                            \
@@ -162,7 +162,7 @@ namespace hls
         }                                                                                                              \
         return nullptr;                                                                                                \
     }                                                                                                                  \
-    (__ptr, __ch, __count)
+    (__ptrmchr, __chmchr, __countmchr)
 #endif
 
 /**
@@ -173,12 +173,12 @@ namespace hls
  */
 #ifndef __TO_UINTPTR
 #define __TO_UINTPTR
-#define to_uintptr_t(__r)                                                                                              \
+#define to_uintptr_t(__ruintptr)                                                                                       \
     [](const void *p) -> uintptr_t __attribute__((always_inline))                                                      \
     {                                                                                                                  \
         return reinterpret_cast<uintptr_t>(p);                                                                         \
     }                                                                                                                  \
-    (__r)
+    (__ruintptr)
 #endif
 
 /**
@@ -189,12 +189,28 @@ namespace hls
  */
 #ifndef __TO_PTR
 #define __TO_PTR
-#define to_ptr(__q)                                                                                                    \
+#define to_ptr(__qtoptr)                                                                                               \
     [](uintptr_t v) -> void *__attribute__((always_inline))                                                            \
     {                                                                                                                  \
         return reinterpret_cast<void *>(v);                                                                            \
     }                                                                                                                  \
-    (__q)
+    (__qtoptr)
+#endif
+
+/**
+ * @brief Converts any pointer type to a byte* type.
+ *
+ * @param v The pointer to be converted
+ * @return byte* Pointer as byte* type
+ */
+#ifndef __AS_BYTE_PTR
+#define __AS_BYTE_PTR
+#define as_byte_ptr(__abptr)                                                                                           \
+    [](const void *p) -> byte *__attribute__((always_inline))                                                          \
+    {                                                                                                                  \
+        return reinterpret_cast<byte *>(const_cast<void *>(p));                                                        \
+    }                                                                                                                  \
+    (__abptr)
 #endif
 
 /**
@@ -206,13 +222,12 @@ namespace hls
  */
 #ifndef __A_OFFSET
 #define __A_OFFSET
-#define apply_offset(__p, __off)                                                                                       \
+#define apply_offset(__pao, __offao)                                                                                   \
     [](void *p, uintptr_t offset) -> void *__attribute__((always_inline))                                              \
     {                                                                                                                  \
-        uintptr_t x = reinterpret_cast<uintptr_t>(p) + offset;                                                         \
-        return reinterpret_cast<void *>(x);                                                                            \
+        return reinterpret_cast<char *>(p) + offset;                                                                   \
     }                                                                                                                  \
-    (__p, __off)
+    (__pao, __offao)
 #endif
 
 /**
@@ -225,26 +240,48 @@ namespace hls
  */
 #ifndef __ISALIGNED
 #define __ISALIGNED
-#define is_aligned(__ptr, __alignment)                                                                                 \
+#define is_aligned(__ptria, __alignmentia)                                                                             \
     [](const void *ptr, size_t alignment) -> bool __attribute__((always_inline))                                       \
     {                                                                                                                  \
         uintptr_t p = to_uintptr_t(ptr);                                                                               \
         return (p / alignment * alignment) == p;                                                                       \
     }                                                                                                                  \
-    (__ptr, __alignment)
+    (__ptria, __alignmentia)
+#endif
+
+/**
+ * @brief Returns the absolute difference (in bytes) between two pointers.
+ *
+ * @param __ptra One of the pointers.
+ * @param __ptrb The other pointer.
+ * @return size_t The absolute difference between both pointers.
+ */
+#ifndef __ABS_PTR_DIFF
+#define __ABS_PTR_DIFF
+#define abs_ptr_diff(__ptraabsd, __ptrbabsd)                                                                           \
+    [](const void *a, const void *b) -> size_t __attribute__((always_inline))                                          \
+    {                                                                                                                  \
+        const char *_a = reinterpret_cast<const char *>(a);                                                            \
+        const char *_b = reinterpret_cast<const char *>(b);                                                            \
+                                                                                                                       \
+        if (_a > _b)                                                                                                   \
+            return _a - _b;                                                                                            \
+        return _b - _a;                                                                                                \
+    }                                                                                                                  \
+    (__ptraabsd, __ptrbabsd)
 #endif
 
 /**
  * @brief Aligns a pointer **ptr** to alignment. If the pointer is not already
  * aligned, it will align it to the next stride, that is, the return value > ptr
  *
- * @param ptr Pointer to be aligned
+ * @param __ptraf Pointer to be aligned
  * @param alignment The required alignment
  * @return void* The pointer aligned
  */
 #ifndef __AFORWARD
 #define __AFORWARD
-#define align_forward(__ptr, __alignment)                                                                              \
+#define align_forward(__ptraf, __alignmentaf)                                                                          \
     [](const void *ptr, size_t alignment) -> void *__attribute__((always_inline))                                      \
     {                                                                                                                  \
         uintptr_t p = to_uintptr_t(ptr);                                                                               \
@@ -252,7 +289,7 @@ namespace hls
             return to_ptr(p);                                                                                          \
         return to_ptr(p + p % alignment);                                                                              \
     }                                                                                                                  \
-    (__ptr, __alignment)
+    (__ptraf, __alignmentaf)
 #endif
 
 /**
@@ -266,7 +303,7 @@ namespace hls
  */
 #ifndef __ABACK
 #define __ABACK
-#define align_back(__ptr, __alignment)                                                                                 \
+#define align_back(__ptrab, __alignmentab)                                                                             \
     [](const void *ptr, size_t alignment) -> void *__attribute__((always_inline))                                      \
     {                                                                                                                  \
         uintptr_t p = to_uintptr_t(ptr);                                                                               \
@@ -275,7 +312,7 @@ namespace hls
         p = (p / alignment) * alignment;                                                                               \
         return to_ptr(p);                                                                                              \
     }                                                                                                                  \
-    (__ptr, __alignment)
+    (__ptrab, __alignmentab)
 #endif
 
 #ifndef __BSWAP16
@@ -299,12 +336,12 @@ namespace hls
 
 #ifndef __BSWAP64
 #define __BSWAP64
-#define byteswap64(__v)                                                                                                \
+#define byteswap64(__z)                                                                                                \
     [](uint64_t v) -> uint64_t __attribute__((always_inline))                                                          \
     {                                                                                                                  \
         return v;                                                                                                      \
     }                                                                                                                  \
-    (__v)
+    (__z)
 #endif
 
 /**
@@ -360,7 +397,7 @@ namespace hls
     {                                                                                                                  \
         if constexpr (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)                                                       \
         {                                                                                                              \
-            return byteswap16(data);                                                                                   \
+            return byteswap64(data);                                                                                   \
         }                                                                                                              \
         return data;                                                                                                   \
     }                                                                                                                  \

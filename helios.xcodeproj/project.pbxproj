@@ -31,7 +31,6 @@
 		99180E6D2C128EB400C05182 /* bootoptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E2A2C128D1D00C05182 /* bootoptions.cpp */; };
 		99180E6E2C128EB400C05182 /* cpu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E2C2C128D1D00C05182 /* cpu.cpp */; };
 		99180E6F2C128EB400C05182 /* devicetree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E2E2C128D1D00C05182 /* devicetree.cpp */; };
-		99180E702C128EB400C05182 /* kmalloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E302C128D1D00C05182 /* kmalloc.cpp */; };
 		99180E712C128EB400C05182 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E322C128D1D00C05182 /* main.cpp */; };
 		99180E722C128EB400C05182 /* panic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E352C128D1D00C05182 /* panic.cpp */; };
 		99180E732C128EB400C05182 /* traphandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E3A2C128D1D00C05182 /* traphandler.cpp */; };
@@ -39,6 +38,7 @@
 		99180E7A2C14D95A00C05182 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 99180E792C14D95A00C05182 /* Makefile */; };
 		99180E7C2C14DEFF00C05182 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 99180E7B2C14DEFF00C05182 /* Makefile */; };
 		99180E7E2C14E07F00C05182 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 99180E7D2C14E07F00C05182 /* Makefile */; };
+		99781E462C1F6BF8008F0888 /* kmalloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99781E452C1F6BF7008F0888 /* kmalloc.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -100,8 +100,6 @@
 		99180E2D2C128D1D00C05182 /* cpu.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = cpu.hpp; sourceTree = "<group>"; };
 		99180E2E2C128D1D00C05182 /* devicetree.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = devicetree.cpp; sourceTree = "<group>"; };
 		99180E2F2C128D1D00C05182 /* devicetree.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = devicetree.hpp; sourceTree = "<group>"; };
-		99180E302C128D1D00C05182 /* kmalloc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = kmalloc.cpp; sourceTree = "<group>"; };
-		99180E312C128D1D00C05182 /* kmalloc.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kmalloc.hpp; sourceTree = "<group>"; };
 		99180E322C128D1D00C05182 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		99180E332C128D1D00C05182 /* mem.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = mem.hpp; sourceTree = "<group>"; };
 		99180E342C128D1D00C05182 /* opensbi.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = opensbi.hpp; sourceTree = "<group>"; };
@@ -131,6 +129,8 @@
 		99180E792C14D95A00C05182 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		99180E7B2C14DEFF00C05182 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		99180E7D2C14E07F00C05182 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		99781E442C1F6BF7008F0888 /* kmalloc.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kmalloc.hpp; sourceTree = "<group>"; };
+		99781E452C1F6BF7008F0888 /* kmalloc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = kmalloc.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -285,8 +285,6 @@
 				99180E2E2C128D1D00C05182 /* devicetree.cpp */,
 				99180E2F2C128D1D00C05182 /* devicetree.hpp */,
 				99180E7B2C14DEFF00C05182 /* Makefile */,
-				99180E302C128D1D00C05182 /* kmalloc.cpp */,
-				99180E312C128D1D00C05182 /* kmalloc.hpp */,
 				99180E322C128D1D00C05182 /* main.cpp */,
 				99180E332C128D1D00C05182 /* mem.hpp */,
 				99180E342C128D1D00C05182 /* opensbi.hpp */,
@@ -294,6 +292,8 @@
 				99180E362C128D1D00C05182 /* panic.hpp */,
 				99180E372C128D1D00C05182 /* print.hpp */,
 				99180E382C128D1D00C05182 /* string.hpp */,
+				99781E442C1F6BF7008F0888 /* kmalloc.hpp */,
+				99781E452C1F6BF7008F0888 /* kmalloc.cpp */,
 			);
 			path = sys;
 			sourceTree = "<group>";
@@ -450,7 +450,7 @@
 				99180E6D2C128EB400C05182 /* bootoptions.cpp in Sources */,
 				99180E6E2C128EB400C05182 /* cpu.cpp in Sources */,
 				99180E6F2C128EB400C05182 /* devicetree.cpp in Sources */,
-				99180E702C128EB400C05182 /* kmalloc.cpp in Sources */,
+				99781E462C1F6BF8008F0888 /* kmalloc.cpp in Sources */,
 				99180E712C128EB400C05182 /* main.cpp in Sources */,
 				99180E722C128EB400C05182 /* panic.cpp in Sources */,
 				99180E7C2C14DEFF00C05182 /* Makefile in Sources */,
