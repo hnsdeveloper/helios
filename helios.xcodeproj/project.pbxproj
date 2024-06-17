@@ -121,7 +121,6 @@
 		99180E462C128D1D00C05182 /* result.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = result.hpp; sourceTree = "<group>"; };
 		99180E472C128D1D00C05182 /* stack.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = stack.hpp; sourceTree = "<group>"; };
 		99180E4A2C128D1D00C05182 /* script.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = script.sh; sourceTree = "<group>"; };
-		99180E4B2C128D1D00C05182 /* u-boot-dtb.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = "u-boot-dtb.bin"; sourceTree = "<group>"; };
 		99180E502C128E6800C05182 /* dummy */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = dummy; sourceTree = BUILT_PRODUCTS_DIR; };
 		99180E742C12949900C05182 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		99180E762C12F67400C05182 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
@@ -149,7 +148,6 @@
 			children = (
 				99180E4A2C128D1D00C05182 /* script.sh */,
 				99180E492C128D1D00C05182 /* src */,
-				99180E4B2C128D1D00C05182 /* u-boot-dtb.bin */,
 				99180E742C12949900C05182 /* Makefile */,
 				99180E512C128E6800C05182 /* Products */,
 			);
@@ -350,16 +348,17 @@
 /* End PBXGroup section */
 
 /* Begin PBXLegacyTarget section */
-		99180D9A2C128C3200C05182 /* helios */ = {
+		99180D9A2C128C3200C05182 /* helios-riscv64 */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "$(ACTION)";
-			buildConfigurationList = 99180D9D2C128C3200C05182 /* Build configuration list for PBXLegacyTarget "helios" */;
+			buildArgumentsString = "CXXPREFIX=riscv64-unknown-elf-";
+			buildConfigurationList = 99180D9D2C128C3200C05182 /* Build configuration list for PBXLegacyTarget "helios-riscv64" */;
 			buildPhases = (
 			);
 			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = "";
 			dependencies = (
 			);
-			name = helios;
+			name = "helios-riscv64";
 			passBuildSettingsInEnvironment = 1;
 			productName = helios;
 		};
@@ -413,7 +412,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				99180D9A2C128C3200C05182 /* helios */,
+				99180D9A2C128C3200C05182 /* helios-riscv64 */,
 				99180E4F2C128E6800C05182 /* dummy */,
 			);
 		};
@@ -636,7 +635,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		99180D9D2C128C3200C05182 /* Build configuration list for PBXLegacyTarget "helios" */ = {
+		99180D9D2C128C3200C05182 /* Build configuration list for PBXLegacyTarget "helios-riscv64" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				99180D9E2C128C3200C05182 /* Debug */,

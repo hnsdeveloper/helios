@@ -26,13 +26,14 @@ SOFTWARE.
 #include "kmalloc.hpp"
 #include "arch/riscv64gc/plat_def.hpp"
 #include "mem/framemanager.hpp"
+#include "mem/mmap.hpp"
 #include "sys/mem.hpp"
+#include "sys/panic.hpp"
 
 #define KMALLOC_INIT_BLOCKS 8
 
 namespace hls
 {
-
     struct MajorBlock;
     struct MinorBlock;
 
@@ -59,30 +60,88 @@ namespace hls
         if (block)
         {
             const size_t hypotetical_free =
-                block->page_count * PAGE_FRAME_SIZE - sizeof(MajorBlock) - sizeof(MinorBlock);
+                block->page_count * FrameKB::s_size - sizeof(MajorBlock) - sizeof(MinorBlock);
             if (hypotetical_free == block->free_space)
                 return true;
         }
         return false;
     };
 
+    bool fits_after(MajorBlock *block, size_t new_block_pages)
+    {
+        if (block == nullptr)
+        {
+            return true;
+        }
+        else
+        {
+            byte *end = as_byte_ptr(block) + block->page_count * FrameKB::s_size;
+            byte *next_begin = as_byte_ptr(block->next);
+            if (((end + new_block_pages * FrameKB::s_size) <= next_begin) || next_begin == nullptr)
+                return true;
+        }
+        return false;
+    }
+
+    MajorBlock *find_list_candidate_predecessor(size_t pages)
+    {
+        if (begin_block)
+        {
+            for (auto block = begin_block; block; block = block->next)
+                if (fits_after(block, pages))
+                    return block;
+        }
+        return nullptr;
+    }
+
+    void major_setup(MajorBlock *block, size_t pages, MajorBlock *pred)
+    {
+        if (pred)
+        {
+            block->next = pred->next;
+            pred->next = block;
+        }
+
+        block->page_count = pages;
+        block->free_list = reinterpret_cast<MinorBlock *>(apply_offset(block, sizeof(MajorBlock)));
+        block->free_space = block->page_count * FrameKB::s_size - sizeof(MajorBlock) - sizeof(MinorBlock);
+        block->free_list->total_size = block->free_space;
+        block->free_list->parent_block = block;
+        block->free_list->p = nullptr;
+    }
+
+    MajorBlock *get_major_block(size_t pages)
+    {
+        const frame_info *f = framealloc(pages, 0);
+        if (f == nullptr)
+            return nullptr;
+        MajorBlock *pred = find_list_candidate_predecessor(pages);
+        byte *paddress = as_byte_ptr(f->frame_pointer);
+        byte *vaddress;
+        if (pred != nullptr)
+            vaddress = as_byte_ptr(apply_offset(pred, pred->page_count * FrameKB::s_size));
+        else
+            vaddress = get_kernel_v_free_address();
+
+        for (size_t i = 0; i < pages; ++i)
+            kmmap(paddress + i * FrameKB::s_size, vaddress + i * FrameKB::s_size, get_kernel_pagetable(),
+                  FrameLevel::FIRST_VPN, READ | WRITE | ACCESS | DIRTY, kmmap_frame_src);
+
+        MajorBlock *block = reinterpret_cast<MajorBlock *>(vaddress);
+        major_setup(block, pages, pred);
+        return block;
+    }
+
     void initialize_kmalloc()
     {
-        //const frame_info *f = framealloc(KMALLOC_INIT_BLOCKS, 0);
-        //byte *begin = as_byte_ptr(f->frame_pointer);
-        //byte* end = as_byte_ptr(apply_offset(begin, PAGE_FRAME_SIZE * KMALLOC_INIT_BLOCKS));
-        //size_t total_size = abs_ptr_diff(end, begin);
-        
-        //begin_block = reinterpret_cast<MajorBlock *>(f->frame_pointer);
-        //begin_block->page_count = KMALLOC_INIT_BLOCKS;
+        begin_block = get_major_block(KMALLOC_INIT_BLOCKS);
+        if (begin_block == nullptr)
+            PANIC("Could not initialize kmalloc.");
     }
 
     void *malloc(size_t size)
     {
-        if (!begin_block)
-            initialize_kmalloc();
-        // TODO: implement
-
+        // TODO: implemented
         return nullptr;
     }
 

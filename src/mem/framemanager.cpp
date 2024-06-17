@@ -616,4 +616,12 @@ namespace hls
         FrameManager::instance().release_frame(ptr);
     }
 
+    void *kmmap_frame_src()
+    {
+        const frame_info *f = framealloc(0);
+        if (f)
+            return f->frame_pointer;
+        return nullptr;
+    }
+
 } // namespace hls

@@ -61,6 +61,7 @@ namespace hls
         unmap_low_kernel(b_info->p_lowkernel_start, b_info->p_lowkernel_end);
         mapfdt(get_device_tree_from_options(b_info->argc, b_info->argv));
         initialize_frame_manager(get_fdt(), b_info);
+        initialize_kmalloc();
 
         while (true)
             ;
