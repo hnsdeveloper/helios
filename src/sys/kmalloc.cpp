@@ -23,14 +23,17 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "kmalloc.hpp"
+#include "sys/kmalloc.hpp"
 #include "arch/riscv64gc/plat_def.hpp"
 #include "mem/framemanager.hpp"
 #include "mem/mmap.hpp"
 #include "sys/mem.hpp"
 #include "sys/panic.hpp"
+#include "sys/print.hpp"
 
 #define KMALLOC_INIT_BLOCKS 8
+
+constexpr size_t MINOR_BLOCK_MAGIC = 0x50173400deadbeef;
 
 namespace hls
 {
@@ -40,16 +43,17 @@ namespace hls
     struct MajorBlock
     {
         MajorBlock *next;
+        MinorBlock *free_list;
         size_t free_space;
         size_t page_count;
-        MinorBlock *free_list;
     };
 
     struct MinorBlock
     {
         MajorBlock *parent_block;
+        MinorBlock *next;
         size_t total_size;
-        void *p;
+        size_t magic;
     };
 
     MajorBlock *begin_block = nullptr;
@@ -96,18 +100,27 @@ namespace hls
 
     void major_setup(MajorBlock *block, size_t pages, MajorBlock *pred)
     {
+        block->next = nullptr;
         if (pred)
         {
             block->next = pred->next;
             pred->next = block;
         }
-
         block->page_count = pages;
         block->free_list = reinterpret_cast<MinorBlock *>(apply_offset(block, sizeof(MajorBlock)));
         block->free_space = block->page_count * FrameKB::s_size - sizeof(MajorBlock) - sizeof(MinorBlock);
         block->free_list->total_size = block->free_space;
         block->free_list->parent_block = block;
-        block->free_list->p = nullptr;
+        block->free_list->next = nullptr;
+        block->free_list->magic = MINOR_BLOCK_MAGIC;
+    }
+
+    void minor_setup(MinorBlock *block, size_t size, MajorBlock *parent, MinorBlock *next)
+    {
+        block->parent_block = parent;
+        block->total_size = size;
+        block->next = next;
+        block->magic = MINOR_BLOCK_MAGIC;
     }
 
     MajorBlock *get_major_block(size_t pages)
@@ -139,10 +152,116 @@ namespace hls
             PANIC("Could not initialize kmalloc.");
     }
 
+    MinorBlock *find_suitable_minor_block(MajorBlock *block, size_t size)
+    {
+        MinorBlock *minor = block->free_list;
+        MinorBlock *suitable = nullptr;
+        while (minor)
+        {
+            byte *begin_mem = as_byte_ptr(minor) + sizeof(MinorBlock);
+            byte *end_mem = as_byte_ptr(minor) + minor->total_size;
+            byte *mem = as_byte_ptr(align_forward(begin_mem, alignof(max_align_t)));
+            if ((mem + size) <= end_mem)
+            {
+                if (suitable == nullptr)
+                    suitable = minor;
+                else
+                    suitable = suitable->total_size < minor->total_size ? suitable : minor;
+            }
+            minor = minor->next;
+        }
+        return suitable;
+    }
+
+    void split_minor(MinorBlock *prev, MinorBlock *block, size_t size)
+    {
+        byte *mem = as_byte_ptr(align_forward(apply_offset(block, sizeof(MinorBlock)), alignof(max_align_t)));
+        byte *mem_end = as_byte_ptr(align_forward(apply_offset(block, size), alignof(MinorBlock)));
+        size_t used_size = mem_end - mem;
+        block->parent_block->free_space = block->parent_block->free_space - used_size;
+        if ((used_size < size) && ((block->total_size - used_size) > sizeof(MinorBlock *)))
+        {
+            MinorBlock *sub = reinterpret_cast<MinorBlock *>(mem_end);
+            minor_setup(sub, block->total_size - used_size, block->parent_block, block->next);
+            block->total_size = used_size;
+            if (prev)
+                prev->next = sub;
+            else
+                block->parent_block->free_list = sub;
+            block->parent_block->free_space = block->parent_block->free_space - sizeof(MinorBlock);
+        }
+    }
+
     void *malloc(size_t size)
     {
-        // TODO: implemented
-        return nullptr;
+        MajorBlock *used_major;
+        MinorBlock *used_minor;
+
+        // First try to find on the best block.
+        if (best_block)
+        {
+            MinorBlock *temp = find_suitable_minor_block(best_block, size);
+            if (temp != nullptr)
+            {
+                used_major = best_block;
+                used_minor = temp;
+            }
+            else
+            {
+                kdebug("No suitable minor block found at best_block.");
+                best_block = nullptr;
+            }
+        }
+
+        // Okay, we didn't find anything on the best block, time to search all blocks
+        if (!best_block)
+        {
+            for (MajorBlock *it = begin_block; begin_block; it = it->next)
+            {
+                MinorBlock *temp = find_suitable_minor_block(it, size);
+                if (temp != nullptr)
+                {
+                    used_major = it;
+                    used_minor = temp;
+                    break;
+                }
+            }
+            if (!used_major && !used_minor)
+            {
+                kdebug("No suitable minor block found on any of current allocated major blocks.");
+            }
+        }
+
+        // Okay, nothing found on any of the blocks, time to allocate blocks!
+        if (!used_major && !used_minor)
+        {
+            size_t needed_frames =
+                size / FrameKB::s_size + 1; // Extra block for the case where size == KMALLOC_INIT_BLOCKS
+            if (needed_frames < KMALLOC_INIT_BLOCKS)
+                needed_frames = KMALLOC_INIT_BLOCKS;
+            best_block = get_major_block(needed_frames);
+            if (!best_block)
+                PANIC("Out of memory."); // We could return nullptr, but given that it is kernel code, if an allocation
+            // fails, it is a big issue
+            used_major = best_block;
+            used_minor = best_block->free_list;
+        }
+
+        MinorBlock *prev = [](MinorBlock *min) -> MinorBlock * {
+            MinorBlock *p = min->parent_block->free_list;
+            if (p == min)
+                return nullptr;
+            while (p->next != min)
+                p = p->next;
+            return p;
+        }(used_minor);
+
+        split_minor(prev, used_minor, size);
+        return align_forward(apply_offset(used_minor, sizeof(used_minor)), alignof(max_align_t));
+    }
+
+    void free(void *ptr)
+    {
     }
 
 } // namespace hls

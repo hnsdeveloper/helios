@@ -32,8 +32,6 @@ SOFTWARE.
 namespace hls
 {
 
-    using uintreg_t = uint64_t;
-
 #define REGISTER_SIZE 8;
 
 #define PAGE_LEVELS 4
@@ -50,6 +48,9 @@ namespace hls
 #define G_WHAT uint64_t(1u) << 5
 #define ACCESS uint64_t(1u) << 6
 #define DIRTY uint64_t(1u) << 7
+
+    using uintreg_t = uint64_t;
+    using max_align_t = void *;
 
     enum class FrameLevel : size_t
     {
