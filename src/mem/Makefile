@@ -20,5 +20,5 @@ $(BUILD_DIR)framemanager.o: framemanager.cpp framemanager.hpp \
   $(INCLUDE_DIR)sys/mem.hpp $(INCLUDE_DIR)sys/string.hpp $(INCLUDE_DIR)misc/libfdt/fdt.h \
   $(INCLUDE_DIR)misc/new.hpp $(INCLUDE_DIR)sys/print.hpp $(INCLUDE_DIR)sys/opensbi.hpp \
   $(INCLUDE_DIR)ulib/rb_tree.hpp $(INCLUDE_DIR)ulib/hash.hpp $(INCLUDE_DIR)ulib/node.hpp \
-  $(INCLUDE_DIR)misc/utilities.hpp
+  $(INCLUDE_DIR)ulib/variant.hpp $(INCLUDE_DIR)misc/utilities.hpp
 	$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) -I$(INCLUDE_DIR) -o $@ $<

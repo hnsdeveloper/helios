@@ -50,6 +50,12 @@ namespace hls
         return static_cast<T &&>(t);
     }
 
+    template <typename T>
+    add_lvalue_reference_t<T> declval()
+    {
+        static_assert("Shouldn't be evaluated");
+    }
+
 } // namespace hls
 
 #endif
