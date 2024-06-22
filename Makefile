@@ -31,7 +31,7 @@ helios : dep
 
 dep :
 	@mkdir -p build
-	@for folder in $(MAKES); do $(MAKE) -C $$folder; done
+	@for folder in $(MAKES); do $(MAKE) -C $$folder || exit; done
 		
 clean :
 	@$(RM) build/*.o

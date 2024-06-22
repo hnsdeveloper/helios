@@ -130,6 +130,7 @@
 		99180E7D2C14E07F00C05182 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		99781E442C1F6BF7008F0888 /* kmalloc.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kmalloc.hpp; sourceTree = "<group>"; };
 		99781E452C1F6BF7008F0888 /* kmalloc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = kmalloc.cpp; sourceTree = "<group>"; };
+		998A89412C25C0FF0036FFD4 /* variant.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = variant.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -308,6 +309,7 @@
 		99180E482C128D1D00C05182 /* ulib */ = {
 			isa = PBXGroup;
 			children = (
+				998A89412C25C0FF0036FFD4 /* variant.hpp */,
 				99180E3D2C128D1D00C05182 /* bit.hpp */,
 				99180E3E2C128D1D00C05182 /* double_list.hpp */,
 				99180E3F2C128D1D00C05182 /* hash.hpp */,

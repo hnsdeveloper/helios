@@ -262,6 +262,7 @@ namespace hls
 
     void free(void *ptr)
     {
+        (void)(ptr);
     }
 
 } // namespace hls
