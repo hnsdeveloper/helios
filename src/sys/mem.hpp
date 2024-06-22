@@ -284,10 +284,12 @@ namespace hls
 #define align_forward(__ptraf, __alignmentaf)                                                                          \
     [](const void *ptr, size_t alignment) -> void *__attribute__((always_inline))                                      \
     {                                                                                                                  \
-        uintptr_t p = to_uintptr_t(ptr);                                                                               \
-        if (alignment <= 1 || is_aligned(ptr, alignment))                                                              \
-            return to_ptr(p);                                                                                          \
-        return to_ptr(p + p % alignment);                                                                              \
+        if (!((alignment - 1) & alignment))                                                                            \
+        {                                                                                                              \
+            uintptr_t p = to_uintptr_t(ptr);                                                                           \
+            return to_ptr((p + (alignment - 1)) & (~alignment + 1));                                                   \
+        }                                                                                                              \
+        return const_cast<void *>(ptr);                                                                                \
     }                                                                                                                  \
     (__ptraf, __alignmentaf)
 #endif
@@ -306,11 +308,13 @@ namespace hls
 #define align_back(__ptrab, __alignmentab)                                                                             \
     [](const void *ptr, size_t alignment) -> void *__attribute__((always_inline))                                      \
     {                                                                                                                  \
-        uintptr_t p = to_uintptr_t(ptr);                                                                               \
-        if (alignment <= 1 || is_aligned(ptr, alignment))                                                              \
-            return to_ptr(p);                                                                                          \
-        p = (p / alignment) * alignment;                                                                               \
-        return to_ptr(p);                                                                                              \
+        if (!((alignment - 1) & alignment) && ptr && (alignment > 1))                                                  \
+        {                                                                                                              \
+            uintptr_t p = to_uintptr_t(ptr);                                                                           \
+            return to_ptr(((p + (alignment - 1)) & (~alignment + 1)) - alignment);                                     \
+        }                                                                                                              \
+                                                                                                                       \
+        return const_cast<void *>(ptr);                                                                                \
     }                                                                                                                  \
     (__ptrab, __alignmentab)
 #endif
