@@ -8,7 +8,7 @@ CPPFLAGS := -c -fno-omit-frame-pointer -march=rv64gc -mabi=lp64 -std=c++20  -ffr
 -fno-exceptions -fno-rtti -mabi=lp64d -mcmodel=medany -fno-asynchronous-unwind-tables -fno-use-cxa-atexit \
 -Wall -Wextra -T./src/arch/riscv64gc/link.lds
 
-EXTRAFLAGS := -DBOOTPAGES=32 -Wall -Wextra -Werror
+EXTRAFLAGS := -DBOOTPAGES=32 -Wall -Wextra -Werror -DDEBUG
 
 CXX := $(CXXPREFIX)g++
 AR  := $(CXXPREFIX)ar

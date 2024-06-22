@@ -56,7 +56,7 @@ namespace hls
         FrameData() = default;
 
         FrameData(FrameKB *f_ptr, size_t frame_count, size_t flags)
-            : m_frame_pointer(f_ptr), m_frame_count(frame_count),  m_use_count(1) ,m_flags(flags)
+            : m_frame_pointer(f_ptr), m_frame_count(frame_count), m_use_count(1), m_flags(flags)
         {
         }
 
@@ -104,8 +104,8 @@ namespace hls
         {
             return m_frame_count * FrameKB::s_size;
         }
-        
-        const FrameKB* get_frame_pointer() const
+
+        const FrameKB *get_frame_pointer() const
         {
             return m_frame_pointer;
         }

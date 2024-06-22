@@ -85,7 +85,8 @@ namespace hls
                                         {HELP, 0, "h", "help", ArgVal::None, "  --help    \tPrint usage and exit."},
                                         {FDT, 0, "f", "fdt", ArgVal::NumericHexUnique,
                                          "  --fdt, -f \t Flattened device tree address as hex value (e.g. FFFFFFFF "
-                                         "or 0xFFFFFFF)."}};
+                                         "or 0xFFFFFFF)."},
+                                        {0, 0, 0, 0, 0, 0}};
 
     void *get_device_tree_from_options(int argc, const char **argv);
 
