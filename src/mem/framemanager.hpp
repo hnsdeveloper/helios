@@ -60,6 +60,10 @@ namespace hls
         {
         }
 
+        FrameData(FrameKB *f_ptr, size_t frame_count) : FrameData(f_ptr, frame_count, 0)
+        {
+        }
+
         template <typename U>
         FrameData(FrameKB *f_ptr, size_t frame_count, size_t flags, U &&data) : FrameData(f_ptr, frame_count, flags)
         {

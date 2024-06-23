@@ -27,6 +27,7 @@ SOFTWARE.
 #include "mem/mmap.hpp"
 #include "misc/libfdt/libfdt.h"
 #include "misc/new.hpp"
+#include "sys/devicetree.hpp"
 #include "sys/print.hpp"
 #include "ulib/rb_tree.hpp"
 
@@ -48,13 +49,13 @@ namespace hls
         }
     };
 
-    class FrameNodeAllocator
+    class FrameNodeBumpAllocator
     {
         byte *m_nodes_vaddress_begin = nullptr;
         byte *m_nodes_vaddress_current = nullptr;
         size_t m_node_size;
 
-        FrameNodeAllocator() = default;
+        FrameNodeBumpAllocator() = default;
 
         void *m_nodes_list;
 
@@ -130,9 +131,9 @@ namespace hls
             return count;
         }
 
-        static FrameNodeAllocator &instance()
+        static FrameNodeBumpAllocator &instance()
         {
-            static FrameNodeAllocator s_allocator;
+            static FrameNodeBumpAllocator s_allocator;
             return s_allocator;
         }
     };
@@ -174,7 +175,7 @@ namespace hls
 
         type_ptr allocate()
         {
-            void *p = FrameNodeAllocator::instance().get();
+            void *p = FrameNodeBumpAllocator::instance().get();
             return reinterpret_cast<type_ptr>(p);
         }
 
@@ -182,7 +183,7 @@ namespace hls
         {
             if (p == nullptr)
                 return;
-            FrameNodeAllocator::instance().release(p);
+            FrameNodeBumpAllocator::instance().release(p);
         }
     };
 
@@ -209,7 +210,7 @@ namespace hls
             FrameKB *p_begin = reinterpret_cast<FrameKB *>(align_forward(mem, FrameKB::s_alignment));
             FrameKB *p_end = reinterpret_cast<FrameKB *>(p_frame_end);
 
-            auto &f_node_alloc = FrameNodeAllocator::instance();
+            auto &f_node_alloc = FrameNodeBumpAllocator::instance();
             byte *vaddress_begin = nullptr;
             vaddress_begin = vaddress_begin + FRAMEMANAGEMENT_BEGIN;
             f_node_alloc.set_nodes_vaddress_begin(vaddress_begin);
@@ -240,7 +241,7 @@ namespace hls
 
         void validate_and_fix_node_allocator(size_t minimum_nodes)
         {
-            auto &allocator = FrameNodeAllocator::instance();
+            auto &allocator = FrameNodeBumpAllocator::instance();
             if (allocator.node_count() >= minimum_nodes)
             {
                 return;
@@ -500,11 +501,8 @@ namespace hls
         const char *memory_string = "memory@";
         int len = 0;
         const char *node_name = fdt_get_name(fdt, node, &len);
-
         if (len)
-        {
             return strncmp(memory_string, node_name, strlen(memory_string)) == 0;
-        }
 
         return false;
     }
@@ -516,53 +514,21 @@ namespace hls
         {
             if (is_memory_node(fdt, node))
             {
-                size_t address_cells = fdt_address_cells(fdt, 0);
-                size_t size_cells = fdt_size_cells(fdt, 0);
+                // A memory node has to be a child of the root node, thus we can use node 0 directly to
+                // get address_cells and size_cells. These two properties are inherited from the parent
+                // according to the Device Tree specification.
 
-                int len;
-                const struct fdt_property *prop = fdt_get_property(fdt, node, "reg", &len);
-
-                auto get_address = [&](size_t idx) {
-                    const char *d = reinterpret_cast<const char *>(prop->data);
-                    d += idx * (sizeof(uint32_t) * address_cells + sizeof(uint32_t) * size_cells);
-                    uintptr_t p = 0;
-
-                    if (address_cells == 1)
-                        p = fdt32_ld(reinterpret_cast<const fdt32_t *>(d));
-                    else if (address_cells == 2)
-                        p = fdt64_ld(reinterpret_cast<const fdt64_t *>(d));
-
-                    return to_ptr(p);
-                };
-
-                auto get_size = [&](size_t idx) {
-                    const char *d = reinterpret_cast<const char *>(prop->data);
-                    d += idx * (sizeof(uint32_t) * address_cells + sizeof(uint32_t) * size_cells);
-                    size_t p = 0;
-
-                    d += address_cells * sizeof(uint32_t);
-
-                    if (size_cells == 1)
-                        p = fdt32_ld(reinterpret_cast<const fdt32_t *>(d));
-                    else if (size_cells == 2)
-                        p = fdt64_ld(reinterpret_cast<const fdt64_t *>(d));
-
-                    return p;
-                };
-
-                byte *mem_temp = reinterpret_cast<byte *>(get_address(0));
-                size_t mem_size = get_size(0);
-
+                const fdt32_t *a_cells =
+                    reinterpret_cast<const fdt32_t *>(fdt_getprop(fdt, 0, "#address-cells", nullptr));
+                const fdt32_t *s_cells = reinterpret_cast<const fdt32_t *>(fdt_getprop(fdt, 0, "#size-cells", nullptr));
+                auto reg = read_fdt_prop_reg_prop(fdt, node, a_cells, s_cells);
+                byte *mem_temp = as_byte_ptr(reg.mem_address);
+                size_t mem_size = reg.mem_size;
                 mem_size -= (mem - mem_temp);
 
                 FrameManager::init(mem, mem_size);
                 break;
             }
-        }
-
-        for (size_t i = 0; i < 100; ++i)
-        {
-            FrameManager::instance().get_frames(i, i * FrameKB::s_size, 0);
         }
     }
 

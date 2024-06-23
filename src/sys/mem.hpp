@@ -339,7 +339,8 @@ namespace hls
     [](uint32_t v) -> uint32_t __attribute__((always_inline))                                                          \
     {                                                                                                                  \
         return ((v & 0xFF) << 24) | ((v & 0xFF00) << 8) | ((v >> 8) & 0xFF00) | ((v >> 24) | 0xFF);                    \
-    };
+    }                                                                                                                  \
+    (__v)
 #endif
 
 #ifndef __BSWAP64

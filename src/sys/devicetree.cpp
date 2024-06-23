@@ -2,7 +2,6 @@
 #include "arch/riscv64gc/plat_def.hpp"
 #include "mem/framemanager.hpp"
 #include "mem/mmap.hpp"
-#include "misc/libfdt/libfdt.h"
 #include "misc/types.hpp"
 #include "sys/mem.hpp"
 
@@ -37,6 +36,32 @@ namespace hls
     void *get_fdt()
     {
         return fdt_address;
+    }
+
+    reg_prop read_fdt_prop_reg_prop(void *fdt, int node, const fdt32_t *p_a_cells, const fdt32_t *p_s_cells)
+    {
+        reg_prop ret{.mem_address = nullptr, .mem_size = 0};
+        int len;
+        const fdt32_t *a_cells = reinterpret_cast<const fdt32_t *>(fdt_getprop(fdt, node, "#address-cells", &len));
+        const fdt32_t *s_cells = reinterpret_cast<const fdt32_t *>(fdt_getprop(fdt, node, "#size-cells", &len));
+
+        if (!a_cells || !s_cells)
+        {
+            a_cells = p_a_cells;
+            s_cells = p_s_cells;
+        }
+
+        const struct fdt_property *prop = fdt_get_property(fdt, node, "reg", &len);
+
+        const byte *prop_data = as_byte_ptr(prop->data);
+
+        ret.mem_address = fdt32_ld(a_cells) == 1 ? to_ptr(fdt32_ld(reinterpret_cast<const fdt32_t *>(prop_data)))
+                                                 : to_ptr(fdt64_ld(reinterpret_cast<const fdt64_t *>(prop_data)));
+        prop_data += sizeof(fdt32_t) * (fdt32_ld(a_cells));
+        ret.mem_size = fdt32_ld(s_cells) == 1 ? fdt32_ld(reinterpret_cast<const fdt32_t *>(prop_data))
+                                              : fdt64_ld(reinterpret_cast<const fdt64_t *>(prop_data));
+
+        return ret;
     }
 
 } // namespace hls
