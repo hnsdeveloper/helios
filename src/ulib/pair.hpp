@@ -26,8 +26,8 @@ SOFTWARE.
 #ifndef _PAIR_HPP_
 #define _PAIR_HPP_
 
-#include "misc/typetraits.hpp"
 #include "misc/utilities.hpp"
+#include <type_traits>
 
 namespace hls
 {
@@ -66,8 +66,8 @@ namespace hls
     template <typename T, typename U>
     auto make_pair(T &&first, U &&second)
     {
-        using first_type = hls::remove_cvref_t<decltype(first)>;
-        using second_type = hls::remove_cvref_t<decltype(second)>;
+        using first_type = std::remove_cvref_t<decltype(first)>;
+        using second_type = std::remove_cvref_t<decltype(second)>;
 
         return Pair<first_type, second_type>(hls::move(first), hls::move(second));
     };

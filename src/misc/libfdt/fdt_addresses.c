@@ -73,7 +73,8 @@ int fdt_appendprop_addrrange(void *fdt, int parent, int nodeoffset, const char *
     prop = data;
     if (addr_cells == 1)
     {
-        if ((addr > hls::limit<uint32_t>::max) || (((uint64_t)hls::limit<uint32_t>::max + 1 - addr) < size))
+        if ((addr > std::numeric_limits<uint32_t>::max()) ||
+            (((uint64_t)std::numeric_limits<uint32_t>::max() + 1 - addr) < size))
             return -FDT_ERR_BADVALUE;
 
         fdt32_st(prop, (uint32_t)addr);
@@ -91,7 +92,7 @@ int fdt_appendprop_addrrange(void *fdt, int parent, int nodeoffset, const char *
     prop += addr_cells * sizeof(fdt32_t);
     if (size_cells == 1)
     {
-        if (size > hls::limit<uint32_t>::max)
+        if (size > std::numeric_limits<uint32_t>::max())
             return -FDT_ERR_BADVALUE;
 
         fdt32_st(prop, (uint32_t)size);

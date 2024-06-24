@@ -26,11 +26,11 @@ SOFTWARE.
 #ifndef _RB_TREE_HPP_
 #define _RB_TREE_HPP_
 
-#include "misc/limits.hpp"
 #include "misc/macros.hpp"
 #include "misc/types.hpp"
 #include "ulib/hash.hpp"
 #include "ulib/node.hpp"
+#include <limits>
 
 namespace hls
 {
@@ -990,7 +990,7 @@ namespace hls
 
         size_t max_size() const
         {
-            return hls::limit<size_t>::max;
+            return std::numeric_limits<size_t>::max();
         }
 
         template <bool a, bool b>

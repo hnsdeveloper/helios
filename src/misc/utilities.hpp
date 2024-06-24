@@ -26,32 +26,32 @@ SOFTWARE.
 #ifndef _UTILITIES_HPP_
 #define _UTILITIES_HPP_
 
-#include "misc/typetraits.hpp"
+#include <type_traits>
 
 namespace hls
 {
 
     template <typename T>
-    constexpr hls::remove_reference_t<T> &&move(T &&arg)
+    constexpr std::remove_reference_t<T> &&move(T &&arg)
     {
-        return static_cast<hls::remove_reference_t<T> &&>(arg);
+        return static_cast<std::remove_reference_t<T> &&>(arg);
     }
 
     template <class T>
-    inline T &&forward(typename hls::remove_reference<T>::type &t) noexcept
+    inline T &&forward(typename std::remove_reference<T>::type &t) noexcept
     {
         return static_cast<T &&>(t);
     }
 
     template <class T>
-    inline T &&forward(typename hls::remove_reference<T>::type &&t) noexcept
+    inline T &&forward(typename std::remove_reference<T>::type &&t) noexcept
     {
-        static_assert(!hls::is_lvalue_reference<T>::value, "Can not forward an rvalue as an lvalue.");
+        static_assert(!std::is_lvalue_reference<T>::value, "Can not forward an rvalue as an lvalue.");
         return static_cast<T &&>(t);
     }
 
     template <typename T>
-    add_lvalue_reference_t<T> declval()
+    std::add_lvalue_reference_t<T> declval()
     {
         static_assert("Shouldn't be evaluated");
     }
