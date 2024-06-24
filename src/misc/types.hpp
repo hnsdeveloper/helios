@@ -26,29 +26,10 @@ SOFTWARE.
 #ifndef _TYPES_HPP_
 #define _TYPES_HPP_
 
-#ifndef NULL
-#define NULL 0
-#endif
+#include <cstdint>
+#include <cstddef>
 
-static_assert(sizeof(char) == 1);
-static_assert(sizeof(short int) == 2);
-static_assert(sizeof(int) == 4);
-static_assert(sizeof(unsigned long int) == 8);
-
-using int8_t = char;
-using uint8_t = unsigned char;
 using byte = uint8_t;
-using int16_t = short int;
-using uint16_t = unsigned short int;
-using int32_t = int;
-using uint32_t = unsigned int;
-using int64_t = long int;
-using uint64_t = unsigned long int;
-using size_t = uint64_t;
-using uintptr_t = size_t;
-using ptrdiff_t = size_t;
-
-static_assert(sizeof(uintptr_t) == sizeof(void *));
 
 using frame_fn = void *(*)();
 using frame_rls_fn = void (*)(void *);

@@ -759,74 +759,35 @@ namespace hls
             --m_size;
         }
 
-        node_ptr insert(type_const_reference key, bool print = false)
+        node_ptr insert(type_const_reference key)
         {
             if (size() == max_size())
                 return null();
-
-            if (print)
-            {
-                kspit(key.frame_pointer);
-            }
 
             auto &c = get_comparator();
             auto &h = get_hasher();
 
             node_ptr n = m_allocator.create(key, Color::RED, null());
 
-            if (print)
-            {
-                kspit(n);
-            }
-
             if (m_root != null())
             {
-                if (print)
-                {
-                    kprint("Here!");
-                }
                 // Find to which node we are going to insert node n
                 node_ptr p;
                 find_helper(h(key), &p);
-                if (print)
-                {
-                    kspit(p);
-                    kprint("Here2!");
-                }
                 if (c(h(key), h(p->get_data())))
                 {
                     p->set_left(n);
-                    if (print)
-                    {
-                        kprint("Here3!");
-                    }
                 }
                 else
                 {
-                    if (print)
-                    {
-                        kprint("Here4!");
-                    }
                     p->set_right(n);
                 }
 
                 n->set_parent(p);
-                if (print)
-                {
-                    kprint("Here5!");
-                }
                 insert_fix(n);
-                if (print)
-                {
-                    kprint("Here6!");
-                }
-            }
+             }
             else
             {
-                if (print)
-                {
-                    kprint("Here7!");
-                }
                 m_root = n;
                 n->set_color(Color::BLACK);
             }
