@@ -16,7 +16,6 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     hdiutil create -size 1024m -fs fat32 -volname HeliOSQEMU $hdd_image_name
     hdiutil attach $hdd_image_name.dmg
     mkdir /Volumes/HELIOSQEMU/boot
-    riscv64-unknown-elf-objcopy -O binary $kernel_image $kernel_image.bin
     cp $kernel_image           /Volumes/HELIOSQEMU/boot/helios.elf
     cp $kernel_image.bin       /Volumes/HELIOSQEMU/boot/helios.bin
     hdiutil detach /Volumes/HELIOSQEMU

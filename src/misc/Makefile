@@ -5,4 +5,5 @@ MISC_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 all : $(BUILD_DIR)new.o
 
 $(BUILD_DIR)new.o: new.cpp new.hpp macros.hpp types.hpp
-	$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) -I$(INCLUDE_DIR) -o $@ $<
+	@echo "Making $@"
+	@$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) -I$(INCLUDE_DIR) -o $@ $<

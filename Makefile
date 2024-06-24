@@ -25,9 +25,13 @@ export CXX
 
 .PHONY: dep
 
-helios : dep
-	$(LD) $(BUILD_DIR)*.o -nostdlib --gc-sections -Bdynamic -T./src/arch/riscv64gc/link.lds -o $(BUILD_DIR)helios
-	$(CXXPREFIX)objcopy -O binary $(BUILD_DIR)helios $(BUILD_DIR)helios.bin
+$(BUILD_DIR)helios : dep
+	echo "Linking object files."
+	@$(LD) $(BUILD_DIR)*.o -nostdlib --gc-sections -Bdynamic -T./src/arch/riscv64gc/link.lds -o $(BUILD_DIR)helios
+	
+$(BUILD_DIR)helios.bin : $(BUILD_DIR)helios
+	echo "Generating kernel binary"
+	@$(CXXPREFIX)objcopy -O binary $(BUILD_DIR)helios $(BUILD_DIR)helios.bin
 
 dep :
 	@mkdir -p build
