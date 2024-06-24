@@ -428,6 +428,15 @@ namespace hls
     (__mem, __memsize, __p_lvl)
 #endif
 
+#ifndef __ISPWTWO
+#define __ISPWTWO
+#define is_power_of_two(__integral)                                                                                    \
+    [](size_t val) -> bool __attribute__(())                                                                           \
+    {                                                                                                                  \
+        return !(val & (val - 1));                                                                                     \
+    }                                                                                                                  \
+    (__integral)
+#endif
 } // namespace hls
 
 #endif
