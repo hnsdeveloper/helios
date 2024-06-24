@@ -9,12 +9,12 @@ namespace hls
 
     void *v_to_p(const void *vaddress, PageTable *table);
 
-    bool kmmap(const void *paddress, const void *vaddress, PageTable *table, FrameLevel p_lvl, uint64_t flags,
+    bool kmmap(const void *paddress, const void *vaddress, PageTable *table, FrameOrder p_lvl, uint64_t flags,
                frame_fn f_src);
 
     void kmunmap(const void *vaddress, PageTable *start_table, frame_rls_fn rls_fn);
 
-    size_t kmmap(const void *paddress, const void *vaddress, PageTable *table, const FrameLevel p_lvl, uint64_t flags,
+    size_t kmmap(const void *paddress, const void *vaddress, PageTable *table, const FrameOrder p_lvl, uint64_t flags,
                  FrameKB **f_src, size_t f_count);
 
     void kmunmap(const void *vaddress, PageTable *ptable, FrameKB **f_dst, size_t &limit);

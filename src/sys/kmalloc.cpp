@@ -138,7 +138,7 @@ namespace hls
 
         for (size_t i = 0; i < pages; ++i)
             kmmap(paddress + i * FrameKB::s_size, vaddress + i * FrameKB::s_size, get_kernel_pagetable(),
-                  FrameLevel::FIRST_VPN, READ | WRITE | ACCESS | DIRTY, kmmap_frame_src);
+                  FrameOrder::LOWEST_ORDER, READ | WRITE | ACCESS | DIRTY, kmmap_frame_src);
 
         MajorBlock *block = reinterpret_cast<MajorBlock *>(vaddress);
         major_setup(block, pages, pred);

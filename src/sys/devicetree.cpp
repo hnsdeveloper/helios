@@ -14,7 +14,7 @@ namespace hls
     {
         PageTable *kptp = get_kernel_pagetable();
         byte *aligned = reinterpret_cast<byte *>(align_back(fdt, PAGE_FRAME_ALIGNMENT));
-        kmmap(aligned, aligned, kptp, FrameLevel::KB_VPN, READ | ACCESS | DIRTY, initfalloc);
+        kmmap(aligned, aligned, kptp, FrameOrder::FIRST_ORDER, READ | ACCESS | DIRTY, initfalloc);
 
         size_t fdt_size = fdt_totalsize(fdt);
         size_t needed_size = reinterpret_cast<byte *>(fdt) - aligned + fdt_size;
@@ -26,7 +26,7 @@ namespace hls
         fdt_address = addr + (reinterpret_cast<byte *>(fdt) - aligned);
         for (size_t i = 0; i < needed_pages; ++i)
         {
-            kmmap(aligned, addr, kptp, FrameLevel::KB_VPN, READ | ACCESS | DIRTY, initfalloc);
+            kmmap(aligned, addr, kptp, FrameOrder::FIRST_ORDER, READ | ACCESS | DIRTY, initfalloc);
             aligned += PAGE_FRAME_SIZE;
             addr += PAGE_FRAME_SIZE;
         }

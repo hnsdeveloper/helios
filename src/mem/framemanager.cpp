@@ -103,10 +103,10 @@ namespace hls
         size_t map_node_frame(FrameKB *p_frame, FrameKB **frames, size_t count)
         {
             auto vaddress = m_nodes_vaddress_current;
-            size_t used_frames = kmmap(p_frame, vaddress, get_kernel_pagetable(), FrameLevel::KB_VPN,
+            size_t used_frames = kmmap(p_frame, vaddress, get_kernel_pagetable(), FrameOrder::FIRST_ORDER,
                                        READ | WRITE | ACCESS | DIRTY, frames, count);
 
-            m_nodes_vaddress_current += FrameInfo<FrameLevel::KB_VPN>::s_size;
+            m_nodes_vaddress_current += FrameInfo<FrameOrder::FIRST_ORDER>::s_size;
             for (; vaddress < m_nodes_vaddress_current; vaddress += m_node_size)
             {
                 if (vaddress + m_node_size <= m_nodes_vaddress_current)
@@ -217,7 +217,7 @@ namespace hls
             f_node_alloc.set_nodes_vaddress_begin(vaddress_begin);
             f_node_alloc.set_frame_node_size(sizeof(NodeTree::node));
 
-            const size_t f_count = static_cast<size_t>(FrameLevel::LAST_VPN);
+            const size_t f_count = static_cast<size_t>(FrameOrder::HIGHEST_ORDER);
 
             FrameKB *frames[f_count];
             for (size_t i = 0; i < f_count; ++i)
@@ -248,8 +248,8 @@ namespace hls
                 return;
             }
 
-            // We need 1 for mapping and at maximum LAST_VPN frames, given that the root table is always available.
-            const size_t f_count = static_cast<size_t>(FrameLevel::LAST_VPN) + 1;
+            // We need 1 for mapping and at maximum HIGHEST_ORDER frames, given that the root table is always available.
+            const size_t f_count = static_cast<size_t>(FrameOrder::HIGHEST_ORDER) + 1;
             FrameKB *frames[f_count];
 
             size_t i = 0;
@@ -399,7 +399,7 @@ namespace hls
             if (count == 0 || !is_alignment_valid || m_free.size() == 0)
                 return nullptr;
             // Needed when getting a new frame, given that frames can be split and we might have to map more nodes.
-            validate_and_fix_node_allocator((size_t)(FrameLevel::LAST_VPN));
+            validate_and_fix_node_allocator((size_t)(FrameOrder::HIGHEST_ORDER));
 
             for (auto it = m_free.begin(); it != m_free.end();)
             {
@@ -578,7 +578,7 @@ namespace hls
 
     const frame_info *framealloc(size_t count, uint64_t flags)
     {
-        return FrameManager::instance().get_frames(count, FrameInfo<FrameLevel::KB_VPN>::s_alignment, flags);
+        return FrameManager::instance().get_frames(count, FrameInfo<FrameOrder::FIRST_ORDER>::s_alignment, flags);
     }
 
     const frame_info *framealloc(uint64_t flags)

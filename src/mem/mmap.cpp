@@ -76,7 +76,7 @@ namespace hls
         return (PageTable *)(nullptr) - get_cpu_id() - 2;
     }
 
-    size_t get_page_entry_index(const void *vaddress, FrameLevel v)
+    size_t get_page_entry_index(const void *vaddress, FrameOrder v)
     {
         size_t vpn_idx = static_cast<size_t>(v);
         uintptr_t idx = to_uintptr_t(vaddress) >> 12;
@@ -89,9 +89,9 @@ namespace hls
         return p & 0xFFF;
     }
 
-    void walk_table(const void *vaddress, PageTable **table, FrameLevel *lvl)
+    void walk_table(const void *vaddress, PageTable **table, FrameOrder *lvl)
     {
-        if (table == nullptr || lvl == nullptr || *lvl == FrameLevel::FIRST_VPN)
+        if (table == nullptr || lvl == nullptr || *lvl == FrameOrder::LOWEST_ORDER)
             return;
 
         size_t idx = get_page_entry_index(vaddress, *lvl);
@@ -109,8 +109,8 @@ namespace hls
         if (table != nullptr)
         {
 
-            constexpr size_t p_lvl_count = (size_t)(FrameLevel::LAST_VPN);
-            FrameLevel lvl = FrameLevel::LAST_VPN;
+            constexpr size_t p_lvl_count = (size_t)(FrameOrder::HIGHEST_ORDER);
+            FrameOrder lvl = FrameOrder::HIGHEST_ORDER;
             for (size_t i = 0; i < p_lvl_count; ++i)
             {
                 // Will walk the table as much as it can.
@@ -128,7 +128,7 @@ namespace hls
         return nullptr;
     }
 
-    void direct_frame_map(const void *paddress, const void *vaddress, PageTable *table, const FrameLevel lvl,
+    void direct_frame_map(const void *paddress, const void *vaddress, PageTable *table, const FrameOrder lvl,
                           uint64_t flags)
     {
         PageTable *vt = translated_page_vaddress(table);
@@ -138,7 +138,7 @@ namespace hls
         entry.set_flags(flags);
     }
 
-    bool kmmap(const void *paddress, const void *vaddress, PageTable *table, const FrameLevel p_lvl, uint64_t flags,
+    bool kmmap(const void *paddress, const void *vaddress, PageTable *table, const FrameOrder p_lvl, uint64_t flags,
                frame_fn f_src)
     {
 
@@ -148,8 +148,8 @@ namespace hls
         if (vaddress == get_scratch_pagetable())
             return false;
 
-        FrameLevel c_lvl = FrameLevel::LAST_VPN;
-        FrameLevel expected = next_vpn(c_lvl);
+        FrameOrder c_lvl = FrameOrder::HIGHEST_ORDER;
+        FrameOrder expected = next_vpn(c_lvl);
         PageTable *p_table = table;
 
         while (c_lvl != p_lvl)
@@ -201,13 +201,13 @@ namespace hls
             return;
 
         // We assume we are using the highest possible page level.
-        FrameLevel current_level = FrameLevel::LAST_VPN;
+        FrameOrder current_level = FrameOrder::HIGHEST_ORDER;
 
         // Stores all pages used to reach the address
-        PageTable *table_path[(size_t)(FrameLevel::LAST_VPN) + 1];
+        PageTable *table_path[(size_t)(FrameOrder::HIGHEST_ORDER) + 1];
 
         size_t i = 0;
-        while (current_level != FrameLevel::KB_VPN)
+        while (current_level != FrameOrder::FIRST_ORDER)
         {
             table_path[i++] = ptable;
             // If the current page contains a leaf node, the page will not be walked.
@@ -255,7 +255,7 @@ namespace hls
         }
     }
 
-    size_t kmmap(const void *paddress, const void *vaddress, PageTable *table, const FrameLevel p_lvl, uint64_t flags,
+    size_t kmmap(const void *paddress, const void *vaddress, PageTable *table, const FrameOrder p_lvl, uint64_t flags,
                  FrameKB **f_src, size_t f_count)
     {
 
@@ -265,8 +265,8 @@ namespace hls
         if (vaddress == get_scratch_pagetable())
             return false;
 
-        FrameLevel c_lvl = FrameLevel::LAST_VPN;
-        FrameLevel expected = next_vpn(c_lvl);
+        FrameOrder c_lvl = FrameOrder::HIGHEST_ORDER;
+        FrameOrder expected = next_vpn(c_lvl);
         PageTable *p_table = table;
         size_t used_frames = 0;
         while (c_lvl != p_lvl)
@@ -319,13 +319,13 @@ namespace hls
             return false;
 
         // We assume we are using the highest possible page level.
-        FrameLevel current_level = FrameLevel::LAST_VPN;
+        FrameOrder current_level = FrameOrder::HIGHEST_ORDER;
 
         // Stores all pages used to reach the address
-        PageTable *table_path[(size_t)(FrameLevel::LAST_VPN) + 1];
+        PageTable *table_path[(size_t)(FrameOrder::HIGHEST_ORDER) + 1];
 
         size_t i = 0;
-        while (current_level != FrameLevel::KB_VPN)
+        while (current_level != FrameOrder::FIRST_ORDER)
         {
             table_path[i++] = ptable;
             // If the current page contains a leaf node, the page will not be walked.
