@@ -785,7 +785,7 @@ namespace hls
 
                 n->set_parent(p);
                 insert_fix(n);
-             }
+            }
             else
             {
                 m_root = n;

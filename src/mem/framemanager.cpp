@@ -29,6 +29,7 @@ SOFTWARE.
 #include "misc/new.hpp"
 #include "sys/devicetree.hpp"
 #include "sys/print.hpp"
+#include "ulib/pair.hpp"
 #include "ulib/rb_tree.hpp"
 
 #define FRAMEMANAGEMENT_BEGIN 0x1000
@@ -507,9 +508,10 @@ namespace hls
         return false;
     }
 
-    void initialize_frame_manager(void *fdt, bootinfo *b_info)
+    Pair<void *, size_t> get_available_ram(void *fdt, bootinfo *b_info)
     {
         byte *mem = b_info->p_kernel_physical_end;
+        size_t mem_size = 0;
         for (auto node = fdt_first_subnode(fdt, 0); node >= 0; node = fdt_next_subnode(fdt, node))
         {
             if (is_memory_node(fdt, node))
@@ -517,19 +519,26 @@ namespace hls
                 // A memory node has to be a child of the root node, thus we can use node 0 directly to
                 // get address_cells and size_cells. These two properties are inherited from the parent
                 // according to the Device Tree specification.
-
                 const fdt32_t *a_cells =
                     reinterpret_cast<const fdt32_t *>(fdt_getprop(fdt, 0, "#address-cells", nullptr));
                 const fdt32_t *s_cells = reinterpret_cast<const fdt32_t *>(fdt_getprop(fdt, 0, "#size-cells", nullptr));
                 auto reg = read_fdt_prop_reg_prop(fdt, node, a_cells, s_cells);
                 byte *mem_temp = as_byte_ptr(reg.mem_address);
                 size_t mem_size = reg.mem_size;
+                mem_size = reg.mem_size;
                 mem_size -= (mem - mem_temp);
 
                 FrameManager::init(mem, mem_size);
                 break;
             }
         }
+        return {mem, mem_size};
+    }
+
+    void initialize_frame_manager(void *fdt, bootinfo *b_info)
+    {
+        Pair<void *, size_t> mem_info = get_available_ram(fdt, b_info);
+        FrameManager::init(mem_info.first, mem_info.second);
     }
 
     void *get_frame_management_begin_vaddress()
