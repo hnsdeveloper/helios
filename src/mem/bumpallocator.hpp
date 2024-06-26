@@ -34,7 +34,7 @@ namespace hls
 {
     class BumpAllocator
     {
-        byte *m_initialmemory[FrameKB::s_size];
+        byte m_initialmemory[FrameKB::s_size];
         void *m_items_list;
         size_t m_items_count;
         size_t m_type_size;
