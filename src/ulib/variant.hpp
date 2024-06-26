@@ -294,6 +294,7 @@ namespace hls
                     other.clear();
                 }
             }
+            return *this;
         }
 
         template <typename U>
