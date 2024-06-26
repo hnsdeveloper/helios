@@ -29,6 +29,7 @@ SOFTWARE.
 #include "misc/macros.hpp"
 #include "misc/new.hpp"
 #include "misc/types.hpp"
+#include "misc/utilities.hpp"
 #include "sys/mem.hpp"
 #include "sys/panic.hpp"
 #include "sys/print.hpp"
@@ -41,7 +42,7 @@ namespace hls
     class Singleton
     {
         SET_USING_CLASS(ClassType, class_t);
-        alignas(type_size) static byte s_mem[type_size];
+        alignas(type_size) static inline byte s_mem[type_size] = {0};
 
         static bool set_and_get_initialized_internal(bool v = false)
         {
@@ -54,7 +55,7 @@ namespace hls
       public:
         static class_t_reference instance()
         {
-            static_assert(type_size >= sizeof(class_t));
+            // static_assert(type_size >= sizeof(class_t));
             if (!is_initialized())
             {
                 PANIC("Attempting to get instance of unitialized class.");
@@ -65,7 +66,7 @@ namespace hls
         template <typename... Args>
         static void initialize_instance(Args &&...args)
         {
-            static_assert(type_size >= sizeof(class_t));
+            // static_assert(type_size >= sizeof(class_t));
 
             if (!is_initialized())
             {

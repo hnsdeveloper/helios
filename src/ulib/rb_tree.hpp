@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include "misc/macros.hpp"
 #include "misc/types.hpp"
+#include "misc/utilities.hpp"
 #include "ulib/hash.hpp"
 #include "ulib/node.hpp"
 #include <limits>
@@ -684,8 +685,10 @@ namespace hls
         }
 
       public:
-        RedBlackTree()
+        template <typename... Args>
+        RedBlackTree(Args &&...args) : m_allocator(hls::forward<Args>(args)...)
         {
+
             m_root = null();
             m_size = 0;
         }
@@ -772,17 +775,34 @@ namespace hls
             if (m_root != null())
             {
                 // Find to which node we are going to insert node n
-                node_ptr p;
-                find_helper(h(key), &p);
-                if (c(h(key), h(p->get_data())))
+                node_ptr p = m_root;
+                while (true)
                 {
-                    p->set_left(n);
+                    if (c(h(p->get_data()), h(key)))
+                    {
+                        if (p->get_right() != null())
+                        {
+                            p = p->get_right();
+                        }
+                        else
+                        {
+                            p->set_right(n);
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        if (p->get_left() != null())
+                        {
+                            p = p->get_left();
+                        }
+                        else
+                        {
+                            p->set_left(n);
+                            break;
+                        }
+                    }
                 }
-                else
-                {
-                    p->set_right(n);
-                }
-
                 n->set_parent(p);
                 insert_fix(n);
             }
