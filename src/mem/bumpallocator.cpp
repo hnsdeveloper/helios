@@ -23,35 +23,48 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef _BUMPALLOCATOR_HPP_
-#define _BUMPALLOCATOR_HPP_
-
-#include "arch/riscv64gc/plat_def.hpp"
-#include "misc/types.hpp"
-#include "sys/mem.hpp"
-#include "sys/print.hpp"
+#include "mem/bumpallocator.hpp"
 
 namespace hls
 {
-    class BumpAllocator
+    BumpAllocator::BumpAllocator(size_t typesize)
     {
-        byte m_initialmemory[FrameKB::s_size];
-        void *m_items_list;
-        size_t m_items_count;
-        size_t m_type_size;
+        m_items_list = nullptr;
+        m_items_count = 0;
+        m_type_size = typesize;
+        expand_from_frame(m_initialmemory);
+    }
 
-      public:
-        BumpAllocator(size_t typesize);
-        BumpAllocator(const BumpAllocator &) = delete;
-        BumpAllocator(BumpAllocator &&) = delete;
+    void BumpAllocator::expand_from_frame(void *frame_address)
+    {
+        for (byte *i = as_byte_ptr(frame_address); i < (as_byte_ptr(frame_address) + FrameKB::s_size); i += m_type_size)
+        {
+            release_mem(i);
+        }
+    }
 
-        void expand_from_frame(void *frame_address);
-        void *get_mem();
+    void *BumpAllocator::get_mem()
+    {
+        if (m_items_count > 0)
+        {
+            --m_items_count;
+            auto ret = m_items_list;
+            m_items_list = *reinterpret_cast<void **>(m_items_list);
+            return ret;
+        }
+        return nullptr;
+    }
 
-        void release_mem(const void *ptr);
+    void BumpAllocator::release_mem(const void *ptr)
+    {
+        *reinterpret_cast<void **>(const_cast<void *>(ptr)) = m_items_list;
+        m_items_list = const_cast<void *>(ptr);
+        ++m_items_count;
+    }
 
-        size_t available_count() const;
-    };
+    size_t BumpAllocator::available_count() const
+    {
+        return m_items_count;
+    }
+
 } // namespace hls
-
-#endif /* bumpallocator_hpp */
