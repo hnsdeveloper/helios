@@ -38,6 +38,7 @@
 		99180E7A2C14D95A00C05182 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 99180E792C14D95A00C05182 /* Makefile */; };
 		99180E7C2C14DEFF00C05182 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 99180E7B2C14DEFF00C05182 /* Makefile */; };
 		99180E7E2C14E07F00C05182 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 99180E7D2C14E07F00C05182 /* Makefile */; };
+		993F375C2C34AC2E00017F49 /* bumpallocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 993F375B2C34AC2900017F49 /* bumpallocator.cpp */; };
 		99781E462C1F6BF8008F0888 /* kmalloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99781E452C1F6BF7008F0888 /* kmalloc.cpp */; };
 /* End PBXBuildFile section */
 
@@ -125,9 +126,12 @@
 		99180E792C14D95A00C05182 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		99180E7B2C14DEFF00C05182 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		99180E7D2C14E07F00C05182 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		993F375B2C34AC2900017F49 /* bumpallocator.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = bumpallocator.cpp; sourceTree = "<group>"; };
 		99781E442C1F6BF7008F0888 /* kmalloc.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kmalloc.hpp; sourceTree = "<group>"; };
 		99781E452C1F6BF7008F0888 /* kmalloc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = kmalloc.cpp; sourceTree = "<group>"; };
 		998911C82C29713D00AD8A27 /* bumpallocator.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = bumpallocator.hpp; sourceTree = "<group>"; };
+		998911CA2C29F69F00AD8A27 /* nodeallocator.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = nodeallocator.hpp; sourceTree = "<group>"; };
+		998911CE2C2A0DD300AD8A27 /* singleton.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = singleton.hpp; sourceTree = "<group>"; };
 		998A89412C25C0FF0036FFD4 /* variant.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = variant.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -211,11 +215,14 @@
 		99180E0B2C128D1D00C05182 /* mem */ = {
 			isa = PBXGroup;
 			children = (
+				993F375B2C34AC2900017F49 /* bumpallocator.cpp */,
+				998911C82C29713D00AD8A27 /* bumpallocator.hpp */,
 				99180E072C128D1D00C05182 /* framemanager.cpp */,
 				99180E082C128D1D00C05182 /* framemanager.hpp */,
-				99180E772C13DDDB00C05182 /* Makefile */,
 				99180E092C128D1D00C05182 /* mmap.cpp */,
 				99180E0A2C128D1D00C05182 /* mmap.hpp */,
+				998911CA2C29F69F00AD8A27 /* nodeallocator.hpp */,
+				99180E772C13DDDB00C05182 /* Makefile */,
 			);
 			path = mem;
 			sourceTree = "<group>";
@@ -310,13 +317,13 @@
 				99180E3F2C128D1D00C05182 /* hash.hpp */,
 				99180E402C128D1D00C05182 /* list.hpp */,
 				99180E412C128D1D00C05182 /* map.hpp */,
-				998911C82C29713D00AD8A27 /* bumpallocator.hpp */,
 				99180E422C128D1D00C05182 /* node.hpp */,
 				99180E432C128D1D00C05182 /* pair.hpp */,
 				99180E442C128D1D00C05182 /* rb_tree.hpp */,
 				99180E452C128D1D00C05182 /* reference.hpp */,
 				99180E462C128D1D00C05182 /* result.hpp */,
 				99180E472C128D1D00C05182 /* stack.hpp */,
+				998911CE2C2A0DD300AD8A27 /* singleton.hpp */,
 			);
 			path = ulib;
 			sourceTree = "<group>";
@@ -432,6 +439,7 @@
 				99180E5E2C128EB400C05182 /* plat_def.hpp in Sources */,
 				99180E5F2C128EB400C05182 /* driverframework.cpp in Sources */,
 				99180E602C128EB400C05182 /* framemanager.cpp in Sources */,
+				993F375C2C34AC2E00017F49 /* bumpallocator.cpp in Sources */,
 				99180E612C128EB400C05182 /* mmap.cpp in Sources */,
 				99180E622C128EB400C05182 /* fdt_addresses.c in Sources */,
 				99180E632C128EB400C05182 /* fdt_check.c in Sources */,

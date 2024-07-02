@@ -29,6 +29,7 @@ SOFTWARE.
 #include "misc/macros.hpp"
 #include "misc/types.hpp"
 #include "misc/utilities.hpp"
+#include "sys/print.hpp"
 #include "ulib/hash.hpp"
 #include "ulib/node.hpp"
 #include <limits>
@@ -688,7 +689,6 @@ namespace hls
         template <typename... Args>
         RedBlackTree(Args &&...args) : m_allocator(hls::forward<Args>(args)...)
         {
-
             m_root = null();
             m_size = 0;
         }
@@ -769,7 +769,6 @@ namespace hls
 
             auto &c = get_comparator();
             auto &h = get_hasher();
-
             node_ptr n = m_allocator.create(key, Color::RED, null());
 
             if (m_root != null())

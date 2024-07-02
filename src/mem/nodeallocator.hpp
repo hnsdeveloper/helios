@@ -38,10 +38,10 @@ namespace hls
     class NodeAllocator
     {
         SET_USING_CLASS(T, type);
-        BumpAllocator &m_bump_allocator;
+        BumpAllocator *m_bump_allocator;
 
       public:
-        NodeAllocator(BumpAllocator &allocator) : m_bump_allocator(allocator)
+        NodeAllocator(BumpAllocator &allocator) : m_bump_allocator(&allocator)
         {
         }
 
@@ -68,7 +68,7 @@ namespace hls
 
         type_ptr allocate()
         {
-            void *p = m_bump_allocator.get_mem();
+            void *p = m_bump_allocator->get_mem();
             return reinterpret_cast<type_ptr>(p);
         }
 
@@ -76,7 +76,7 @@ namespace hls
         {
             if (p == nullptr)
                 return;
-            m_bump_allocator.release_mem(p);
+            m_bump_allocator->release_mem(p);
         }
     };
 

@@ -33,58 +33,38 @@ SOFTWARE.
 #include "sys/mem.hpp"
 #include "sys/panic.hpp"
 #include "sys/print.hpp"
-#include <type_traits>
 
 namespace hls
 {
-    template <typename ClassType, size_t type_size>
-        requires(is_power_of_two(type_size))
+    template <typename ClassType>
     class Singleton
     {
         SET_USING_CLASS(ClassType, class_t);
-        alignas(type_size) static inline byte s_mem[type_size] = {0};
-
-        static bool set_and_get_initialized_internal(bool v = false)
-        {
-            static bool initialized = false;
-            if (v)
-                initialized = true;
-            return initialized;
-        }
+        static inline bool s_initialized = false;
+        static inline class_t *s_mem = nullptr;
 
       public:
         static class_t_reference instance()
         {
-            // static_assert(type_size >= sizeof(class_t));
-            if (!is_initialized())
+            if (!s_initialized)
             {
-                PANIC("Attempting to get instance of unitialized class.");
+                PANIC("Attempting to use unitialized singleton.");
             }
-            return *reinterpret_cast<class_t_ptr>(align_forward(s_mem, alignof(class_t)));
+            return *s_mem;
         }
 
         template <typename... Args>
-        static void initialize_instance(Args &&...args)
+        static void initialize(void *mem, Args... args)
         {
-            // static_assert(type_size >= sizeof(class_t));
-
-            if (!is_initialized())
+            if (nullptr == mem)
             {
-                new (align_forward(s_mem, alignof(class_t))) class_t(hls::forward<Args>(args)...);
-                set_and_get_initialized_internal(true);
+                PANIC("Can't initialize singleton to nullptr.");
             }
-            else
-            {
-                PANIC("Attempting to initialize already initialized class");
-            }
-        }
-
-        static bool is_initialized()
-        {
-            return set_and_get_initialized_internal();
+            s_mem = reinterpret_cast<class_t_ptr>(mem);
+            new (s_mem) class_t(hls::forward<Args>(args)...);
+            s_initialized = true;
         }
     };
-
 } // namespace hls
 
 #endif

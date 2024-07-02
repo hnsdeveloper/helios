@@ -24,6 +24,8 @@ SOFTWARE.
 ---------------------------------------------------------------------------------*/
 
 #include "mem/bumpallocator.hpp"
+#include "sys/mem.hpp"
+#include "sys/print.hpp"
 
 namespace hls
 {

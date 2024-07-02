@@ -28,8 +28,6 @@ SOFTWARE.
 
 #include "arch/riscv64gc/plat_def.hpp"
 #include "misc/types.hpp"
-#include "sys/mem.hpp"
-#include "sys/print.hpp"
 
 namespace hls
 {

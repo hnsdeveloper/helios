@@ -61,6 +61,10 @@ namespace hls
         unmap_low_kernel(b_info->p_lowkernel_start, b_info->p_lowkernel_end);
         mapfdt(get_device_tree_from_options(b_info->argc, b_info->argv));
         initialize_frame_manager(get_fdt(), b_info);
+        //  VMMap::initialize_instance(get_kernel_pagetable(), (void *)(0x80000000), (void *)(0x90000000));
+        //  VMMap::instance().map_memory((void *)(0x10000000), (void *)(0x80000000), FrameOrder::LOWEST_ORDER, 0);
+        while (true)
+            ;
         initialize_kmalloc();
 
         while (true)

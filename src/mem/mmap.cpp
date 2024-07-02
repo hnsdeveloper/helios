@@ -5,7 +5,7 @@ Copyright (c) 2024 Helio Nunes Santos
 
         Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"), to
-deal in the Software without restriction, including without limitation the
+deal in the Software without restriction , including without limitation the
 rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
         copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
@@ -28,9 +28,106 @@ SOFTWARE.
 #include "sys/mem.hpp"
 #include "sys/opensbi.hpp"
 #include "sys/print.hpp"
+#include "ulib/pair.hpp"
 
 namespace hls
 {
+
+    size_t get_page_entry_index(const void *vaddress, FrameOrder v)
+    {
+        size_t vpn_idx = static_cast<size_t>(v);
+        uintptr_t idx = to_uintptr_t(vaddress) >> 12;
+        return (idx >> (vpn_idx * 9)) & 0x1FF;
+    }
+
+    PageTable *translated_page_vaddress(PageTable *paddress)
+    {
+        auto scratch = get_scratch_pagetable();
+        auto &entry = scratch->get_entry(PageTable::entries_on_table - get_cpu_id() - 2);
+        entry.point_to_frame(paddress);
+        entry.set_flags(READ | WRITE | ACCESS | DIRTY);
+        flush_tlb();
+        return (PageTable *)(nullptr) - get_cpu_id() - 2;
+    }
+
+    Pair<FrameOrder, PageTable *> table_walk(const void *vaddress, PageTable *table, FrameOrder order)
+    {
+        if (table != nullptr && order != FrameOrder::LOWEST_ORDER)
+        {
+            size_t idx = get_page_entry_index(vaddress, order);
+            auto v_table = translated_page_vaddress(table);
+            auto &entry = v_table->get_entry(idx);
+            if (entry.is_valid() && !entry.is_leaf())
+                return {next_vpn(order), entry.as_table_pointer()};
+        }
+        return {order, table};
+    }
+
+    detail::VMMap::VMMap(PageTable *table, void *min_map_addr, void *max_map_addr)
+        : m_bump_allocator(sizeof(VMMap::tree::node)), m_memmap_info_tree(m_bump_allocator), m_root_table(table),
+          m_min_alloc_address(min_map_addr), m_max_alloc_address(max_map_addr) {};
+
+    bool detail::VMMap::is_valid_virtual_address(const void *addr)
+    {
+        return addr >= m_min_alloc_address && addr <= m_max_alloc_address;
+    }
+
+    void detail::VMMap::translate_to_page(const MemMapInfo &m_map)
+    {
+        PageTable *p_table = m_root_table;
+        for (FrameOrder c_lvl = FrameOrder::HIGHEST_ORDER;
+             (c_lvl != FrameOrder::LOWEST_ORDER) && (c_lvl != m_map.get_frame_order()); c_lvl = next_vpn(c_lvl))
+        {
+            auto result = table_walk(m_map.get_vaddress(), p_table, c_lvl);
+            // If it is true, we don't have a page table for this range of addresses
+            if (result.first == c_lvl)
+            {
+                auto frame_info = FrameManager::instance().get_frames(1, 0);
+                if (frame_info == nullptr)
+                {
+                    // TODO: Handle killing processes to get memory
+                    PANIC("Out of memory. Can't allocate frame for page table.");
+                }
+                auto temp = translated_page_vaddress(p_table);
+                auto &entry = temp->get_entry(get_page_entry_index(m_map.get_vaddress(), m_map.get_frame_order()));
+                entry.point_to_table(reinterpret_cast<PageTable *>(frame_info->get_frame_pointer()));
+                temp->print_entries();
+                p_table = entry.as_table_pointer();
+                auto vt = translated_page_vaddress(reinterpret_cast<PageTable *>(frame_info->get_frame_pointer()));
+                memset(vt, 0, PAGE_FRAME_SIZE);
+            }
+            else
+            {
+                p_table = result.second;
+            }
+        }
+        p_table = translated_page_vaddress(p_table);
+        auto &entry = p_table->get_entry(get_page_entry_index(m_map.get_vaddress(), m_map.get_frame_order()));
+        entry.point_to_frame(m_map.get_paddress());
+        entry.set_flags(m_map.get_flags());
+        flush_tlb();
+    }
+
+    MemMapInfo *detail::VMMap::map_memory(const void *p_address, const void *v_address, FrameOrder order,
+                                          uint64_t flags)
+    {
+        if (is_valid_virtual_address(v_address))
+        {
+            MemMapInfo temp(order, p_address, v_address, flags);
+            auto check = m_memmap_info_tree.equal_or_greater(temp);
+            auto pred_check = m_memmap_info_tree.get_in_order_predecessor(check);
+            auto post_check = m_memmap_info_tree.get_in_order_successor(check);
+            if (!((check && temp.overlaps(check->get_data())) ||
+                  (pred_check && temp.overlaps(pred_check->get_data())) ||
+                  (post_check && temp.overlaps(post_check->get_data()))))
+            {
+                auto nd = m_memmap_info_tree.insert(temp);
+                translate_to_page((nd->get_data()));
+                return &(nd->get_data());
+            }
+        }
+        return nullptr;
+    }
 
     static PageTable *s_scratch_page_table;
     static PageTable *s_kernel_page_table;
@@ -64,23 +161,6 @@ namespace hls
     PageTable *get_kernel_pagetable()
     {
         return s_kernel_page_table;
-    }
-
-    PageTable *translated_page_vaddress(PageTable *paddress)
-    {
-        auto scratch = get_scratch_pagetable();
-        auto &entry = scratch->get_entry(PageTable::entries_on_table - get_cpu_id() - 2);
-        entry.point_to_frame(paddress);
-        entry.set_flags(READ | WRITE | ACCESS | DIRTY);
-        flush_tlb();
-        return (PageTable *)(nullptr) - get_cpu_id() - 2;
-    }
-
-    size_t get_page_entry_index(const void *vaddress, FrameOrder v)
-    {
-        size_t vpn_idx = static_cast<size_t>(v);
-        uintptr_t idx = to_uintptr_t(vaddress) >> 12;
-        return (idx >> (vpn_idx * 9)) & 0x1FF;
     }
 
     uintptr_t get_vaddress_offset(const void *vaddress)
