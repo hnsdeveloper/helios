@@ -39,10 +39,9 @@ namespace hls
 
     void BumpAllocator::expand_from_frame(void *frame_address)
     {
-        for (byte *i = as_byte_ptr(frame_address); i < (as_byte_ptr(frame_address) + FrameKB::s_size); i += m_type_size)
-        {
+        for (byte *i = as_byte_ptr(frame_address); (i + m_type_size) < (as_byte_ptr(frame_address) + FrameKB::s_size);
+             i += m_type_size)
             release_mem(i);
-        }
     }
 
     void *BumpAllocator::get_mem()

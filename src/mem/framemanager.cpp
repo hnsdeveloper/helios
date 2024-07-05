@@ -128,9 +128,6 @@ namespace hls
         FrameKB *mem_end =
             reinterpret_cast<FrameKB *>(align_back(apply_offset(mem_init, mem_info.second), alignof(FrameKB)));
         m_frame_count = (size_t)(mem_end - mem_init);
-        // TODO: THIS FOR SOME REASON NOT WELL UNDERSTOOD FIXES A BUG WHERE THE COUNT BECOMES ZERO AFTER THE FIRST USE,
-        // THUS THE REASON SHALL BE CHECKED AND THIS REMOVED.
-        m_bump_allocator.get_mem();
         m_free_frames.insert({mem_init, m_frame_count, 0});
         kprintln("Initializing FrameManager with {} frames for a total of {}KiB of memory.", m_frame_count,
                  m_frame_count * FrameKB::s_size / 1024);
@@ -151,11 +148,11 @@ namespace hls
                 auto temp_a = *it;
                 auto temp_b = temp_a;
                 m_free_frames.remove(*it);
-                temp_a.shrink_end(temp_a.get_frame_count() - count);
+                if (count > temp_a.get_frame_count())
+                    temp_a.shrink_end(temp_a.get_frame_count() - count);
                 temp_b.shrink_begin(count);
                 if (temp_b.get_frame_count() > 0)
                     m_free_frames.insert(hls::move(temp_b));
-
                 temp_a.set_flags(flags);
                 auto it = m_used_frames.insert(hls::move(temp_a));
                 return &(it->get_data());

@@ -8,7 +8,7 @@ CPPFLAGS := -c -fno-omit-frame-pointer -march=rv64gc -mabi=lp64 -std=c++20  -ffr
 -fno-exceptions -fno-rtti -mabi=lp64d -mcmodel=medany -fno-asynchronous-unwind-tables -fno-use-cxa-atexit \
 -Wall -Wextra -T./src/arch/riscv64gc/link.lds
 
-EXTRAFLAGS := -DBOOTPAGES=32 -Wall -Wextra -Werror -DDEBUG
+EXTRAFLAGS := -DBOOTPAGES=32 -Wall -Wextra -Werror -DDEBUG -g
 
 CXX := $(CXXPREFIX)g++
 AR  := $(CXXPREFIX)ar
@@ -34,7 +34,7 @@ helios.bin : $(BUILD_DIR)helios.bin
 
 $(BUILD_DIR)helios : dep
 	@echo "Linking object files."
-	@$(LD) $(BUILD_DIR)*.o -nostdlib --gc-sections -Bdynamic -T./src/arch/riscv64gc/link.lds -o $(BUILD_DIR)helios
+	@$(LD) $(BUILD_DIR)*.o -nostdlib -T./src/arch/riscv64gc/link.lds -o $(BUILD_DIR)helios
 	
 $(BUILD_DIR)helios.bin : $(BUILD_DIR)helios
 	@echo "Generating kernel binary"
