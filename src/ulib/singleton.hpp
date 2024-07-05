@@ -44,22 +44,17 @@ namespace hls
         static inline class_t *s_mem = nullptr;
 
       public:
-        static class_t_reference instance()
+        static class_t_reference get_global_instance()
         {
             if (!s_initialized)
-            {
                 PANIC("Attempting to use unitialized singleton.");
-            }
             return *s_mem;
         }
 
         template <typename... Args>
-        static void initialize(void *mem, Args... args)
+        static void initialize_global_instance(Args... args)
         {
-            if (nullptr == mem)
-            {
-                PANIC("Can't initialize singleton to nullptr.");
-            }
+            alignas(class_t) byte mem[sizeof(class_t)];
             s_mem = reinterpret_cast<class_t_ptr>(mem);
             new (s_mem) class_t(hls::forward<Args>(args)...);
             s_initialized = true;

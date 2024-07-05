@@ -103,7 +103,7 @@ namespace hls
         }
     };
 
-    class FrameManagerImpl
+    class FrameManager : public Singleton<FrameManager>
     {
         using tree = RedBlackTree<FrameData, Hash, LessComparator, NodeAllocator>;
         BumpAllocator m_bump_allocator;
@@ -111,17 +111,16 @@ namespace hls
         tree m_free_frames;
         size_t m_frame_count;
 
-        FrameManagerImpl(const Pair<void *, size_t> &mem_info);
-        FrameManagerImpl(const FrameManagerImpl &) = delete;
-        FrameManagerImpl(FrameManagerImpl &&) = delete;
-        friend class Singleton<FrameManagerImpl>;
+        FrameManager(const Pair<void *, size_t> &mem_info);
+        FrameManager(const FrameManager &) = delete;
+        FrameManager(FrameManager &&) = delete;
+        friend class Singleton<FrameManager>;
 
       public:
         FrameData *get_frames(size_t count, uint64_t flags);
         void release_frames(void *frame_pointer);
     };
 
-    using FrameManager = Singleton<FrameManagerImpl>;
     void initialize_frame_manager(void *fdt, bootinfo *b_info);
 
     PageTable *init_initfalloc(size_t used, PageTable *tables);

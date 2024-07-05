@@ -36,9 +36,6 @@ SOFTWARE.
 
 namespace hls
 {
-
-    byte g_frame_manager_mem[sizeof(FrameManagerImpl)];
-
     FrameData::FrameData(FrameKB *f_ptr, size_t frame_count, size_t flags)
         : m_frame_pointer(f_ptr), m_frame_count(frame_count), m_use_count(1), m_flags(flags)
     {
@@ -121,7 +118,7 @@ namespace hls
         return *this;
     }
 
-    FrameManagerImpl::FrameManagerImpl(const Pair<void *, size_t> &mem_info)
+    FrameManager::FrameManager(const Pair<void *, size_t> &mem_info)
         : m_bump_allocator(sizeof(tree::node)), m_used_frames(m_bump_allocator), m_free_frames(m_bump_allocator)
     {
         FrameKB *mem_init = reinterpret_cast<FrameKB *>(align_forward(mem_info.first, alignof(FrameKB)));
@@ -133,7 +130,7 @@ namespace hls
                  m_frame_count * FrameKB::s_size / 1024);
     }
 
-    FrameData *FrameManagerImpl::get_frames(size_t count, uint64_t flags)
+    FrameData *FrameManager::get_frames(size_t count, uint64_t flags)
     {
         if (count >= m_frame_count)
         {
@@ -161,7 +158,7 @@ namespace hls
         return nullptr;
     }
 
-    void FrameManagerImpl::release_frames(void *frame_pointer)
+    void FrameManager::release_frames(void *frame_pointer)
     {
         (void)(frame_pointer);
     }
@@ -204,7 +201,7 @@ namespace hls
     void initialize_frame_manager(void *fdt, bootinfo *b_info)
     {
         Pair<void *, size_t> mem_info = get_available_ram(fdt, b_info);
-        FrameManager::initialize(g_frame_manager_mem, mem_info);
+        FrameManager::initialize_global_instance(mem_info);
     }
 
     PageTable *init_initfalloc(size_t used, PageTable *tables)
