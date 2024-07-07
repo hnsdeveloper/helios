@@ -63,16 +63,16 @@ namespace hls
         return {order, table};
     }
 
-    detail::VMMap::VMMap(PageTable *table, void *min_map_addr, void *max_map_addr)
+    VMMap::VMMap(PageTable *table, void *min_map_addr, void *max_map_addr)
         : m_bump_allocator(sizeof(VMMap::tree::node)), m_memmap_info_tree(m_bump_allocator), m_root_table(table),
           m_min_alloc_address(min_map_addr), m_max_alloc_address(max_map_addr) {};
 
-    bool detail::VMMap::is_valid_virtual_address(const void *addr)
+    bool VMMap::is_valid_virtual_address(const void *addr)
     {
         return addr >= m_min_alloc_address && addr <= m_max_alloc_address;
     }
 
-    void detail::VMMap::translate_to_page(const MemMapInfo &m_map)
+    void VMMap::translate_to_page(const MemMapInfo &m_map)
     {
         PageTable *p_table = m_root_table;
         for (FrameOrder c_lvl = FrameOrder::HIGHEST_ORDER;
@@ -82,7 +82,7 @@ namespace hls
             // If it is true, we don't have a page table for this range of addresses
             if (result.first == c_lvl)
             {
-                auto frame_info = FrameManager::instance().get_frames(1, 0);
+                auto frame_info = FrameManager::get_global_instance().get_frames(1, 0);
                 if (frame_info == nullptr)
                 {
                     // TODO: Handle killing processes to get memory
@@ -91,7 +91,6 @@ namespace hls
                 auto temp = translated_page_vaddress(p_table);
                 auto &entry = temp->get_entry(get_page_entry_index(m_map.get_vaddress(), m_map.get_frame_order()));
                 entry.point_to_table(reinterpret_cast<PageTable *>(frame_info->get_frame_pointer()));
-                temp->print_entries();
                 p_table = entry.as_table_pointer();
                 auto vt = translated_page_vaddress(reinterpret_cast<PageTable *>(frame_info->get_frame_pointer()));
                 memset(vt, 0, PAGE_FRAME_SIZE);
@@ -108,25 +107,24 @@ namespace hls
         flush_tlb();
     }
 
-    MemMapInfo *detail::VMMap::map_memory(const void *p_address, const void *v_address, FrameOrder order,
-                                          uint64_t flags)
+    MemMapInfo *VMMap::map_memory(const void *p_address, const void *v_address, FrameOrder order, uint64_t flags)
     {
-        if (is_valid_virtual_address(v_address))
-        {
-            MemMapInfo temp(order, p_address, v_address, flags);
-            auto check = m_memmap_info_tree.equal_or_greater(temp);
-            auto pred_check = m_memmap_info_tree.get_in_order_predecessor(check);
-            auto post_check = m_memmap_info_tree.get_in_order_successor(check);
-            if (!((check && temp.overlaps(check->get_data())) ||
-                  (pred_check && temp.overlaps(pred_check->get_data())) ||
-                  (post_check && temp.overlaps(post_check->get_data()))))
-            {
-                auto nd = m_memmap_info_tree.insert(temp);
-                translate_to_page((nd->get_data()));
-                return &(nd->get_data());
-            }
-        }
-        return nullptr;
+        if (!is_valid_virtual_address(v_address))
+            return nullptr;
+
+        MemMapInfo temp(order, p_address, v_address, flags);
+        auto check = m_memmap_info_tree.equal_or_greater(temp);
+        auto pred_check = m_memmap_info_tree.get_in_order_predecessor(check);
+        auto post_check = m_memmap_info_tree.get_in_order_successor(check);
+        if (m_memmap_info_tree.is_valid_node(check) && temp.overlaps(check->get_data()))
+            return nullptr;
+        if (m_memmap_info_tree.is_valid_node(pred_check) && temp.overlaps(pred_check->get_data()))
+            return nullptr;
+        if (m_memmap_info_tree.is_valid_node(post_check) && temp.overlaps(post_check->get_data()))
+            return nullptr;
+        auto nd = m_memmap_info_tree.insert(temp);
+        translate_to_page((nd->get_data()));
+        return &(nd->get_data());
     }
 
     static PageTable *s_scratch_page_table;
@@ -333,137 +331,6 @@ namespace hls
             if (i == 0)
                 break;
         }
-    }
-
-    size_t kmmap(const void *paddress, const void *vaddress, PageTable *table, const FrameOrder p_lvl, uint64_t flags,
-                 FrameKB **f_src, size_t f_count)
-    {
-
-        if (table == nullptr)
-            return false;
-
-        if (vaddress == get_scratch_pagetable())
-            return false;
-
-        FrameOrder c_lvl = FrameOrder::HIGHEST_ORDER;
-        FrameOrder expected = next_vpn(c_lvl);
-        PageTable *p_table = table;
-        size_t used_frames = 0;
-        while (c_lvl != p_lvl)
-        {
-            walk_table(vaddress, &p_table, &c_lvl);
-            if (c_lvl == expected)
-            {
-                expected = next_vpn(expected);
-                continue;
-            }
-
-            PageTable *vt = translated_page_vaddress(p_table);
-            size_t idx = get_page_entry_index(vaddress, c_lvl);
-            auto *entry = &(vt->get_entry(idx));
-
-            // Address already mapped
-            if (entry->is_leaf())
-                return false;
-
-            if (!(entry->is_valid()))
-            {
-                // If entry is not valid, either it has been swapped or it never been mapped
-                // TODO: add code to check for swapped pages
-                if (f_src == nullptr || used_frames == f_count)
-                {
-                    // TODO: add proper error handling
-                    return used_frames;
-                }
-                void *frame = f_src[used_frames];
-                f_src[used_frames++] = nullptr;
-
-                entry->point_to_table(reinterpret_cast<PageTable *>(frame));
-                auto vt = translated_page_vaddress(reinterpret_cast<PageTable *>(frame));
-                memset(vt, 0, PAGE_FRAME_SIZE);
-                // Recovering t, given that we have mapped other page table
-                vt = translated_page_vaddress(p_table);
-            }
-
-            c_lvl = next_vpn(c_lvl);
-            expected = next_vpn(expected);
-            p_table = entry->as_table_pointer();
-        }
-        direct_frame_map(paddress, vaddress, p_table, c_lvl, flags);
-        return used_frames;
-    }
-
-    bool kmunmap(const void *vaddress, PageTable *ptable, FrameKB **f_dst, const size_t &limit)
-    {
-        if (vaddress == nullptr || ptable == nullptr)
-            return false;
-
-        // We assume we are using the highest possible page level.
-        FrameOrder current_level = FrameOrder::HIGHEST_ORDER;
-
-        // Stores all pages used to reach the address
-        PageTable *table_path[(size_t)(FrameOrder::HIGHEST_ORDER) + 1];
-
-        size_t i = 0;
-        while (current_level != FrameOrder::FIRST_ORDER)
-        {
-            table_path[i++] = ptable;
-            // If the current page contains a leaf node, the page will not be walked.
-            // Thus later it will break out of the loop
-            walk_table(vaddress, &ptable, &current_level);
-            PageTable *vtable = translated_page_vaddress(ptable);
-
-            size_t idx = get_page_entry_index(vaddress, current_level);
-            TableEntry &entry = vtable->get_entry(idx);
-
-            if (!entry.is_valid())
-            {
-                // HANDLE SWAPPED PAGES?
-                return false;
-            }
-
-            if (entry.is_leaf())
-                break;
-        }
-
-        PageTable *vtable = translated_page_vaddress(ptable);
-        auto &entry = vtable->get_entry(get_page_entry_index(vaddress, current_level));
-        entry.erase();
-
-        bool freed = false;
-        size_t released = 0;
-        while (true)
-        {
-            PageTable *ph_table = table_path[--i];
-            PageTable *vh_table = translated_page_vaddress(ph_table);
-
-            if (freed)
-            {
-                auto &entry = vh_table->get_entry(get_page_entry_index(vaddress, current_level));
-                entry.erase();
-            }
-
-            if (vh_table->is_empty())
-            {
-                if (released < limit)
-                {
-                    f_dst[released] = ph_table;
-                    ++released;
-                    freed = true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-
-            current_level = next_vpn(current_level);
-
-            if (i == 0)
-                break;
-        }
-
-        return true;
     }
 
     void setup_kernel_memory_map(bootinfo *b_info)

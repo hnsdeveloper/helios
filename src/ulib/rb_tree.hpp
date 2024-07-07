@@ -957,6 +957,11 @@ namespace hls
             return null() != n ? n : p;
         }
 
+        bool is_valid_node(node_const_ptr node) const
+        {
+            return node && (node != null());
+        }
+
         iterator begin()
         {
             return iterator(this, get_in_order_successor(nullptr));
