@@ -26,12 +26,21 @@ SOFTWARE.
 #ifndef __DEVICETREE_HPP_
 #define __DEVICETREE_HPP_
 
+#include "misc/libfdt/libfdt.h"
+#include "misc/types.hpp"
+
 namespace hls
 {
+    struct reg_prop
+    {
+        void *mem_address;
+        size_t mem_size;
+    };
 
     void mapfdt(void *fdt);
-
     void *get_fdt();
+
+    reg_prop read_fdt_prop_reg_prop(void *fdt, int node, const fdt32_t *p_a_cells, const fdt32_t *p_s_cells);
 
 } // namespace hls
 

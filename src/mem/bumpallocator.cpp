@@ -23,22 +23,49 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef _CONCEPTS_H_
-#define _CONCEPTS_H_
-
-#include "misc/typetraits.hpp"
+#include "mem/bumpallocator.hpp"
+#include "sys/mem.hpp"
+#include "sys/print.hpp"
 
 namespace hls
 {
-    template <typename T>
-    concept Integral = is_integral_v<T>;
+    BumpAllocator::BumpAllocator(size_t typesize)
+    {
+        m_items_list = nullptr;
+        m_items_count = 0;
+        m_type_size = typesize;
+        expand_from_frame(m_initialmemory);
+    }
 
-    template <typename T>
-    concept SignedIntegral = is_integral_v<T> && is_signed_v<T>;
+    void BumpAllocator::expand_from_frame(void *frame_address)
+    {
+        for (byte *i = as_byte_ptr(frame_address); (i + m_type_size) < (as_byte_ptr(frame_address) + FrameKB::s_size);
+             i += m_type_size)
+            release_mem(i);
+    }
 
-    template <typename T>
-    concept UnsignedIntegral = is_integral_v<T> && !is_signed_v<T>;
+    void *BumpAllocator::get_mem()
+    {
+        if (m_items_count > 0)
+        {
+            --m_items_count;
+            auto ret = m_items_list;
+            m_items_list = *reinterpret_cast<void **>(m_items_list);
+            return ret;
+        }
+        return nullptr;
+    }
 
-}; // namespace hls
+    void BumpAllocator::release_mem(const void *ptr)
+    {
+        *reinterpret_cast<void **>(const_cast<void *>(ptr)) = m_items_list;
+        m_items_list = const_cast<void *>(ptr);
+        ++m_items_count;
+    }
 
-#endif
+    size_t BumpAllocator::available_count() const
+    {
+        return m_items_count;
+    }
+
+} // namespace hls

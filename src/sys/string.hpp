@@ -249,6 +249,8 @@ namespace hls
         size_t i = 0;                                                                                                  \
         while (str1 && str2 && i++ < n)                                                                                \
         {                                                                                                              \
+            a = *str1;                                                                                                 \
+            b = *str2;                                                                                                 \
             if (*str1 != *str2 || !(*str1) || !(*str2))                                                                \
                 break;                                                                                                 \
             ++str1;                                                                                                    \

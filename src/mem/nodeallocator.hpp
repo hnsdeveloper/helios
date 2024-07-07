@@ -23,32 +23,63 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef _LIMITS_H_
-#define _LIMITS_H_
+#ifndef _NODEALLOCATOR_HPP_
+#define _NODEALLOCATOR_HPP_
 
-#include "misc/concepts.hpp"
+#include "arch/riscv64gc/plat_def.hpp"
+#include "mem/bumpallocator.hpp"
 #include "misc/types.hpp"
+#include "misc/utilities.hpp"
+#include "sys/mem.hpp"
 
 namespace hls
 {
-
     template <typename T>
-    struct limit;
-
-    template <SignedIntegral T>
-    struct limit<T>
+    class NodeAllocator
     {
-        static constexpr T max = (((T(1) << (sizeof(T) * 8 - 2)) - 1) * 2) + 1;
-        static constexpr T min = -max - 1;
+        SET_USING_CLASS(T, type);
+        BumpAllocator *m_bump_allocator;
+
+      public:
+        NodeAllocator(BumpAllocator &allocator) : m_bump_allocator(&allocator)
+        {
+        }
+
+        template <typename... Args>
+        type_ptr create(Args... args)
+        {
+            type_ptr v = allocate();
+            if (v != nullptr)
+            {
+                new (v) type(hls::forward<Args>(args)...);
+            }
+            return v;
+        }
+
+        void destroy(type_const_ptr p)
+        {
+            if (p == nullptr)
+                return;
+
+            type_ptr p_nc = const_cast<type_ptr>(p);
+            (*p_nc).~type();
+            deallocate(p_nc);
+        }
+
+        type_ptr allocate()
+        {
+            void *p = m_bump_allocator->get_mem();
+            return reinterpret_cast<type_ptr>(p);
+        }
+
+        void deallocate(type_const_ptr p)
+        {
+            if (p == nullptr)
+                return;
+            m_bump_allocator->release_mem(p);
+        }
     };
 
-    template <UnsignedIntegral T>
-    struct limit<T>
-    {
-        static constexpr T max = T(0) - T(1);
-        static constexpr T min = T(0);
-    };
-
-}; // namespace hls
+} // namespace hls
 
 #endif

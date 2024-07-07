@@ -47,8 +47,7 @@ int32_t fdt_ro_probe_(const void *fdt)
     {
         return -FDT_ERR_BADMAGIC;
     }
-
-    if (totalsize < hls::limit<int32_t>::max)
+    if (totalsize < std::numeric_limits<int32_t>::max())
         return totalsize;
     else
         return -FDT_ERR_TRUNCATED;
@@ -110,7 +109,7 @@ int fdt_check_header(const void *fdt)
     hdrsize = fdt_header_size(fdt);
     if (!can_assume(VALID_DTB))
     {
-        if ((fdt_totalsize(fdt) < hdrsize) || (fdt_totalsize(fdt) > hls::limit<int32_t>::max))
+        if ((fdt_totalsize(fdt) < hdrsize) || (fdt_totalsize(fdt) > std::numeric_limits<int32_t>::max()))
             return -FDT_ERR_TRUNCATED;
 
         /* Bounds check memrsv block */
@@ -190,7 +189,7 @@ uint32_t fdt_next_tag(const void *fdt, int startoffset, int *nextoffset)
 
         len = fdt32_to_cpu(*lenp);
         sum = len + offset;
-        if (!can_assume(VALID_DTB) && (hls::limit<int32_t>::max <= sum || sum < (uint32_t)offset))
+        if (!can_assume(VALID_DTB) && (std::numeric_limits<int32_t>::max() <= sum || sum < (uint32_t)offset))
             return FDT_END; /* premature end */
 
         /* skip-name offset, length and value */

@@ -120,40 +120,40 @@ namespace hls
         return entries()[entry_index];
     }
 
-    FrameLevel next_vpn(FrameLevel v)
+    FrameOrder next_vpn(FrameOrder v)
     {
-        if (v == FrameLevel::FIRST_VPN)
+        if (v == FrameOrder::LOWEST_ORDER)
             return v;
-        return static_cast<FrameLevel>(static_cast<size_t>(v) - 1);
+        return static_cast<FrameOrder>(static_cast<size_t>(v) - 1);
     }
 
-    size_t get_frame_size(FrameLevel lvl)
+    size_t get_frame_size(FrameOrder lvl)
     {
         switch (lvl)
         {
-        case FrameLevel::KB_VPN:
-            return FrameInfo<FrameLevel::KB_VPN>::s_size;
-        case FrameLevel::MB_VPN:
-            return FrameInfo<FrameLevel::MB_VPN>::s_size;
-        case FrameLevel::GB_VPN:
-            return FrameInfo<FrameLevel::GB_VPN>::s_size;
-        case FrameLevel::TB_VPN:
-            return FrameInfo<FrameLevel::TB_VPN>::s_size;
+        case FrameOrder::FIRST_ORDER:
+            return FrameInfo<FrameOrder::FIRST_ORDER>::s_size;
+        case FrameOrder::SECOND_ORDER:
+            return FrameInfo<FrameOrder::SECOND_ORDER>::s_size;
+        case FrameOrder::THIRD_ORDER:
+            return FrameInfo<FrameOrder::THIRD_ORDER>::s_size;
+        case FrameOrder::FOURTH_ORDER:
+            return FrameInfo<FrameOrder::FOURTH_ORDER>::s_size;
         default:
             return 0;
         }
     }
 
-    size_t get_frame_alignment(FrameLevel lvl)
+    size_t get_frame_alignment(FrameOrder lvl)
     {
         return get_frame_size(lvl);
     }
 
-    FrameLevel get_fit_level(size_t bytes)
+    FrameOrder get_fit_level(size_t bytes)
     {
-        FrameLevel lvl = FrameLevel::LAST_VPN;
+        FrameOrder lvl = FrameOrder::HIGHEST_ORDER;
 
-        while (lvl != FrameLevel::FIRST_VPN)
+        while (lvl != FrameOrder::LOWEST_ORDER)
         {
             if (bytes <= get_frame_size(lvl) && bytes > get_frame_size(next_vpn(lvl)))
                 return next_vpn(lvl);

@@ -1,17 +1,35 @@
-//
-//  variant.hpp
-//  dummy
-//
-//  Created by Helio Santos on 21/06/2024.
-//
+/*---------------------------------------------------------------------------------
+MIT License
+
+Copyright (c) 2024 Helio Nunes Santos
+
+        Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"), to
+deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---------------------------------------------------------------------------------*/
 
 #ifndef _VARIANT_HPP_
 #define _VARIANT_HPP_
 
 #include "misc/new.hpp"
-#include "misc/typetraits.hpp"
 #include "misc/utilities.hpp"
 #include "sys/mem.hpp"
+#include <type_traits>
 
 namespace hls
 {
@@ -102,7 +120,7 @@ namespace hls
             template <typename U>
             static constexpr size_t get_type_index()
             {
-                if (hls::is_same_v<U, T>)
+                if (std::is_same_v<U, T>)
                     return curr_idx;
                 return next::template get_type_index<U>();
             }
@@ -161,13 +179,23 @@ namespace hls
             }
         };
 
+        template <typename T, typename U>
+        class biggest_type
+        {
+          public:
+            using type = std::conditional_t<(sizeof(T) > sizeof(U)), T, U>;
+        };
+
+        template <typename T, typename U>
+        using biggest_type_t = biggest_type<T, U>::type;
+
     } // namespace detail
 
     template <typename T, typename... Args>
     class Variant
     {
         using helper = typename detail::Helper<sizeof...(Args) + 1, 0, T, Args...>;
-        using BiggestType = detail::compare_property<biggest_type, T, Args...>::property_first;
+        using BiggestType = detail::compare_property<detail::biggest_type_t, T, Args...>::property_first;
 
         alignas(BiggestType) byte m_data[sizeof(BiggestType)];
         size_t m_held_id;
@@ -188,10 +216,10 @@ namespace hls
         Variant() : m_held_id(0), m_has_val(false) {};
 
         template <typename U>
-            requires is_one_of_v<hls::remove_cvref_t<U>, T, Args...>
+            requires(std::is_same_v<U, T> || (std::is_same_v<T, Args> || ...))
         explicit Variant(U &&val)
         {
-            using t = hls::remove_cvref_t<U>;
+            using t = std::remove_cvref_t<U>;
             m_held_id = helper::template get_type_index<t>();
 
             void *ptr = helper::aligned_buffer(get_held_id(), m_data, sizeof(m_data));
@@ -201,7 +229,7 @@ namespace hls
 
         // Uses RVO to construct a variant in place
         template <typename U, typename... UArgs>
-            requires is_one_of_v<U, T, Args...>
+            requires(std::is_same_v<U, T> || (std::is_same_v<T, Args> || ...))
         static Variant in_place(UArgs &&...args)
         {
             Variant v;
@@ -266,10 +294,11 @@ namespace hls
                     other.clear();
                 }
             }
+            return *this;
         }
 
         template <typename U>
-            requires is_one_of_v<U, T, Args...>
+            requires(std::is_same_v<U, T> || (std::is_same_v<T, Args> || ...))
         U &get_value_or_default(U &&def)
         {
             const auto &as_const = *this;
@@ -277,7 +306,7 @@ namespace hls
         }
 
         template <typename U>
-            requires is_one_of_v<U, T, Args...>
+            requires(std::is_same_v<U, T> || (std::is_same_v<T, Args> || ...))
         const U &get_value_or_default(U &&def) const
         {
             auto p = get_value_ptr<U>();
@@ -287,7 +316,7 @@ namespace hls
         }
 
         template <typename U>
-            requires is_one_of_v<U, T, Args...>
+            requires(std::is_same_v<U, T> || (std::is_same_v<T, Args> || ...))
         const U *get_value_ptr() const
         {
             if (!is_empty() && ((get_held_id()) == helper::template get_type_index<U>()))
@@ -299,7 +328,7 @@ namespace hls
         }
 
         template <typename U>
-            requires is_one_of_v<U, T, Args...>
+            requires(std::is_same_v<U, T> || (std::is_same_v<T, Args> || ...))
         U *get_value_ptr()
         {
             const auto &as_const = *this;
@@ -317,12 +346,12 @@ namespace hls
         }
 
         template <typename U>
-            requires is_one_of_v<hls::remove_cvref_t<U>, T, Args...>
+            requires(std::is_same_v<U, T> || (std::is_same_v<T, Args> || ...))
         Variant &operator=(U &&val)
         {
             if (!is_empty())
                 clear();
-            using type = hls::remove_cvref_t<U>;
+            using type = std::remove_cvref_t<U>;
             size_t type_idx = helper::template get_type_index<type>();
             void *ptr = helper::aligned_buffer(type_idx, m_data, sizeof(m_data));
             new (ptr) type(hls::move(val));

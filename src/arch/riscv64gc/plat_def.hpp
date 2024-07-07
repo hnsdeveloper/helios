@@ -52,27 +52,27 @@ namespace hls
     using uintreg_t = uint64_t;
     using max_align_t = void *;
 
-    enum class FrameLevel : size_t
+    enum class FrameOrder : size_t
     {
-        FIRST_VPN = 0,
-        KB_VPN = 0,
-        MB_VPN = 1,
-        GB_VPN = 2,
-        TB_VPN = 3,
-        LAST_VPN = TB_VPN,
+        LOWEST_ORDER = 0,
+        FIRST_ORDER = 0,
+        SECOND_ORDER = 1,
+        THIRD_ORDER = 2,
+        FOURTH_ORDER = 3,
+        HIGHEST_ORDER = FOURTH_ORDER,
         INVALID
     };
 
-    FrameLevel next_vpn(FrameLevel v);
+    FrameOrder next_vpn(FrameOrder v);
     void _flush_tlb();
 
-    template <FrameLevel P>
+    template <FrameOrder P>
     struct FrameInfo
     {
         static constexpr size_t s_size =
-            ENTRIES_PER_TABLE * FrameInfo<static_cast<FrameLevel>(static_cast<size_t>(P) - 1)>::s_size;
+            ENTRIES_PER_TABLE * FrameInfo<static_cast<FrameOrder>(static_cast<size_t>(P) - 1)>::s_size;
         static constexpr size_t s_alignment = s_size;
-        static constexpr FrameLevel s_level = P;
+        static constexpr FrameOrder s_level = P;
 
         static bool can_fit(size_t bytes)
         {
@@ -86,14 +86,14 @@ namespace hls
     };
 
     template <>
-    struct FrameInfo<FrameLevel::INVALID>;
+    struct FrameInfo<FrameOrder::INVALID>;
 
     template <>
-    struct FrameInfo<FrameLevel::FIRST_VPN>
+    struct FrameInfo<FrameOrder::LOWEST_ORDER>
     {
         static constexpr size_t s_size = PAGE_FRAME_SIZE;
         static constexpr size_t s_alignment = s_size;
-        static constexpr FrameLevel s_level = FrameLevel::FIRST_VPN;
+        static constexpr FrameOrder s_level = FrameOrder::LOWEST_ORDER;
 
         static bool can_fit(size_t bytes)
         {
@@ -106,14 +106,14 @@ namespace hls
         }
     };
 
-    size_t get_frame_size(FrameLevel lvl);
-    size_t get_frame_alignment(FrameLevel lvl);
+    size_t get_frame_size(FrameOrder lvl);
+    size_t get_frame_alignment(FrameOrder lvl);
 
-    FrameLevel get_fit_level(size_t bytes);
+    FrameOrder get_fit_level(size_t bytes);
 
     struct TableEntry;
     struct PageTable;
-    template <FrameLevel type>
+    template <FrameOrder type>
     struct PageFrame;
 
     struct __attribute__((packed)) TableEntry
@@ -144,24 +144,24 @@ namespace hls
         void unset_flags(uint64_t flags);
     };
 
-    template <FrameLevel v>
+    template <FrameOrder v>
     struct __attribute__((packed)) PageFrame
     {
         static constexpr size_t s_size = FrameInfo<v>::s_size;
         static constexpr size_t s_alignment = FrameInfo<v>::s_alignment;
-        static constexpr FrameLevel s_level = FrameInfo<v>::s_level;
+        static constexpr FrameOrder s_level = FrameInfo<v>::s_level;
 
         char data[FrameInfo<v>::s_size];
     };
 
     template <>
-    struct __attribute__((packed)) PageFrame<FrameLevel::KB_VPN>
+    struct __attribute__((packed)) PageFrame<FrameOrder::FIRST_ORDER>
     {
-        static constexpr size_t s_size = FrameInfo<FrameLevel::KB_VPN>::s_size;
-        static constexpr size_t s_alignment = FrameInfo<FrameLevel::KB_VPN>::s_alignment;
-        static constexpr FrameLevel s_level = FrameInfo<FrameLevel::KB_VPN>::s_level;
+        static constexpr size_t s_size = FrameInfo<FrameOrder::FIRST_ORDER>::s_size;
+        static constexpr size_t s_alignment = FrameInfo<FrameOrder::FIRST_ORDER>::s_alignment;
+        static constexpr FrameOrder s_level = FrameInfo<FrameOrder::FIRST_ORDER>::s_level;
 
-        char data[FrameInfo<FrameLevel::KB_VPN>::s_size];
+        char data[FrameInfo<FrameOrder::FIRST_ORDER>::s_size];
 
         PageTable *as_table()
         {
@@ -169,7 +169,7 @@ namespace hls
         }
     };
 
-    struct __attribute__((packed)) PageTable : public PageFrame<FrameLevel::KB_VPN>
+    struct __attribute__((packed)) PageTable : public PageFrame<FrameOrder::FIRST_ORDER>
     {
         static constexpr size_t entries_on_table = ENTRIES_PER_TABLE;
         TableEntry *entries();
@@ -178,15 +178,15 @@ namespace hls
         bool is_empty();
     };
 
-    using FrameKB = PageFrame<FrameLevel::KB_VPN>;
-    static_assert(sizeof(FrameKB) == FrameInfo<FrameLevel::KB_VPN>::s_size);
+    using FrameKB = PageFrame<FrameOrder::FIRST_ORDER>;
+    static_assert(sizeof(FrameKB) == FrameInfo<FrameOrder::FIRST_ORDER>::s_size);
     static_assert(sizeof(PageTable) == sizeof(FrameKB));
-    using FrameMB = PageFrame<FrameLevel::MB_VPN>;
-    static_assert(sizeof(FrameMB) == FrameInfo<FrameLevel::MB_VPN>::s_size);
-    using FrameGB = PageFrame<FrameLevel::GB_VPN>;
-    static_assert(sizeof(FrameGB) == FrameInfo<FrameLevel::GB_VPN>::s_size);
-    using FrameTB = PageFrame<FrameLevel::TB_VPN>;
-    static_assert(sizeof(FrameTB) == FrameInfo<FrameLevel::TB_VPN>::s_size);
+    using FrameMB = PageFrame<FrameOrder::SECOND_ORDER>;
+    static_assert(sizeof(FrameMB) == FrameInfo<FrameOrder::SECOND_ORDER>::s_size);
+    using FrameGB = PageFrame<FrameOrder::THIRD_ORDER>;
+    static_assert(sizeof(FrameGB) == FrameInfo<FrameOrder::THIRD_ORDER>::s_size);
+    using FrameTB = PageFrame<FrameOrder::FOURTH_ORDER>;
+    static_assert(sizeof(FrameTB) == FrameInfo<FrameOrder::FOURTH_ORDER>::s_size);
 
     using GranularPage = FrameKB;
 

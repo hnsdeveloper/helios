@@ -23,55 +23,53 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef _PAIR_HPP_
-#define _PAIR_HPP_
+#ifndef _SINGLETON_HPP_
+#define _SINGLETON_HPP_
 
+#include "misc/macros.hpp"
+#include "misc/new.hpp"
+#include "misc/types.hpp"
 #include "misc/utilities.hpp"
-#include <type_traits>
+#include "sys/mem.hpp"
+#include "sys/panic.hpp"
+#include "sys/print.hpp"
+#include "ulib/pair.hpp"
 
 namespace hls
 {
-
-    template <typename T, typename U>
-    class Pair
+    template <typename ClassType>
+    class Singleton
     {
+        SET_USING_CLASS(ClassType, class_t);
 
-        SET_USING_CLASS(T, first_type);
-        SET_USING_CLASS(U, second_type);
+        static Pair<class_t_ptr, bool *> mem_get()
+        {
+            static bool initialized = false;
+            alignas(class_t) static byte mem[sizeof(class_t)];
+
+            return {reinterpret_cast<class_t_ptr>(mem), &initialized};
+        }
 
       public:
-        Pair() = default;
-        Pair(T &&a, U &&b) : first(hls::move(a)), second(hls::move(b)) {};
-        Pair(const T &a, const U &b) : first(a), second(b) {};
-        Pair(Pair &&p) : first(hls::move(p.first)), second(hls::move(p.second)) {};
-        Pair(const Pair &p) : first(p.first), second(p.second) {};
-        ~Pair() = default;
-
-        first_type first;
-        second_type second;
-
-        Pair &operator=(Pair &other)
+        static class_t_reference get_global_instance()
         {
-            first = other.first;
-            second = other.second;
+            auto p = mem_get();
+            if (*(p.second) == false)
+                PANIC("Attempting to use unitialized singleton.");
+            return *(p.first);
         }
 
-        Pair &operator=(Pair &&other)
+        template <typename... Args>
+        static void initialize_global_instance(Args... args)
         {
-            first = hls::move(other.first);
-            second = hls::move(other.second);
+            auto p = mem_get();
+            if (*(p.second) == false)
+            {
+                new (p.first) class_t(hls::forward<Args>(args)...);
+                *(p.second) = true;
+            }
         }
     };
-
-    template <typename T, typename U>
-    auto make_pair(T &&first, U &&second)
-    {
-        using first_type = std::remove_cvref_t<decltype(first)>;
-        using second_type = std::remove_cvref_t<decltype(second)>;
-
-        return Pair<first_type, second_type>(hls::move(first), hls::move(second));
-    };
-
 } // namespace hls
 
 #endif

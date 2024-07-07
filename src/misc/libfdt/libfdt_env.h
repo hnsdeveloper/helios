@@ -14,10 +14,10 @@
 // #include <string.h>
 // #include <limits.h>
 
-#include "misc/limits.hpp"
 #include "misc/types.hpp"
 #include "sys/mem.hpp"
 #include "sys/string.hpp"
+#include <limits>
 
 #ifdef __CHECKER__
 #define FDT_FORCE __attribute__((force))

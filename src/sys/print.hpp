@@ -25,11 +25,11 @@ SOFTWARE.
 #ifndef _PRINT_HPP_
 #define _PRINT_HPP_
 
-#include "misc/limits.hpp"
 #include "misc/types.hpp"
-#include "misc/typetraits.hpp"
 #include "sys/mem.hpp"
 #include "sys/opensbi.hpp"
+#include <limits>
+#include <type_traits>
 namespace hls
 {
 
@@ -124,7 +124,7 @@ namespace hls
         else                                                                                                           \
         {                                                                                                              \
             opensbi_putchar('-');                                                                                      \
-            if (v == hls::limit<int64_t>::min)                                                                         \
+            if (v == std::numeric_limits<int64_t>::min())                                                              \
             {                                                                                                          \
                 v += 1;                                                                                                \
                 v = -v;                                                                                                \
@@ -217,30 +217,30 @@ namespace hls
                     break;
                 }
                 using type = decltype(p);
-                if constexpr (is_same_v<type, const char *>)
+                if constexpr (std::is_same_v<type, const char *>)
                 {
                     strprint(p);
                 }
-                else if constexpr (is_same_v<remove_cvref_t<type>, char>)
+                else if constexpr (std::is_same_v<std::remove_cvref_t<type>, char>)
                 {
                     opensbi_putchar(p);
                 }
-                else if constexpr (is_pointer_v<type>)
+                else if constexpr (std::is_pointer_v<type>)
                 {
                     ptrprint(p);
                 }
-                else if constexpr (is_integral_v<type>)
+                else if constexpr (std::is_integral_v<type>)
                 {
-                    if (is_signed<type>::value)
+                    if (std::is_signed<type>::value)
                     {
                         intprint(p);
                     }
-                    else if constexpr (!is_signed<type>::value)
+                    else if constexpr (!std::is_signed<type>::value)
                     {
                         uintprint(p);
                     }
                 }
-                else if constexpr (is_floating_point_v<type>)
+                else if constexpr (std::is_floating_point_v<type>)
                 {
                     floatprint(p);
                 }
@@ -315,7 +315,7 @@ namespace hls
 #define kspit(expr)                                                                                                    \
     if constexpr (true)                                                                                                \
     {                                                                                                                  \
-        if constexpr (is_integral_v<decltype(expr)>)                                                                   \
+        if constexpr (std::is_integral_v<decltype(expr)>)                                                              \
         {                                                                                                              \
             const void *p = reinterpret_cast<const void *>(expr);                                                      \
             auto p2 = expr;                                                                                            \

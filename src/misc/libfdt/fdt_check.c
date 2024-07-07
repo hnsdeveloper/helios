@@ -59,7 +59,7 @@ int fdt_check_full(const void *fdt, size_t bufsize)
 
         case FDT_BEGIN_NODE:
             depth++;
-            if (depth > hls::limit<int>::max)
+            if (depth > std::numeric_limits<int>::max())
                 return -FDT_ERR_BADSTRUCTURE;
 
             /* The root node must have an empty name */

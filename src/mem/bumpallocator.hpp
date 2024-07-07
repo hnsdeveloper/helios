@@ -23,55 +23,33 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef _PAIR_HPP_
-#define _PAIR_HPP_
+#ifndef _BUMPALLOCATOR_HPP_
+#define _BUMPALLOCATOR_HPP_
 
-#include "misc/utilities.hpp"
-#include <type_traits>
+#include "arch/riscv64gc/plat_def.hpp"
+#include "misc/types.hpp"
 
 namespace hls
 {
-
-    template <typename T, typename U>
-    class Pair
+    class BumpAllocator
     {
-
-        SET_USING_CLASS(T, first_type);
-        SET_USING_CLASS(U, second_type);
+        byte m_initialmemory[FrameKB::s_size];
+        void *m_items_list;
+        size_t m_items_count;
+        size_t m_type_size;
 
       public:
-        Pair() = default;
-        Pair(T &&a, U &&b) : first(hls::move(a)), second(hls::move(b)) {};
-        Pair(const T &a, const U &b) : first(a), second(b) {};
-        Pair(Pair &&p) : first(hls::move(p.first)), second(hls::move(p.second)) {};
-        Pair(const Pair &p) : first(p.first), second(p.second) {};
-        ~Pair() = default;
+        BumpAllocator(size_t typesize);
+        BumpAllocator(const BumpAllocator &) = delete;
+        BumpAllocator(BumpAllocator &&) = delete;
 
-        first_type first;
-        second_type second;
+        void expand_from_frame(void *frame_address);
+        void *get_mem();
 
-        Pair &operator=(Pair &other)
-        {
-            first = other.first;
-            second = other.second;
-        }
+        void release_mem(const void *ptr);
 
-        Pair &operator=(Pair &&other)
-        {
-            first = hls::move(other.first);
-            second = hls::move(other.second);
-        }
+        size_t available_count() const;
     };
-
-    template <typename T, typename U>
-    auto make_pair(T &&first, U &&second)
-    {
-        using first_type = std::remove_cvref_t<decltype(first)>;
-        using second_type = std::remove_cvref_t<decltype(second)>;
-
-        return Pair<first_type, second_type>(hls::move(first), hls::move(second));
-    };
-
 } // namespace hls
 
-#endif
+#endif /* bumpallocator_hpp */

@@ -64,10 +64,12 @@ extern "C" void die();
  *
  */
 #define PANIC(msg)                                                                                                     \
-    PRINT_REGISTERS();                                                                                                 \
-    kprintln("Panic message: {}", #msg);                                                                               \
-    kprintln("At {} {} line: {}", __FILE__, __PRETTY_FUNCTION__, __LINE__);                                            \
-    stack_trace();                                                                                                     \
-    die();
+    {                                                                                                                  \
+        PRINT_REGISTERS();                                                                                             \
+        kprintln("Panic message: {}", #msg);                                                                           \
+        kprintln("At {} {} line: {}", __FILE__, __PRETTY_FUNCTION__, __LINE__);                                        \
+        stack_trace();                                                                                                 \
+        die();                                                                                                         \
+    }
 
 #endif

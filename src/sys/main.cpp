@@ -55,12 +55,16 @@ namespace hls
     __attribute__((noreturn)) void kernel_main(bootinfo *b_info)
     {
         display_initial_info();
-
         setup_kernel_memory_map(b_info);
         init_initfalloc(b_info->used_bootpages, get_kernel_pagetable());
         unmap_low_kernel(b_info->p_lowkernel_start, b_info->p_lowkernel_end);
         mapfdt(get_device_tree_from_options(b_info->argc, b_info->argv));
         initialize_frame_manager(get_fdt(), b_info);
+        VMMap::initialize_global_instance(get_kernel_pagetable(), (void *)(0x80000000), (void *)(0x90000000));
+        VMMap::get_global_instance().map_memory((void *)(0x10000000), (void *)(0x80000000), FrameOrder::LOWEST_ORDER,
+                                                0);
+        while (true)
+            ;
         initialize_kmalloc();
 
         while (true)

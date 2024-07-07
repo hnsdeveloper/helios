@@ -10,42 +10,39 @@ $(BUILD_DIR)devicetree.o: devicetree.cpp devicetree.hpp \
   $(INCLUDE_DIR)arch/riscv64gc/plat_def.hpp $(INCLUDE_DIR)misc/macros.hpp $(INCLUDE_DIR)misc/types.hpp \
   $(INCLUDE_DIR)mem/framemanager.hpp bootdata.hpp $(INCLUDE_DIR)mem/mmap.hpp \
   cpu.hpp $(INCLUDE_DIR)misc/libfdt/libfdt.h $(INCLUDE_DIR)misc/libfdt/libfdt_env.h \
-  $(INCLUDE_DIR)misc/limits.hpp $(INCLUDE_DIR)misc/concepts.hpp $(INCLUDE_DIR)misc/typetraits.hpp \
   mem.hpp string.hpp $(INCLUDE_DIR)misc/libfdt/fdt.h
-	$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) -I$(INCLUDE_DIR) -o $@ $<
+	@echo "Making $@"
+	@$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) -I$(INCLUDE_DIR) -o $@ $<
 
 $(BUILD_DIR)bootoptions.o: bootoptions.cpp bootoptions.hpp \
   $(INCLUDE_DIR)misc/leanmeanparser/optionparser.hpp $(INCLUDE_DIR)misc/types.hpp \
-  print.hpp $(INCLUDE_DIR)misc/limits.hpp $(INCLUDE_DIR)misc/concepts.hpp \
-  $(INCLUDE_DIR)misc/typetraits.hpp mem.hpp opensbi.hpp \
-  string.hpp cpu.hpp
-	$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) -I$(INCLUDE_DIR) -o $@ $<
+  print.hpp mem.hpp opensbi.hpp string.hpp cpu.hpp
+	@echo "Making $@"
+	@$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) -I$(INCLUDE_DIR) -o $@ $<
 
 $(BUILD_DIR)panic.o: panic.cpp panic.hpp \
   $(INCLUDE_DIR)arch/riscv64gc/plat_def.hpp $(INCLUDE_DIR)misc/macros.hpp $(INCLUDE_DIR)misc/types.hpp \
-  print.hpp $(INCLUDE_DIR)misc/limits.hpp $(INCLUDE_DIR)misc/concepts.hpp \
-  $(INCLUDE_DIR)misc/typetraits.hpp mem.hpp opensbi.hpp
-	$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) -I$(INCLUDE_DIR) -o $@ $<
+  mem.hpp opensbi.hpp
+	@echo "Making $@"
+	@$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) -I$(INCLUDE_DIR) -o $@ $<
 
 $(BUILD_DIR)cpu.o: cpu.cpp cpu.hpp $(INCLUDE_DIR)misc/types.hpp \
   $(INCLUDE_DIR)arch/riscv64gc/plat_def.hpp $(INCLUDE_DIR)misc/macros.hpp
-	$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) -I$(INCLUDE_DIR) -o $@ $<
+	@echo "Making $@"
+	@$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) -I$(INCLUDE_DIR) -o $@ $<
 
 $(BUILD_DIR)kmalloc.o: kmalloc.cpp kmalloc.hpp $(INCLUDE_DIR)misc/macros.hpp \
   $(INCLUDE_DIR)misc/new.hpp $(INCLUDE_DIR)misc/types.hpp $(INCLUDE_DIR)misc/utilities.hpp \
-  $(INCLUDE_DIR)misc/typetraits.hpp $(INCLUDE_DIR)mem/framemanager.hpp \
-  $(INCLUDE_DIR)arch/riscv64gc/plat_def.hpp bootdata.hpp panic.hpp \
-  print.hpp $(INCLUDE_DIR)misc/limits.hpp $(INCLUDE_DIR)misc/concepts.hpp \
-  mem.hpp opensbi.hpp
-	$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) -I$(INCLUDE_DIR) -o $@ $<
+  $(INCLUDE_DIR)mem/framemanager.hpp $(INCLUDE_DIR)arch/riscv64gc/plat_def.hpp bootdata.hpp panic.hpp \
+  print.hpp mem.hpp opensbi.hpp
+	@echo "Making $@"
+	@$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) -I$(INCLUDE_DIR) -o $@ $<
 
 $(BUILD_DIR)main.o: main.cpp $(INCLUDE_DIR)arch/riscv64gc/plat_def.hpp \
   $(INCLUDE_DIR)misc/macros.hpp $(INCLUDE_DIR)misc/types.hpp $(INCLUDE_DIR)mem/framemanager.hpp \
-  bootdata.hpp $(INCLUDE_DIR)mem/mmap.hpp cpu.hpp \
-  $(INCLUDE_DIR)misc/githash.hpp $(INCLUDE_DIR)misc/leanmeanparser/optionparser.hpp \
-  $(INCLUDE_DIR)misc/splash.hpp $(INCLUDE_DIR)misc/symbols.hpp bootoptions.hpp \
-  print.hpp $(INCLUDE_DIR)misc/limits.hpp $(INCLUDE_DIR)misc/concepts.hpp \
-  $(INCLUDE_DIR)misc/typetraits.hpp mem.hpp opensbi.hpp \
-  string.hpp devicetree.hpp kmalloc.hpp \
-  $(INCLUDE_DIR)misc/new.hpp $(INCLUDE_DIR)misc/utilities.hpp
-	$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) -I$(INCLUDE_DIR) -o $@ $<
+  bootdata.hpp $(INCLUDE_DIR)mem/mmap.hpp cpu.hpp $(INCLUDE_DIR)misc/githash.hpp \
+  $(INCLUDE_DIR)misc/leanmeanparser/optionparser.hpp $(INCLUDE_DIR)misc/splash.hpp $(INCLUDE_DIR)misc/symbols.hpp \
+  bootoptions.hpp mem.hpp opensbi.hpp string.hpp devicetree.hpp kmalloc.hpp $(INCLUDE_DIR)misc/new.hpp \
+  $(INCLUDE_DIR)misc/utilities.hpp
+	@echo "Making $@"
+	@$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) -I$(INCLUDE_DIR) -o $@ $<

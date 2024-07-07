@@ -141,7 +141,11 @@ namespace hls
             if (a != b)                                                                                                \
                 break;                                                                                                 \
         }                                                                                                              \
-        return a - b;                                                                                                  \
+        if (a > b)                                                                                                     \
+            return 1;                                                                                                  \
+        else if (b > a)                                                                                                \
+            return -1;                                                                                                 \
+        return 0;                                                                                                      \
     }                                                                                                                  \
     (__ptr1mcmp, __ptr2mcmp, __nummcmp)
 #endif
@@ -335,7 +339,8 @@ namespace hls
     [](uint32_t v) -> uint32_t __attribute__((always_inline))                                                          \
     {                                                                                                                  \
         return ((v & 0xFF) << 24) | ((v & 0xFF00) << 8) | ((v >> 8) & 0xFF00) | ((v >> 24) | 0xFF);                    \
-    };
+    }                                                                                                                  \
+    (__v)
 #endif
 
 #ifndef __BSWAP64
@@ -411,7 +416,7 @@ namespace hls
 #ifndef __GETNEEDEDPAGES
 #define __GETNEEDEDPAGES
 #define get_needed_pages(__mem, __memsize, __p_lvl)                                                                    \
-    [](const void *mem, size_t size, FrameLevel lvl) -> auto __attribute__((always_inline))                            \
+    [](const void *mem, size_t size, FrameOrder lvl) -> auto __attribute__((always_inline))                            \
     {                                                                                                                  \
         size_t alignment = get_frame_alignment(lvl);                                                                   \
         byte *p = reinterpret_cast<byte *>(const_cast<void *>(mem));                                                   \
@@ -423,6 +428,15 @@ namespace hls
     (__mem, __memsize, __p_lvl)
 #endif
 
+#ifndef __ISPWTWO
+#define __ISPWTWO
+#define is_power_of_two(__integral)                                                                                    \
+    [](size_t val) -> bool __attribute__(())                                                                           \
+    {                                                                                                                  \
+        return !(val & (val - 1));                                                                                     \
+    }                                                                                                                  \
+    (__integral)
+#endif
 } // namespace hls
 
 #endif

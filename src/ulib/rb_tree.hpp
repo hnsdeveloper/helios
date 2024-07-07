@@ -26,11 +26,13 @@ SOFTWARE.
 #ifndef _RB_TREE_HPP_
 #define _RB_TREE_HPP_
 
-#include "misc/limits.hpp"
 #include "misc/macros.hpp"
 #include "misc/types.hpp"
+#include "misc/utilities.hpp"
+#include "sys/print.hpp"
 #include "ulib/hash.hpp"
 #include "ulib/node.hpp"
+#include <limits>
 
 namespace hls
 {
@@ -684,7 +686,8 @@ namespace hls
         }
 
       public:
-        RedBlackTree()
+        template <typename... Args>
+        RedBlackTree(Args &&...args) : m_allocator(hls::forward<Args>(args)...)
         {
             m_root = null();
             m_size = 0;
@@ -759,74 +762,51 @@ namespace hls
             --m_size;
         }
 
-        node_ptr insert(type_const_reference key, bool print = false)
+        node_ptr insert(type_const_reference key)
         {
             if (size() == max_size())
                 return null();
 
-            if (print)
-            {
-                kspit(key.frame_pointer);
-            }
-
             auto &c = get_comparator();
             auto &h = get_hasher();
-
             node_ptr n = m_allocator.create(key, Color::RED, null());
-
-            if (print)
-            {
-                kspit(n);
-            }
 
             if (m_root != null())
             {
-                if (print)
-                {
-                    kprint("Here!");
-                }
                 // Find to which node we are going to insert node n
-                node_ptr p;
-                find_helper(h(key), &p);
-                if (print)
+                node_ptr p = m_root;
+                while (true)
                 {
-                    kspit(p);
-                    kprint("Here2!");
-                }
-                if (c(h(key), h(p->get_data())))
-                {
-                    p->set_left(n);
-                    if (print)
+                    if (c(h(p->get_data()), h(key)))
                     {
-                        kprint("Here3!");
+                        if (p->get_right() != null())
+                        {
+                            p = p->get_right();
+                        }
+                        else
+                        {
+                            p->set_right(n);
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        if (p->get_left() != null())
+                        {
+                            p = p->get_left();
+                        }
+                        else
+                        {
+                            p->set_left(n);
+                            break;
+                        }
                     }
                 }
-                else
-                {
-                    if (print)
-                    {
-                        kprint("Here4!");
-                    }
-                    p->set_right(n);
-                }
-
                 n->set_parent(p);
-                if (print)
-                {
-                    kprint("Here5!");
-                }
                 insert_fix(n);
-                if (print)
-                {
-                    kprint("Here6!");
-                }
             }
             else
             {
-                if (print)
-                {
-                    kprint("Here7!");
-                }
                 m_root = n;
                 n->set_color(Color::BLACK);
             }
@@ -977,6 +957,11 @@ namespace hls
             return null() != n ? n : p;
         }
 
+        bool is_valid_node(node_const_ptr node) const
+        {
+            return node && (node != null());
+        }
+
         iterator begin()
         {
             return iterator(this, get_in_order_successor(nullptr));
@@ -1029,7 +1014,7 @@ namespace hls
 
         size_t max_size() const
         {
-            return hls::limit<size_t>::max;
+            return std::numeric_limits<size_t>::max();
         }
 
         template <bool a, bool b>
