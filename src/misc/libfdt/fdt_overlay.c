@@ -244,10 +244,10 @@ static int overlay_update_local_node_references(void *fdto, int tree_node, int f
             /*
              * phandles to fixup can be unaligned.
              *
-             * Use a memcpy for the architectures that do
+             * Use a hls::memcpy for the architectures that do
              * not support unaligned accesses.
              */
-            memcpy(&adj_val, tree_val + poffset, sizeof(adj_val));
+            hls::memcpy(&adj_val, tree_val + poffset, sizeof(adj_val));
 
             adj_val = cpu_to_fdt32(fdt32_to_cpu(adj_val) + delta);
 
@@ -418,7 +418,7 @@ static int overlay_fixup_phandle(void *fdt, void *fdto, int symbols_off, int pro
         char *sep, *endptr;
         int poffset, ret;
 
-        fixup_end = reinterpret_cast<const char *>(memchr(value, '\0', len));
+        fixup_end = reinterpret_cast<const char *>(hls::memchr(value, '\0', len));
         if (!fixup_end)
             return -FDT_ERR_BADOVERLAY;
         fixup_len = fixup_end - fixup_str;
@@ -427,7 +427,7 @@ static int overlay_fixup_phandle(void *fdt, void *fdto, int symbols_off, int pro
         value += fixup_len + 1;
 
         path = fixup_str;
-        sep = reinterpret_cast<char *>(const_cast<void *>(memchr(fixup_str, ':', fixup_len)));
+        sep = reinterpret_cast<char *>(const_cast<void *>(hls::memchr(fixup_str, ':', fixup_len)));
         if (!sep || *sep != ':')
             return -FDT_ERR_BADOVERLAY;
 
@@ -437,7 +437,7 @@ static int overlay_fixup_phandle(void *fdt, void *fdto, int symbols_off, int pro
 
         fixup_len -= path_len + 1;
         name = sep + 1;
-        sep = reinterpret_cast<char *>(const_cast<void *>(memchr(name, ':', fixup_len)));
+        sep = reinterpret_cast<char *>(const_cast<void *>(hls::memchr(name, ':', fixup_len)));
         if (!sep || *sep != ':')
             return -FDT_ERR_BADOVERLAY;
 
@@ -700,7 +700,7 @@ static int overlay_symbol_update(void *fdt, void *fdto)
             return path_len;
 
         /* verify it's a string property (terminated by a single \0) */
-        if (path_len < 1 || memchr(path, '\0', path_len) != &path[path_len - 1])
+        if (path_len < 1 || hls::memchr(path, '\0', path_len) != &path[path_len - 1])
             return -FDT_ERR_BADVALUE;
 
         /* keep end marker to avoid strlen() */
@@ -723,13 +723,13 @@ static int overlay_symbol_update(void *fdt, void *fdto)
 
         /* verify format; safe since "s" lies in \0 terminated prop */
         len = sizeof("/__overlay__/") - 1;
-        if ((e - s) > len && (memcmp(s, "/__overlay__/", len) == 0))
+        if ((e - s) > len && (hls::memcmp(s, "/__overlay__/", len) == 0))
         {
             /* /<fragment-name>/__overlay__/<relative-subnode-path> */
             rel_path = s + len;
             rel_path_len = e - rel_path - 1;
         }
-        else if ((e - s) == len && (memcmp(s, "/__overlay__", len - 1) == 0))
+        else if ((e - s) == len && (hls::memcmp(s, "/__overlay__", len - 1) == 0))
         {
             /* /<fragment-name>/__overlay__ */
             rel_path = "";
@@ -796,13 +796,13 @@ static int overlay_symbol_update(void *fdt, void *fdto)
                     return ret;
             }
             else
-                memcpy(buf, target_path, len + 1);
+                hls::memcpy(buf, target_path, len + 1);
         }
         else
             len--;
 
         buf[len] = '/';
-        memcpy(buf + len + 1, rel_path, rel_path_len);
+        hls::memcpy(buf + len + 1, rel_path, rel_path_len);
         buf[len + 1 + rel_path_len] = '\0';
     }
 

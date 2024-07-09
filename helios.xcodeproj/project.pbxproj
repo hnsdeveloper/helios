@@ -39,6 +39,7 @@
 		99180E7C2C14DEFF00C05182 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 99180E7B2C14DEFF00C05182 /* Makefile */; };
 		99180E7E2C14E07F00C05182 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 99180E7D2C14E07F00C05182 /* Makefile */; };
 		993F375C2C34AC2E00017F49 /* bumpallocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 993F375B2C34AC2900017F49 /* bumpallocator.cpp */; };
+		993F375E2C3B9C3800017F49 /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 993F375D2C3B9C3400017F49 /* mem.cpp */; };
 		99781E462C1F6BF8008F0888 /* kmalloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99781E452C1F6BF7008F0888 /* kmalloc.cpp */; };
 /* End PBXBuildFile section */
 
@@ -127,6 +128,7 @@
 		99180E7B2C14DEFF00C05182 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		99180E7D2C14E07F00C05182 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		993F375B2C34AC2900017F49 /* bumpallocator.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = bumpallocator.cpp; sourceTree = "<group>"; };
+		993F375D2C3B9C3400017F49 /* mem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = mem.cpp; sourceTree = "<group>"; };
 		99781E442C1F6BF7008F0888 /* kmalloc.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kmalloc.hpp; sourceTree = "<group>"; };
 		99781E452C1F6BF7008F0888 /* kmalloc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = kmalloc.cpp; sourceTree = "<group>"; };
 		998911C82C29713D00AD8A27 /* bumpallocator.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = bumpallocator.hpp; sourceTree = "<group>"; };
@@ -287,6 +289,7 @@
 				99180E2F2C128D1D00C05182 /* devicetree.hpp */,
 				99180E7B2C14DEFF00C05182 /* Makefile */,
 				99180E322C128D1D00C05182 /* main.cpp */,
+				993F375D2C3B9C3400017F49 /* mem.cpp */,
 				99180E332C128D1D00C05182 /* mem.hpp */,
 				99180E342C128D1D00C05182 /* opensbi.hpp */,
 				99180E352C128D1D00C05182 /* panic.cpp */,
@@ -441,6 +444,7 @@
 				99180E602C128EB400C05182 /* framemanager.cpp in Sources */,
 				993F375C2C34AC2E00017F49 /* bumpallocator.cpp in Sources */,
 				99180E612C128EB400C05182 /* mmap.cpp in Sources */,
+				993F375E2C3B9C3800017F49 /* mem.cpp in Sources */,
 				99180E622C128EB400C05182 /* fdt_addresses.c in Sources */,
 				99180E632C128EB400C05182 /* fdt_check.c in Sources */,
 				99180E642C128EB400C05182 /* fdt_empty_tree.c in Sources */,

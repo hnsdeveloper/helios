@@ -314,7 +314,7 @@ const char *fdt_find_string_(const char *strtab, int tabsize, const char *s)
     const char *p;
 
     for (p = strtab; p <= last; p++)
-        if (memcmp(p, s, len) == 0)
+        if (hls::memcmp(p, s, len) == 0)
             return p;
     return NULL;
 }
@@ -329,6 +329,6 @@ int fdt_move(const void *fdt, void *buf, int bufsize)
     if (fdt_totalsize(fdt) > (unsigned int)bufsize)
         return -FDT_ERR_NOSPACE;
 
-    memmove(buf, fdt, fdt_totalsize(fdt));
+    hls::memmove(buf, fdt, fdt_totalsize(fdt));
     return 0;
 }

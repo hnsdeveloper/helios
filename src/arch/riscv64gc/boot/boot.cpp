@@ -27,10 +27,6 @@ SOFTWARE.
 #include "misc/macros.hpp"
 #include "misc/symbols.hpp"
 #include "sys/bootdata.hpp"
-#include "sys/mem.hpp"
-#include "sys/opensbi.hpp"
-#include "sys/print.hpp"
-#include "sys/string.hpp"
 
 #ifndef BOOTPAGES
 #define BOOTPAGES 64
@@ -51,13 +47,72 @@ LKERNELRODATA const char NEEDARGCV[] =
     "Not enough pages for arguments. Please, compile kernel with higher ARGPAGES option.";
 LKERNELDATA byte *kvaddress = reinterpret_cast<byte *>(uintptr_t(0) - uintptr_t(0x40000000));
 
-#define nvpn(__v)                                                                                                      \
-    __v == FrameOrder::FIRST_ORDER ? FrameOrder::FIRST_ORDER : static_cast<FrameOrder>(static_cast<size_t>(__v) - 1)
+LKERNELFUN void bputc(char)
+{
+    // TODO: implement
+}
+
+LKERNELFUN void bputstr(const char *str)
+{
+    while (str && *str)
+        bputc(*(str++));
+}
+
+LKERNELFUN void bputstrln(const char *str)
+{
+    bputstr(str);
+    bputstr("\n");
+}
+
+LKERNELFUN void *bmemset(void *mem, byte data, size_t size)
+{
+    byte *m = reinterpret_cast<byte *>(mem);
+
+    for (; size; --size)
+        *(m++) = data;
+
+    return mem;
+}
+
+LKERNELFUN void bmemcpy(void *dest, const void *src, size_t bytes)
+{
+    const byte *src_c = reinterpret_cast<const byte *>(src);
+    byte *dest_c = reinterpret_cast<byte *>(dest);
+    while (bytes--)
+    {
+        *dest_c = *src_c;
+        ++src_c;
+        ++dest_c;
+    }
+}
+
+LKERNELFUN size_t bstrlen(const char *a)
+{
+    size_t i = 0;
+    while (a && *(a++))
+        ++i;
+    return i;
+}
+
+LKERNELFUN void *bptr(uintptr_t p)
+{
+    return reinterpret_cast<void *>(p);
+}
+
+LKERNELFUN uintptr_t buintptr_t(const void *p)
+{
+    return reinterpret_cast<uintptr_t>(const_cast<void *>(p));
+}
+
+LKERNELFUN FrameOrder nvpn(FrameOrder v)
+{
+    return v == FrameOrder::FIRST_ORDER ? FrameOrder::FIRST_ORDER : static_cast<FrameOrder>(static_cast<size_t>(v) - 1);
+}
 
 LKERNELFUN size_t pe_idx(const void *vaddress, FrameOrder v)
 {
     size_t vpn_idx = static_cast<size_t>(v);
-    uintptr_t idx = to_uintptr_t(vaddress) >> 12;
+    uintptr_t idx = buintptr_t(vaddress) >> 12;
     return (idx >> (vpn_idx * 9)) & 0x1FF;
 }
 
@@ -83,7 +138,7 @@ LKERNELFUN void twlk(const void *vaddress, PageTable **table, FrameOrder *lvl)
 
 LKERNELFUN void init_f_alloc()
 {
-    memset(INITIAL_FRAMES, 0, sizeof(INITIAL_FRAMES));
+    bmemset(INITIAL_FRAMES, 0, sizeof(INITIAL_FRAMES));
     s_used = 0;
 }
 
@@ -94,7 +149,7 @@ LKERNELFUN void *f_alloc()
     if (s_used < BOOTPAGES)
         return p + s_used++;
 
-    strprintln(NEEDPAGES);
+    bputstrln(NEEDPAGES);
     while (true)
         ;
 
@@ -130,19 +185,19 @@ LKERNELFUN PageTable *bkmmap(const void *paddress, const void *vaddress, PageTab
         if (!(entry.data & VALID))
         {
             void *frame = f_alloc();
-            memset(frame, 0, PAGE_FRAME_SIZE);
+            // We can use this memory without zeroing it.
             entry.data = ((reinterpret_cast<uint64_t>(frame) >> 12) << 10);
             entry.data = entry.data | VALID;
         }
 
         c_lvl = nvpn(c_lvl);
         expected = nvpn(expected);
-        t = reinterpret_cast<PageTable *>(to_ptr((entry.data >> 10) << 12));
+        t = reinterpret_cast<PageTable *>(bptr((entry.data >> 10) << 12));
     }
 
     size_t lvl_entry_idx = pe_idx(vaddress, c_lvl);
     auto &entry = reinterpret_cast<TableEntry *>(t)[lvl_entry_idx];
-    entry.data = (to_uintptr_t(paddress) >> 12) << 10;
+    entry.data = (buintptr_t(paddress) >> 12) << 10;
     entry.data = entry.data | VALID | flags;
 
     return t;
@@ -190,14 +245,14 @@ LKERNELFUN const char **map_args(PageTable *kernel_table, int argc, const char *
     {
         const char *str = argv[i];
         // Memory length, not string length
-        size_t len = strlen(str) + 1;
-        memcpy(c, str, len);
+        size_t len = bstrlen(str) + 1;
+        bmemcpy(c, str, len);
         nargv[i] = reinterpret_cast<const char *>(kvaddress + consumed_bytes);
         consumed_bytes += len;
         c += len;
         if (consumed_bytes > sizeof(ARGCV))
         {
-            strprintln(NEEDARGCV);
+            bputstrln(NEEDARGCV);
             while (true)
                 ;
         }
@@ -205,11 +260,11 @@ LKERNELFUN const char **map_args(PageTable *kernel_table, int argc, const char *
 
     if (consumed_bytes + sizeof(nargv) > sizeof(ARGCV))
     {
-        strprintln(NEEDARGCV);
+        bputstrln(NEEDARGCV);
         while (true)
             ;
     }
-    memcpy(c, &nargv, sizeof(nargv));
+    bmemcpy(c, &nargv, sizeof(nargv));
 
     auto old_kv = kvaddress;
     for (size_t i = 0; i < ARGPAGES; ++i)

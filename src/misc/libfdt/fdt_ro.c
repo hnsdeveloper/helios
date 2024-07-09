@@ -19,12 +19,12 @@ static int fdt_nodename_eq_(const void *fdt, int offset, const char *s, int len)
         /* short match */
         return 0;
 
-    if (memcmp(p, s, len) != 0)
+    if (hls::memcmp(p, s, len) != 0)
         return 0;
 
     if (p[len] == '\0')
         return 1;
-    else if (!memchr(s, '@', len) && (p[len] == '@'))
+    else if (!hls::memchr(s, '@', len) && (p[len] == '@'))
         return 1;
     else
         return 0;
@@ -85,7 +85,7 @@ const char *fdt_get_string(const void *fdt, int stroffset, int *lenp)
     }
 
     s = (const char *)fdt + absoffset;
-    n = reinterpret_cast<const char *>(memchr(s, '\0', len));
+    n = reinterpret_cast<const char *>(hls::memchr(s, '\0', len));
     if (!n)
     {
         /* missing terminating NULL */
@@ -113,7 +113,7 @@ static int fdt_string_eq_(const void *fdt, int stroffset, const char *s, int len
     int slen;
     const char *p = fdt_get_string(fdt, stroffset, &slen);
 
-    return p && (slen == len) && (memcmp(p, s, len) == 0);
+    return p && (slen == len) && (hls::memcmp(p, s, len) == 0);
 }
 
 int fdt_find_max_phandle(const void *fdt, uint32_t *phandle)
@@ -263,7 +263,7 @@ int fdt_path_offset_namelen(const void *fdt, const char *path, int namelen)
     /* see if we have an alias */
     if (*path != '/')
     {
-        const char *q = reinterpret_cast<const char *>(memchr(path, '/', end - p));
+        const char *q = reinterpret_cast<const char *>(hls::memchr(path, '/', end - p));
 
         if (!q)
             q = end;
@@ -286,7 +286,7 @@ int fdt_path_offset_namelen(const void *fdt, const char *path, int namelen)
             if (p == end)
                 return offset;
         }
-        q = reinterpret_cast<const char *>(memchr(p, '/', end - p));
+        q = reinterpret_cast<const char *>(hls::memchr(p, '/', end - p));
         if (!q)
             q = end;
 
@@ -563,7 +563,7 @@ int fdt_get_path(const void *fdt, int nodeoffset, char *buf, int buflen)
                 return namelen;
             if ((p + namelen + 1) <= buflen)
             {
-                memcpy(buf + p, name, namelen);
+                hls::memcpy(buf + p, name, namelen);
                 p += namelen;
                 buf[p++] = '/';
                 pdepth++;
@@ -665,7 +665,7 @@ int fdt_node_offset_by_prop_value(const void *fdt, int startoffset, const char *
     for (offset = fdt_next_node(fdt, startoffset, NULL); offset >= 0; offset = fdt_next_node(fdt, offset, NULL))
     {
         val = fdt_getprop(fdt, offset, propname, &len);
-        if (val && (len == proplen) && (memcmp(val, propval, len) == 0))
+        if (val && (len == proplen) && (hls::memcmp(val, propval, len) == 0))
             return offset;
     }
 
@@ -703,9 +703,9 @@ int fdt_stringlist_contains(const char *strlist, int listlen, const char *str)
 
     while (listlen >= len)
     {
-        if (memcmp(str, strlist, len + 1) == 0)
+        if (hls::memcmp(str, strlist, len + 1) == 0)
             return 1;
-        p = reinterpret_cast<const char *>(memchr(strlist, '\0', listlen));
+        p = reinterpret_cast<const char *>(hls::memchr(strlist, '\0', listlen));
         if (!p)
             return 0; /* malformed strlist.. */
         listlen -= (p - strlist) + 1;
@@ -760,7 +760,7 @@ int fdt_stringlist_search(const void *fdt, int nodeoffset, const char *property,
         if (list + length > end)
             return -FDT_ERR_BADVALUE;
 
-        if (length == len && memcmp(list, string, length) == 0)
+        if (length == len && hls::memcmp(list, string, length) == 0)
             return idx;
 
         list += length;
