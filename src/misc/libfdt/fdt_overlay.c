@@ -251,7 +251,7 @@ static int overlay_update_local_node_references(void *fdto, int tree_node, int f
 
             adj_val = cpu_to_fdt32(fdt32_to_cpu(adj_val) + delta);
 
-            ret = fdt_setprop_inplace_namelen_partial(fdto, tree_node, name, strlen(name), poffset, &adj_val,
+            ret = fdt_setprop_inplace_namelen_partial(fdto, tree_node, name, hls::strlen(name), poffset, &adj_val,
                                                       sizeof(adj_val));
             if (ret == -FDT_ERR_NOSPACE)
                 return -FDT_ERR_BADOVERLAY;
@@ -445,7 +445,7 @@ static int overlay_fixup_phandle(void *fdt, void *fdto, int symbols_off, int pro
         if (!name_len)
             return -FDT_ERR_BADOVERLAY;
 
-        poffset = strtoul(sep + 1, &endptr, 10);
+        poffset = hls::strtoul(sep + 1, &endptr, 10);
         if ((*endptr != '\0') || (endptr <= (sep + 1)))
             return -FDT_ERR_BADOVERLAY;
 
@@ -710,7 +710,7 @@ static int overlay_symbol_update(void *fdt, void *fdto)
             return -FDT_ERR_BADVALUE;
 
         /* get fragment name first */
-        s = strchr(path + 1, '/');
+        s = hls::strchr(path + 1, '/');
         if (!s)
         {
             /* Symbol refers to something that won't end
@@ -770,7 +770,7 @@ static int overlay_symbol_update(void *fdt, void *fdto)
         }
         else
         {
-            len = strlen(target_path);
+            len = hls::strlen(target_path);
         }
 
         ret = fdt_setprop_placeholder(fdt, root_sym, name, len + (len > 1) + rel_path_len + 1, &p);

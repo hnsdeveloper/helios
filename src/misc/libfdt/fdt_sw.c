@@ -223,7 +223,7 @@ int fdt_begin_node(void *fdt, const char *name)
 
     FDT_SW_PROBE_STRUCT(fdt);
 
-    namelen = strlen(name) + 1;
+    namelen = hls::strlen(name) + 1;
     nh = reinterpret_cast<struct fdt_node_header *>(fdt_grab_space_(fdt, sizeof(*nh) + FDT_TAGALIGN(namelen)));
     if (!nh)
         return -FDT_ERR_NOSPACE;
@@ -251,7 +251,7 @@ static int fdt_add_string_(void *fdt, const char *s)
 {
     char *strtab = (char *)fdt + fdt_totalsize(fdt);
     unsigned int strtabsize = fdt_size_dt_strings(fdt);
-    unsigned int len = strlen(s) + 1;
+    unsigned int len = hls::strlen(s) + 1;
     unsigned int struct_top, offset;
 
     offset = strtabsize + len;
@@ -268,7 +268,7 @@ static int fdt_add_string_(void *fdt, const char *s)
 static void fdt_del_last_string_(void *fdt, const char *s)
 {
     int strtabsize = fdt_size_dt_strings(fdt);
-    int len = strlen(s) + 1;
+    int len = hls::strlen(s) + 1;
 
     fdt_set_size_dt_strings(fdt, strtabsize - len);
 }

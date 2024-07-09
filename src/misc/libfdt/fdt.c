@@ -309,7 +309,7 @@ int fdt_next_subnode(const void *fdt, int offset)
 
 const char *fdt_find_string_(const char *strtab, int tabsize, const char *s)
 {
-    int len = strlen(s) + 1;
+    size_t len = hls::strlen(s) + 1;
     const char *last = strtab + tabsize - len;
     const char *p;
 

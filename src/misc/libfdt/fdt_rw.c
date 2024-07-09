@@ -90,7 +90,7 @@ static int fdt_splice_struct_(void *fdt, void *p, int oldlen, int newlen)
 /* Must only be used to roll back in case of error */
 static void fdt_del_last_string_(void *fdt, const char *s)
 {
-    int newlen = strlen(s) + 1;
+    int newlen = hls::strlen(s) + 1;
 
     fdt_set_size_dt_strings(fdt, fdt_size_dt_strings(fdt) - newlen);
 }
@@ -121,7 +121,7 @@ static int fdt_find_add_string_(void *fdt, const char *s, int *allocated)
     char *strtab = (char *)fdt + fdt_off_dt_strings(fdt);
     const char *p;
     char *new_str;
-    int len = strlen(s) + 1;
+    int len = hls::strlen(s) + 1;
     int err;
 
     if (!can_assume(NO_ROLLBACK))
@@ -234,7 +234,7 @@ int fdt_set_name(void *fdt, int nodeoffset, const char *name)
     if (!namep)
         return oldlen;
 
-    newlen = strlen(name);
+    newlen = hls::strlen(name);
 
     err = fdt_splice_struct_(fdt, namep, FDT_TAGALIGN(oldlen + 1), FDT_TAGALIGN(newlen + 1));
     if (err)
@@ -363,7 +363,7 @@ int fdt_add_subnode_namelen(void *fdt, int parentoffset, const char *name, int n
 
 int fdt_add_subnode(void *fdt, int parentoffset, const char *name)
 {
-    return fdt_add_subnode_namelen(fdt, parentoffset, name, strlen(name));
+    return fdt_add_subnode_namelen(fdt, parentoffset, name, hls::strlen(name));
 }
 
 int fdt_del_node(void *fdt, int nodeoffset)

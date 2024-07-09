@@ -4,7 +4,7 @@ SYS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 .PHONY: all
 
 all: $(BUILD_DIR)devicetree.o $(BUILD_DIR)bootoptions.o $(BUILD_DIR)panic.o $(BUILD_DIR)cpu.o $(BUILD_DIR)kmalloc.o \
-  $(BUILD_DIR)main.o $(BUILD_DIR)mem.o
+  $(BUILD_DIR)main.o $(BUILD_DIR)mem.o $(BUILD_DIR)string.o
   
 $(BUILD_DIR)devicetree.o: devicetree.cpp devicetree.hpp \
   $(INCLUDE_DIR)arch/riscv64gc/plat_def.hpp $(INCLUDE_DIR)misc/macros.hpp $(INCLUDE_DIR)misc/types.hpp \
@@ -47,5 +47,9 @@ $(BUILD_DIR)main.o: main.cpp $(INCLUDE_DIR)arch/riscv64gc/plat_def.hpp \
 	@$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) -I$(INCLUDE_DIR) -o $@ $<
 	
 $(BUILD_DIR)mem.o: mem.cpp mem.hpp $(INCLUDE_DIR)misc/types.hpp $(INCLUDE_DIR)arch/riscv64gc/plat_def.hpp
+	@echo "Making $@"
+	@$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) -I$(INCLUDE_DIR) -o $@ $<
+
+$(BUILD_DIR)string.o: string.cpp string.hpp $(INCLUDE_DIR)misc/types.hpp
 	@echo "Making $@"
 	@$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) -I$(INCLUDE_DIR) -o $@ $<
