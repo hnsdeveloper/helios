@@ -58,7 +58,7 @@ static int fdt_splice_(void *fdt, void *splicepoint, int oldlen, int newlen)
         return -FDT_ERR_BADOFFSET;
     if (dsize - oldlen + newlen > fdt_totalsize(fdt))
         return -FDT_ERR_NOSPACE;
-    memmove(p + newlen, p + oldlen, ((char *)fdt + dsize) - (p + oldlen));
+    hls::memmove(p + newlen, p + oldlen, ((char *)fdt + dsize) - (p + oldlen));
     return 0;
 }
 
@@ -90,7 +90,7 @@ static int fdt_splice_struct_(void *fdt, void *p, int oldlen, int newlen)
 /* Must only be used to roll back in case of error */
 static void fdt_del_last_string_(void *fdt, const char *s)
 {
-    int newlen = strlen(s) + 1;
+    int newlen = hls::strlen(s) + 1;
 
     fdt_set_size_dt_strings(fdt, fdt_size_dt_strings(fdt) - newlen);
 }
@@ -121,7 +121,7 @@ static int fdt_find_add_string_(void *fdt, const char *s, int *allocated)
     char *strtab = (char *)fdt + fdt_off_dt_strings(fdt);
     const char *p;
     char *new_str;
-    int len = strlen(s) + 1;
+    int len = hls::strlen(s) + 1;
     int err;
 
     if (!can_assume(NO_ROLLBACK))
@@ -140,7 +140,7 @@ static int fdt_find_add_string_(void *fdt, const char *s, int *allocated)
     if (!can_assume(NO_ROLLBACK))
         *allocated = 1;
 
-    memcpy(new_str, s, len);
+    hls::memcpy(new_str, s, len);
     return (new_str - strtab);
 }
 
@@ -234,13 +234,13 @@ int fdt_set_name(void *fdt, int nodeoffset, const char *name)
     if (!namep)
         return oldlen;
 
-    newlen = strlen(name);
+    newlen = hls::strlen(name);
 
     err = fdt_splice_struct_(fdt, namep, FDT_TAGALIGN(oldlen + 1), FDT_TAGALIGN(newlen + 1));
     if (err)
         return err;
 
-    memcpy(namep, name, newlen + 1);
+    hls::memcpy(namep, name, newlen + 1);
     return 0;
 }
 
@@ -271,7 +271,7 @@ int fdt_setprop(void *fdt, int nodeoffset, const char *name, const void *val, in
         return err;
 
     if (len)
-        memcpy(prop_data, val, len);
+        hls::memcpy(prop_data, val, len);
     return 0;
 }
 
@@ -290,14 +290,14 @@ int fdt_appendprop(void *fdt, int nodeoffset, const char *name, const void *val,
         if (err)
             return err;
         prop->len = cpu_to_fdt32(newlen);
-        memcpy(prop->data + oldlen, val, len);
+        hls::memcpy(prop->data + oldlen, val, len);
     }
     else
     {
         err = fdt_add_property_(fdt, nodeoffset, name, len, &prop);
         if (err)
             return err;
-        memcpy(prop->data, val, len);
+        hls::memcpy(prop->data, val, len);
     }
     return 0;
 }
@@ -353,8 +353,8 @@ int fdt_add_subnode_namelen(void *fdt, int parentoffset, const char *name, int n
         return err;
 
     nh->tag = cpu_to_fdt32(FDT_BEGIN_NODE);
-    memset(nh->name, 0, FDT_TAGALIGN(namelen + 1));
-    memcpy(nh->name, name, namelen);
+    hls::memset(nh->name, 0, FDT_TAGALIGN(namelen + 1));
+    hls::memcpy(nh->name, name, namelen);
     endtag = (fdt32_t *)((char *)nh + nodelen - FDT_TAGSIZE);
     *endtag = cpu_to_fdt32(FDT_END_NODE);
 
@@ -363,7 +363,7 @@ int fdt_add_subnode_namelen(void *fdt, int parentoffset, const char *name, int n
 
 int fdt_add_subnode(void *fdt, int parentoffset, const char *name)
 {
-    return fdt_add_subnode_namelen(fdt, parentoffset, name, strlen(name));
+    return fdt_add_subnode_namelen(fdt, parentoffset, name, hls::strlen(name));
 }
 
 int fdt_del_node(void *fdt, int nodeoffset)
@@ -387,14 +387,14 @@ static void fdt_packblocks_(const char *old, char *new_blk, int mem_rsv_size, in
     struct_off = mem_rsv_off + mem_rsv_size;
     strings_off = struct_off + struct_size;
 
-    memmove(new_blk + mem_rsv_off, old + fdt_off_mem_rsvmap(old), mem_rsv_size);
+    hls::memmove(new_blk + mem_rsv_off, old + fdt_off_mem_rsvmap(old), mem_rsv_size);
     fdt_set_off_mem_rsvmap(new_blk, mem_rsv_off);
 
-    memmove(new_blk + struct_off, old + fdt_off_dt_struct(old), struct_size);
+    hls::memmove(new_blk + struct_off, old + fdt_off_dt_struct(old), struct_size);
     fdt_set_off_dt_struct(new_blk, struct_off);
     fdt_set_size_dt_struct(new_blk, struct_size);
 
-    memmove(new_blk + strings_off, old + fdt_off_dt_strings(old), strings_size);
+    hls::memmove(new_blk + strings_off, old + fdt_off_dt_strings(old), strings_size);
     fdt_set_off_dt_strings(new_blk, strings_off);
     fdt_set_size_dt_strings(new_blk, fdt_size_dt_strings(old));
 }
@@ -459,7 +459,7 @@ int fdt_open_into(const void *fdt, void *buf, int bufsize)
     }
 
     fdt_packblocks_(reinterpret_cast<const char *>(fdt), tmp, mem_rsv_size, struct_size, fdt_size_dt_strings(fdt));
-    memmove(buf, tmp, newsize);
+    hls::memmove(buf, tmp, newsize);
 
     fdt_set_magic(buf, FDT_MAGIC);
     fdt_set_totalsize(buf, bufsize);
