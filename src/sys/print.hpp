@@ -26,161 +26,62 @@ SOFTWARE.
 #define _PRINT_HPP_
 
 #include "misc/types.hpp"
-#include "sys/mem.hpp"
-#include "sys/opensbi.hpp"
+#include "misc/utilities.hpp"
 #include <limits>
 #include <type_traits>
+
 namespace hls
 {
 
-/**
- * @brief Prints string **str** to default console without formatting.
- * @remark Thread safety: ST.
- * @param str String to be printed.
- */
-#ifndef __STRPRINT
-#define __STRPRINT
-#define strprint(__str)                                                                                                \
-    [](const char *str) __attribute__((always_inline))                                                                 \
-    {                                                                                                                  \
-        if (str)                                                                                                       \
-        {                                                                                                              \
-            while (*str)                                                                                               \
-            {                                                                                                          \
-                opensbi_putchar(*str);                                                                                 \
-                ++str;                                                                                                 \
-            }                                                                                                          \
-        }                                                                                                              \
-    }                                                                                                                  \
-    (__str)
-#endif
+    /**
+     * @brief Prints char **cr** to default console without formatting.
+     * @remark Thread safety: ST.
+     * @param c Char  to be printed.
+     */
+    void putchar(char c);
 
-/**
- * @brief Same as strprint, but inserts new line at the end.
- * @remark Thread safety: ST.
- * @param str String to be printed.
- */
-#ifndef __STRPRINTLN
-#define __STRPRINTLN
-#define strprintln(__str2)                                                                                             \
-    [](const char *str) __attribute__((always_inline))                                                                 \
-    {                                                                                                                  \
-        strprint(str);                                                                                                 \
-        opensbi_putchar('\r');                                                                                         \
-        opensbi_putchar('\n');                                                                                         \
-    }                                                                                                                  \
-    (__str2)
-#endif
+    /**
+     * @brief Prints string **str** to default console without formatting.
+     * @remark Thread safety: ST.
+     * @param str String to be printed.
+     */
+    void strprint(const char *str);
 
-/**
- * @brief Prints a pointer value to default console as a hex integral.
- * @remark Thread safety: ST.
- * @param p Pointer value to be printed.
- */
-#ifndef __PTRPRINT
-#define __PTRPRINT
-#define ptrprint(__p)                                                                                                  \
-    [](const void *ptr) __attribute__((always_inline))                                                                 \
-    {                                                                                                                  \
-        auto v = to_uintptr_t(ptr);                                                                                    \
-        char buffer[sizeof(v) * 8 / 4];                                                                                \
-        for (size_t i = 0; i < sizeof(v) * 8 / 4; ++i)                                                                 \
-        {                                                                                                              \
-            char c = v & 0xF;                                                                                          \
-            if (c <= 9)                                                                                                \
-            {                                                                                                          \
-                c += '0';                                                                                              \
-            }                                                                                                          \
-            else                                                                                                       \
-            {                                                                                                          \
-                c += 'A' - 10;                                                                                         \
-            }                                                                                                          \
-            buffer[i] = c;                                                                                             \
-            v = v >> 4;                                                                                                \
-        }                                                                                                              \
-        opensbi_putchar('0');                                                                                          \
-        opensbi_putchar('x');                                                                                          \
-        for (size_t i = 0; i < sizeof(v) * 8 / 4; ++i)                                                                 \
-        {                                                                                                              \
-            char &c = buffer[sizeof(v) * 8 / 4 - i - 1];                                                               \
-            opensbi_putchar(c);                                                                                        \
-        }                                                                                                              \
-    }                                                                                                                  \
-    (__p)
-#endif
+    /**
+     * @brief Same as strprint, but inserts new line at the end.
+     * @remark Thread safety: ST.
+     * @param str String to be printed.
+     */
+    void strprintln(const char *str);
 
-/**
- * @brief Prints a signed integral value to default console.
- * @remark Thread safety: ST.
- * @param v Value to be printed.
- */
-#ifndef __INTPRINT
-#define __INTPRINT
-#define intprint(__v)                                                                                                  \
-    [](int64_t v) __attribute__((always_inline))                                                                       \
-    {                                                                                                                  \
-        if (v >= 0)                                                                                                    \
-            uintprint(0 + v);                                                                                          \
-        else                                                                                                           \
-        {                                                                                                              \
-            opensbi_putchar('-');                                                                                      \
-            if (v == std::numeric_limits<int64_t>::min())                                                              \
-            {                                                                                                          \
-                v += 1;                                                                                                \
-                v = -v;                                                                                                \
-                uintprint((uint64_t(0) + v) + 1);                                                                      \
-            }                                                                                                          \
-            else                                                                                                       \
-            {                                                                                                          \
-                v = -v;                                                                                                \
-                uintprint(v);                                                                                          \
-            }                                                                                                          \
-        }                                                                                                              \
-    }                                                                                                                  \
-    (__v)
-#endif
+    /**
+     * @brief Prints a pointer value to default console as a hex integral.
+     * @remark Thread safety: ST.
+     * @param ptr Pointer value to be printed.
+     */
+    void ptrprint(const void *ptr);
 
-/**
- * @brief Prints an unsigned integral value to default console.
- * @remark Thread safety: ST.
- * @param v Value to be printed.
- */
-#ifndef __UINTPRINT
-#define __UINTPRINT
-#define uintprint(__val)                                                                                               \
-    [](uint64_t v) __attribute__((always_inline))                                                                      \
-    {                                                                                                                  \
-        if (v == 0)                                                                                                    \
-        {                                                                                                              \
-            opensbi_putchar('0');                                                                                      \
-            return;                                                                                                    \
-        }                                                                                                              \
-        char buffer[256];                                                                                              \
-        size_t buffer_used = 0;                                                                                        \
-        for (size_t i = 0; v; ++i, v /= 10, ++buffer_used)                                                             \
-        {                                                                                                              \
-            buffer[i] = v % 10 + '0';                                                                                  \
-        }                                                                                                              \
-        for (size_t i = 0; i < buffer_used; ++i)                                                                       \
-        {                                                                                                              \
-            char &c = buffer[buffer_used - i - 1];                                                                     \
-            opensbi_putchar(c);                                                                                        \
-        }                                                                                                              \
-    }                                                                                                                  \
-    (__val)
-#endif
+    /**
+     * @brief Prints a signed integral value to default console.
+     * @remark Thread safety: ST.
+     * @param v Value to be printed.
+     */
+    void intprint(int64_t v);
 
-/**
- * @brief Prints a float value to default console.
- * @remark Thread safety: ST.
- * @todo Implement
- * @param d The value to be printed
- */
-#ifndef __FLOATPRINT
-#define __FLOATPRINT
-// TODO: Implement
-#define floatprint(__d) [](double d) __attribute__((always_inline)){}(__d)
-#endif
+    /**
+     * @brief Prints an unsigned integral value to default console.
+     * @remark Thread safety: ST.
+     * @param v Value to be printed.
+     */
+    void uintprint(uint64_t v);
+
+    /**
+     * @brief Prints a float value to default console.
+     * @remark Thread safety: ST.
+     * @todo Implement
+     * @param val The value to be printed
+     */
+    void doubleprint(double val);
 
     /**
      * @brief Prints string with formatting (to default console), using the pair {}
@@ -204,7 +105,6 @@ namespace hls
         {
             return;
         }
-
         while (*str)
         {
             auto c = *str;
@@ -223,7 +123,7 @@ namespace hls
                 }
                 else if constexpr (std::is_same_v<std::remove_cvref_t<type>, char>)
                 {
-                    opensbi_putchar(p);
+                    putchar(p);
                 }
                 else if constexpr (std::is_pointer_v<type>)
                 {
@@ -250,7 +150,7 @@ namespace hls
                 }
                 if constexpr (sizeof...(args))
                 {
-                    print_v(str + 2, args...);
+                    print_v(str + 2, hls::forward<Args>(args)...);
                 }
                 else
                 {
@@ -259,8 +159,7 @@ namespace hls
                 }
                 break;
             }
-
-            opensbi_putchar(c);
+            putchar(c);
             ++str;
         }
     }

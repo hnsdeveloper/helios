@@ -38,10 +38,9 @@ SOFTWARE.
 
 using namespace hls;
 
-LKERNELBSS alignas(PAGE_FRAME_SIZE) byte INITIAL_FRAMES[PAGE_FRAME_SIZE * BOOTPAGES];
-LKERNELBSS alignas(PAGE_FRAME_SIZE) byte ARGCV[PAGE_FRAME_SIZE * ARGPAGES];
+LKERNELBSS alignas(PAGE_FRAME_SIZE) byte INITIAL_FRAMES[FrameKB::s_size * BOOTPAGES];
+LKERNELBSS alignas(PAGE_FRAME_SIZE) byte ARGCV[FrameKB::s_size * ARGPAGES];
 LKERNELDATA static size_t s_used = 0;
-LKERNELRODATA const char HERE[] = "HERE";
 LKERNELRODATA const char NEEDPAGES[] = "Not enough pages. Please, compile kernel with higher BOOTPAGES option.";
 LKERNELRODATA const char NEEDARGCV[] =
     "Not enough pages for arguments. Please, compile kernel with higher ARGPAGES option.";

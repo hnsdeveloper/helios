@@ -41,6 +41,7 @@
 		993F375C2C34AC2E00017F49 /* bumpallocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 993F375B2C34AC2900017F49 /* bumpallocator.cpp */; };
 		993F375E2C3B9C3800017F49 /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 993F375D2C3B9C3400017F49 /* mem.cpp */; };
 		993F37602C3DE1CF00017F49 /* string.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 993F375F2C3DE1CC00017F49 /* string.cpp */; };
+		993F37622C3DFFE800017F49 /* print.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 993F37612C3DFFE400017F49 /* print.cpp */; };
 		99781E462C1F6BF8008F0888 /* kmalloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99781E452C1F6BF7008F0888 /* kmalloc.cpp */; };
 /* End PBXBuildFile section */
 
@@ -102,7 +103,6 @@
 		99180E2F2C128D1D00C05182 /* devicetree.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = devicetree.hpp; sourceTree = "<group>"; };
 		99180E322C128D1D00C05182 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		99180E332C128D1D00C05182 /* mem.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = mem.hpp; sourceTree = "<group>"; };
-		99180E342C128D1D00C05182 /* opensbi.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = opensbi.hpp; sourceTree = "<group>"; };
 		99180E352C128D1D00C05182 /* panic.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = panic.cpp; sourceTree = "<group>"; };
 		99180E362C128D1D00C05182 /* panic.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = panic.hpp; sourceTree = "<group>"; };
 		99180E372C128D1D00C05182 /* print.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = print.hpp; sourceTree = "<group>"; };
@@ -131,6 +131,7 @@
 		993F375B2C34AC2900017F49 /* bumpallocator.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = bumpallocator.cpp; sourceTree = "<group>"; };
 		993F375D2C3B9C3400017F49 /* mem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = mem.cpp; sourceTree = "<group>"; };
 		993F375F2C3DE1CC00017F49 /* string.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = string.cpp; sourceTree = "<group>"; };
+		993F37612C3DFFE400017F49 /* print.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = print.cpp; sourceTree = "<group>"; };
 		99781E442C1F6BF7008F0888 /* kmalloc.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = kmalloc.hpp; sourceTree = "<group>"; };
 		99781E452C1F6BF7008F0888 /* kmalloc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = kmalloc.cpp; sourceTree = "<group>"; };
 		998911C82C29713D00AD8A27 /* bumpallocator.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = bumpallocator.hpp; sourceTree = "<group>"; };
@@ -293,14 +294,14 @@
 				99180E322C128D1D00C05182 /* main.cpp */,
 				993F375D2C3B9C3400017F49 /* mem.cpp */,
 				99180E332C128D1D00C05182 /* mem.hpp */,
-				99180E342C128D1D00C05182 /* opensbi.hpp */,
 				99180E352C128D1D00C05182 /* panic.cpp */,
 				99180E362C128D1D00C05182 /* panic.hpp */,
+				993F37612C3DFFE400017F49 /* print.cpp */,
 				99180E372C128D1D00C05182 /* print.hpp */,
 				993F375F2C3DE1CC00017F49 /* string.cpp */,
 				99180E382C128D1D00C05182 /* string.hpp */,
-				99781E442C1F6BF7008F0888 /* kmalloc.hpp */,
 				99781E452C1F6BF7008F0888 /* kmalloc.cpp */,
+				99781E442C1F6BF7008F0888 /* kmalloc.hpp */,
 			);
 			path = sys;
 			sourceTree = "<group>";
@@ -457,6 +458,7 @@
 				99180E682C128EB400C05182 /* fdt_strerror.c in Sources */,
 				99180E692C128EB400C05182 /* fdt_sw.c in Sources */,
 				99180E6A2C128EB400C05182 /* fdt_wip.c in Sources */,
+				993F37622C3DFFE800017F49 /* print.cpp in Sources */,
 				99180E6B2C128EB400C05182 /* fdt.c in Sources */,
 				99180E6C2C128EB400C05182 /* new.cpp in Sources */,
 				99180E6D2C128EB400C05182 /* bootoptions.cpp in Sources */,

@@ -63,6 +63,7 @@ namespace hls
         INVALID
     };
 
+    void kinit_putchar(char c);
     FrameOrder next_vpn(FrameOrder v);
     void _flush_tlb();
 

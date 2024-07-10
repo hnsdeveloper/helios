@@ -23,57 +23,87 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "sys/bootoptions.hpp"
-#include "sys/cpu.hpp"
+#include "sys/print.hpp"
+#include "arch/riscv64gc/plat_def.hpp"
 #include "sys/mem.hpp"
 
 namespace hls
 {
 
-    void strcprint(const char *str, size_t n)
+    void putchar(char c)
     {
-        while (n--)
+        kinit_putchar(c);
+    }
+
+    void strprint(const char *str)
+    {
+        if (str)
         {
-            putchar(*(str++));
+            while (*str)
+            {
+                putchar(*str);
+                ++str;
+            }
         }
     }
 
-    void *get_device_tree_from_options(int argc, const char **argv)
+    void strprintln(const char *str)
     {
-        option::Stats stats(usage, argc - 1, argv + 1);
-        option::Option options[stats.options_max], buffer[stats.buffer_max];
-        option::Parser parse(usage, argc - 1, argv + 1, options, buffer);
+        strprint(str);
+        putchar('\r');
+        putchar('\n');
+    }
 
-        if (parse.error())
+    void ptrprint(const void *ptr)
+    {
+        auto v = to_uintptr_t(ptr);
+        char buffer[sizeof(v) * 2];
+        for (size_t i = 0; i < (sizeof(v) * 2); ++i)
         {
-            kprintln("Failed to parse boot options.");
-            die();
+            char c = v & 0xF;
+            if (c <= 9)
+                c += '0';
+            else
+                c += 'A' - 10;
+            buffer[i] = c;
+            v = v >> 4;
         }
-
-        if (argc == 1 || options[OptionIndex::HELP])
+        putchar('0');
+        putchar('x');
+        for (size_t i = 0; i < sizeof(v) * 8 / 4; ++i)
         {
-            option::printUsage(&strcprint, usage);
-            die();
+            char &c = buffer[sizeof(v) * 8 / 4 - i - 1];
+            putchar(c);
         }
+    }
 
-        if (options[OptionIndex::FDT].count() == 1)
+    void intprint(int64_t v)
+    {
+        if (v < 0)
         {
-            char *p = nullptr;
-            uintptr_t addr = strtoul(options[OptionIndex::FDT].arg, &p, 16);
+            putchar('-');
+            if (v < 9)
+                uintprint(-(v / 10));
 
-            if (addr == 0 && p == nullptr)
-            {
-                kprintln("Invalid FDT address. Please reboot and provide a valid one (FDT needed for booting).");
-                die();
-            }
-
-            return to_ptr(addr);
+            putchar(-(v % 10) + '0');
         }
         else
         {
-            kprintln("Invalid fdt option.");
+            uintprint(v);
         }
-
-        return nullptr;
     }
+
+    void uintprint(uint64_t v)
+    {
+        if (v > 9)
+        {
+            uintprint(v / 10);
+        }
+        char c = v % 10;
+        c += '0';
+        putchar(c);
+    }
+
+    void doubleprint(double val);
+
 } // namespace hls
