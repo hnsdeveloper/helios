@@ -26,7 +26,6 @@ SOFTWARE.
 #include "mem/mmap.hpp"
 #include "mem/framemanager.hpp"
 #include "sys/mem.hpp"
-#include "sys/opensbi.hpp"
 #include "sys/print.hpp"
 #include "ulib/pair.hpp"
 
