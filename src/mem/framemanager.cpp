@@ -118,16 +118,10 @@ namespace hls
         return *this;
     }
 
-    FrameManager::FrameManager(const Pair<void *, size_t> &mem_info)
-        : m_bump_allocator(sizeof(tree::node)), m_used_frames(m_bump_allocator), m_free_frames(m_bump_allocator)
+    FrameManager::FrameManager()
+        : m_bump_allocator(sizeof(tree::node)), m_used_frames(m_bump_allocator), m_free_frames(m_bump_allocator),
+          m_frame_count(0)
     {
-        FrameKB *mem_init = reinterpret_cast<FrameKB *>(align_forward(mem_info.first, alignof(FrameKB)));
-        FrameKB *mem_end =
-            reinterpret_cast<FrameKB *>(align_back(apply_offset(mem_init, mem_info.second), alignof(FrameKB)));
-        m_frame_count = (size_t)(mem_end - mem_init);
-        m_free_frames.insert({mem_init, m_frame_count, 0});
-        kprintln("Initializing FrameManager with {} frames for a total of {}KiB of memory.", m_frame_count,
-                 m_frame_count * FrameKB::s_size / 1024);
     }
 
     FrameData *FrameManager::get_frames(size_t count, uint64_t flags)
@@ -161,6 +155,23 @@ namespace hls
     void FrameManager::release_frames(void *frame_pointer)
     {
         (void)(frame_pointer);
+    }
+
+    void FrameManager::expand_memory(const Pair<void *, size_t> mem_info)
+    {
+        FrameKB *mem_init = reinterpret_cast<FrameKB *>(align_forward(mem_info.first, alignof(FrameKB)));
+        FrameKB *mem_end =
+            reinterpret_cast<FrameKB *>(align_back(apply_offset(mem_init, mem_info.second), alignof(FrameKB)));
+        size_t frame_count = (size_t)(mem_end - mem_init);
+        if (frame_count >= 1)
+        {
+            m_frame_count += frame_count;
+            m_free_frames.insert({mem_init, m_frame_count, 0});
+        }
+
+        kdebug("Expanding FrameManager managed memory with {} frames for a total of {}KiB of memory.", frame_count,
+               frame_count * FrameKB::s_size / 1024);
+        kdebug("Frame count: {}. Memory size: {}Kib", m_frame_count, m_frame_count * FrameKB::s_size / 1024);
     }
 
     bool is_memory_node(void *fdt, int node)
@@ -201,7 +212,8 @@ namespace hls
     void initialize_frame_manager(void *fdt, bootinfo *b_info)
     {
         Pair<void *, size_t> mem_info = get_available_ram(fdt, b_info);
-        FrameManager::initialize_global_instance(mem_info);
+        FrameManager::initialize_global_instance();
+        FrameManager::get_global_instance().expand_memory(mem_info);
     }
 
     PageTable *init_initfalloc(size_t used, PageTable *tables)

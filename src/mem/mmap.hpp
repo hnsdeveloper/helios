@@ -10,6 +10,12 @@
 
 namespace hls
 {
+    constexpr uint64_t VM_VALID_FLAG = 0x1;
+    constexpr uint64_t VM_READ_FLAG = 0x1 << 1;
+    constexpr uint64_t VM_WRITE_FLAG = 0x1 << 2;
+    constexpr uint64_t VM_EXECUTE_FLAG = 0x1 << 3;
+    constexpr uint64_t VM_ACCESS_FLAG = 0x1 << 4;
+    constexpr uint64_t VM_DIRTY_FLAG = 0x1 << 5;
 
     class MemMapInfo
     {
@@ -89,12 +95,16 @@ namespace hls
         bool is_valid_virtual_address(const void *addr);
         void map_to_table(const void *p_address, const void *v_address);
         void translate_to_page(const MemMapInfo &m_map);
+        void translate_table_to_tree(PageTable *table, FrameOrder order, void *vaddress);
+
+        VMMap(PageTable *table, void *min_map_addr, void *max_map_addr);
+        friend class Singleton<VMMap>;
 
       public:
-        VMMap(PageTable *table, void *min_map_addr, void *max_map_addr);
-
         MemMapInfo *map_memory(const void *p_address, const void *v_address, FrameOrder order, uint64_t flags);
         void unmap_memory(const void *v_address);
+
+        void *get_physical_address(const void *vaddress);
 
         /*
         MemMapInfo* map_memory_first_fit(const void* paddress, const void* vaddress, FrameOrder f_order, uint64_t

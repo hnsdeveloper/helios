@@ -34,7 +34,7 @@ helios.bin : $(BUILD_DIR)helios.bin
 
 $(BUILD_DIR)helios : dep
 	@echo "Linking object files."
-	@$(LD) $(BUILD_DIR)*.o -nostdlib -T./src/arch/riscv64gc/link.lds -o $(BUILD_DIR)helios
+	@$(LD) $(BUILD_DIR)*.o -nostdlib --gc-sections -T./src/arch/riscv64gc/link.lds -o $(BUILD_DIR)helios
 	
 $(BUILD_DIR)helios.bin : $(BUILD_DIR)helios
 	@echo "Generating kernel binary"

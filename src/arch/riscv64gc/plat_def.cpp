@@ -24,6 +24,7 @@ SOFTWARE.
 ---------------------------------------------------------------------------------*/
 
 #include "arch/riscv64gc/plat_def.hpp"
+#include "mem/mmap.hpp"
 #include "sys/mem.hpp"
 #include "sys/print.hpp"
 
@@ -70,18 +71,40 @@ namespace hls
     void TableEntry::point_to_frame(const void *frame)
     {
         data = to_uintptr_t(frame) >> 2;
-        data |= 0x1;
-        set_flags(READ);
+        data = data | VALID;
+        set_system_flags(VM_READ_FLAG);
     }
 
-    void TableEntry::set_flags(uint64_t flags)
+    void TableEntry::set_system_flags(uint64_t flags)
     {
-        data = data | flags;
+        if (flags & VM_VALID_FLAG)
+            data = data | VALID;
+        if (flags & VM_READ_FLAG)
+            data = data | READ;
+        if (flags & VM_DIRTY_FLAG)
+            data = data | DIRTY;
+        if (flags & VM_WRITE_FLAG)
+            data = data | WRITE;
+        if (flags & VM_ACCESS_FLAG)
+            data = data | ACCESS;
+        if (flags & VM_EXECUTE_FLAG)
+            data = data | EXECUTE;
     }
 
-    void TableEntry::unset_flags(uint64_t flags)
+    void TableEntry::unset_system_flags(uint64_t flags)
     {
-        data = (data | flags) ^ flags;
+        if (flags & VM_VALID_FLAG)
+            data = (data | VALID) ^ VALID;
+        if (flags & VM_READ_FLAG)
+            data = (data | READ) ^ READ;
+        if (flags & VM_DIRTY_FLAG)
+            data = (data | DIRTY) ^ DIRTY;
+        if (flags & VM_WRITE_FLAG)
+            data = (data | WRITE) ^ WRITE;
+        if (flags & VM_ACCESS_FLAG)
+            data = (data | ACCESS) ^ ACCESS;
+        if (flags & VM_EXECUTE_FLAG)
+            data = (data | EXECUTE) ^ EXECUTE;
     }
 
     void TableEntry::erase()
@@ -107,15 +130,21 @@ namespace hls
 
     bool TableEntry::is_writable()
     {
-        return data & (1u << WRITE);
+        return (data & WRITE) != 0;
     }
     bool TableEntry::is_readable()
     {
-        return data & (1u << READ);
+        return (data & READ) != 0;
     }
     bool TableEntry::is_executable()
     {
-        return data & (1u << EXECUTE);
+        return (data & EXECUTE) != 0;
+    }
+
+    uint64_t TableEntry::get_platform_flagmask() const
+    {
+        // TODO: Implement
+        return 0;
     }
 
     PageTable *TableEntry::as_table_pointer()
@@ -123,10 +152,18 @@ namespace hls
         return reinterpret_cast<PageTable *>(as_pointer());
     }
 
+    void *PageTable::compose_address_with_entry(void *vaddress, size_t entry_idx, FrameOrder order)
+    {
+        uintptr_t p = to_uintptr_t(vaddress);
+        uintptr_t vpn_idx = static_cast<size_t>(order);
+        p = p | ((entry_idx & 0x1FF) << ((vpn_idx * 9) + 11));
+        return to_ptr(p);
+    }
+
     void TableEntry::point_to_table(const PageTable *table)
     {
         data = to_uintptr_t(table) >> 2;
-        data |= 0x1;
+        data |= VALID;
     }
 
     TableEntry *PageTable::entries()

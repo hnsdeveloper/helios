@@ -48,7 +48,6 @@ namespace hls
         strprint(splash);
         // Prints copyright notice, the year and the commit which this build was based
         // at.
-
         kprintln("Copyright (C) {}. Built from {}.", __DATE__ + 7, GIT_HASH);
     }
 
@@ -56,17 +55,25 @@ namespace hls
     {
         display_initial_info();
         setup_kernel_memory_map(b_info);
-        init_initfalloc(b_info->used_bootpages, get_kernel_pagetable());
-        unmap_low_kernel(b_info->p_lowkernel_start, b_info->p_lowkernel_end);
-        mapfdt(get_device_tree_from_options(b_info->argc, b_info->argv));
-        initialize_frame_manager(get_fdt(), b_info);
+
+        // Initialize FrameManager with pages that remain from the bootstage.
+        const Pair<void *, size_t> boot_pages{get_kernel_pagetable() + b_info->used_bootpages,
+                                              (BOOTPAGES - b_info->used_bootpages) * FrameKB::s_size};
+        FrameManager::initialize_global_instance();
+        FrameManager::get_global_instance().expand_memory(boot_pages);
+
+        // Initialize kernel memory mapper.
         VMMap::initialize_global_instance(get_kernel_pagetable(), (void *)(0x80000000), (void *)(0x90000000));
-        VMMap::get_global_instance().map_memory((void *)(0x10000000), (void *)(0x80000000), FrameOrder::LOWEST_ORDER,
-                                                0);
+
+        kprintln("Here!");
         while (true)
             ;
-        initialize_kmalloc();
+        init_initfalloc(b_info->used_bootpages, get_kernel_pagetable());
+        // unmap_low_kernel(b_info->p_lowkernel_start, b_info->p_lowkernel_end);
+        mapfdt(get_device_tree_from_options(b_info->argc, b_info->argv));
+        initialize_frame_manager(get_fdt(), b_info);
 
+        // initialize_kmalloc();
         while (true)
             ;
     }

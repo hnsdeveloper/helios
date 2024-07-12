@@ -25,6 +25,7 @@ SOFTWARE.
 
 #include "mem/bumpallocator.hpp"
 #include "sys/mem.hpp"
+#include "sys/panic.hpp"
 #include "sys/print.hpp"
 
 namespace hls
@@ -46,7 +47,7 @@ namespace hls
 
     void *BumpAllocator::get_mem()
     {
-        if (m_items_count > 0)
+        if (available_count() > 0)
         {
             --m_items_count;
             auto ret = m_items_list;
@@ -65,6 +66,11 @@ namespace hls
 
     size_t BumpAllocator::available_count() const
     {
+        // TODO: TEMPORARY, BUMP ALLOCATOR SHOULD EXPAND IF NO MEMORY IS AVAILABLE
+        if (m_items_count == 0)
+        {
+            PANIC("No memory available for bump allocator");
+        }
         return m_items_count;
     }
 

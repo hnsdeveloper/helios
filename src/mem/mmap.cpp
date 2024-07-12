@@ -44,7 +44,7 @@ namespace hls
         auto scratch = get_scratch_pagetable();
         auto &entry = scratch->get_entry(PageTable::entries_on_table - get_cpu_id() - 2);
         entry.point_to_frame(paddress);
-        entry.set_flags(READ | WRITE | ACCESS | DIRTY);
+        entry.set_system_flags(VM_READ_FLAG | VM_WRITE_FLAG | VM_ACCESS_FLAG | VM_DIRTY_FLAG);
         flush_tlb();
         return (PageTable *)(nullptr) - get_cpu_id() - 2;
     }
@@ -62,9 +62,31 @@ namespace hls
         return {order, table};
     }
 
+    void VMMap::translate_table_to_tree(PageTable *table, FrameOrder order, void *vaddress)
+    {
+        for (size_t i = 0; i < PageTable::entries_on_table; ++i)
+        {
+            auto v_table = translated_page_vaddress(table);
+            auto &entry = v_table->get_entry(i);
+            // TODO: SET FLAGS
+            if (entry.is_leaf())
+            {
+                map_memory(entry.as_pointer(), v_table->compose_address_with_entry(vaddress, i, order), order,
+                           entry.get_platform_flagmask());
+            }
+            else
+            {
+                translate_table_to_tree(entry.as_table_pointer(), next_vpn(order), vaddress);
+            }
+        }
+    }
+
     VMMap::VMMap(PageTable *table, void *min_map_addr, void *max_map_addr)
         : m_bump_allocator(sizeof(VMMap::tree::node)), m_memmap_info_tree(m_bump_allocator), m_root_table(table),
-          m_min_alloc_address(min_map_addr), m_max_alloc_address(max_map_addr) {};
+          m_min_alloc_address(min_map_addr), m_max_alloc_address(max_map_addr)
+    {
+        translate_table_to_tree(m_root_table, FrameOrder::HIGHEST_ORDER, nullptr);
+    };
 
     bool VMMap::is_valid_virtual_address(const void *addr)
     {
@@ -102,7 +124,7 @@ namespace hls
         p_table = translated_page_vaddress(p_table);
         auto &entry = p_table->get_entry(get_page_entry_index(m_map.get_vaddress(), m_map.get_frame_order()));
         entry.point_to_frame(m_map.get_paddress());
-        entry.set_flags(m_map.get_flags());
+        entry.set_system_flags(m_map.get_flags());
         flush_tlb();
     }
 
@@ -212,7 +234,7 @@ namespace hls
         size_t lvl_entry_idx = get_page_entry_index(vaddress, lvl);
         auto &entry = vt->get_entry(lvl_entry_idx);
         entry.point_to_frame(paddress);
-        entry.set_flags(flags);
+        entry.set_system_flags(flags);
     }
 
     bool kmmap(const void *paddress, const void *vaddress, PageTable *table, const FrameOrder p_lvl, uint64_t flags,
