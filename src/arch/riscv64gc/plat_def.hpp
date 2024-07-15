@@ -193,8 +193,6 @@ namespace hls
     using FrameTB = PageFrame<FrameOrder::FOURTH_ORDER>;
     static_assert(sizeof(FrameTB) == FrameInfo<FrameOrder::FOURTH_ORDER>::s_size);
 
-    using GranularPage = FrameKB;
-
     struct __attribute__((packed)) _reg_as_data
     {
         uint64_t x0;

@@ -45,7 +45,6 @@ extern "C" void die();
 
 /**
  * @brief Macro used to print current registers values.
- *
  */
 #define PRINT_REGISTERS()                                                                                              \
     {                                                                                                                  \
@@ -61,7 +60,6 @@ extern "C" void die();
 /**
  * @brief Macro used for kernel panics. Prints registers values, shows a panic
  * message, calling location and stack trace.
- *
  */
 #define PANIC(msg)                                                                                                     \
     {                                                                                                                  \

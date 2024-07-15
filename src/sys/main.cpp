@@ -51,25 +51,32 @@ namespace hls
         kprintln("Copyright (C) {}. Built from {}.", __DATE__ + 7, GIT_HASH);
     }
 
+    void unmap_low_kernel(byte *begin, byte *end)
+    {
+        for (auto it = begin; it < end; it += PAGE_FRAME_SIZE)
+        {
+            VMMap::get_global_instance().unmap_memory(it);
+        }
+    }
+
     __attribute__((noreturn)) void kernel_main(bootinfo *b_info)
     {
         display_initial_info();
-        setup_kernel_memory_map(b_info);
 
         // Initialize FrameManager with pages that remain from the bootstage.
-        const Pair<void *, size_t> boot_pages{get_kernel_pagetable() + b_info->used_bootpages,
+        const Pair<void *, size_t> boot_pages{b_info->p_kernel_table + b_info->used_bootpages,
                                               (BOOTPAGES - b_info->used_bootpages) * FrameKB::s_size};
         FrameManager::initialize_global_instance();
         FrameManager::get_global_instance().expand_memory(boot_pages);
 
-        // Initialize kernel memory mapper.
-        VMMap::initialize_global_instance(get_kernel_pagetable(), (void *)(0x80000000), (void *)(0x90000000));
-
+        // Initialize kernel memory mapper and unmap low kernel, given that we don't rely on it anymore.
+        VMMap::initialize_global_instance(b_info->p_kernel_table, b_info->v_scratch);
+        unmap_low_kernel(b_info->p_lowkernel_start, b_info->p_lowkernel_end);
         kprintln("Here!");
+
         while (true)
             ;
-        init_initfalloc(b_info->used_bootpages, get_kernel_pagetable());
-        // unmap_low_kernel(b_info->p_lowkernel_start, b_info->p_lowkernel_end);
+
         mapfdt(get_device_tree_from_options(b_info->argc, b_info->argv));
         initialize_frame_manager(get_fdt(), b_info);
 

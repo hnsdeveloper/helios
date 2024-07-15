@@ -24,6 +24,8 @@ SOFTWARE.
 ---------------------------------------------------------------------------------*/
 
 #include "mem/bumpallocator.hpp"
+#include "mem/framemanager.hpp"
+#include "mem/mmap.hpp"
 #include "sys/mem.hpp"
 #include "sys/panic.hpp"
 #include "sys/print.hpp"
@@ -47,14 +49,28 @@ namespace hls
 
     void *BumpAllocator::get_mem()
     {
-        if (available_count() > 0)
+        if (available_count() == 0)
         {
-            --m_items_count;
-            auto ret = m_items_list;
-            m_items_list = *reinterpret_cast<void **>(m_items_list);
-            return ret;
+            FrameData *f_info = FrameManager::get_global_instance().get_frames(1, 0);
+            // TODO: implement memory releasing routines
+            if (f_info == nullptr)
+            {
+                PANIC("No memory avaiable");
+            }
+            auto result = VMMap::get_global_instance().map_first_fit(
+                f_info->get_frame_pointer(), FrameOrder::FIRST_ORDER,
+                VM_READ_FLAG | VM_WRITE_FLAG | VM_ACCESS_FLAG | VM_DIRTY_FLAG);
+            if (result.is_error())
+            {
+                PANIC("Shouldn't panic!");
+            }
+            expand_from_frame(result.get_value().get_paddress());
         }
-        return nullptr;
+
+        --m_items_count;
+        auto ret = m_items_list;
+        m_items_list = *reinterpret_cast<void **>(m_items_list);
+        return ret;
     }
 
     void BumpAllocator::release_mem(const void *ptr)
@@ -66,11 +82,6 @@ namespace hls
 
     size_t BumpAllocator::available_count() const
     {
-        // TODO: TEMPORARY, BUMP ALLOCATOR SHOULD EXPAND IF NO MEMORY IS AVAILABLE
-        if (m_items_count == 0)
-        {
-            PANIC("No memory available for bump allocator");
-        }
         return m_items_count;
     }
 

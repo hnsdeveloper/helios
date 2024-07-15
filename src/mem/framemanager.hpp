@@ -124,7 +124,4 @@ namespace hls
 
     void initialize_frame_manager(void *fdt, bootinfo *b_info);
 
-    PageTable *init_initfalloc(size_t used, PageTable *tables);
-    void *initfalloc();
-    void initffree(void *);
 } // namespace hls

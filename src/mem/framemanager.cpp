@@ -146,6 +146,7 @@ namespace hls
                     m_free_frames.insert(hls::move(temp_b));
                 temp_a.set_flags(flags);
                 auto it = m_used_frames.insert(hls::move(temp_a));
+                --m_frame_count;
                 return &(it->get_data());
             }
         }
@@ -214,29 +215,5 @@ namespace hls
         Pair<void *, size_t> mem_info = get_available_ram(fdt, b_info);
         FrameManager::initialize_global_instance();
         FrameManager::get_global_instance().expand_memory(mem_info);
-    }
-
-    PageTable *init_initfalloc(size_t used, PageTable *tables)
-    {
-        static size_t g_usedpages = used;
-        static PageTable *g_tables = tables;
-
-        if (used == 0)
-        {
-            if (g_usedpages < BOOTPAGES)
-                return g_tables + g_usedpages++;
-        }
-
-        return nullptr;
-    }
-
-    void *initfalloc()
-    {
-        return init_initfalloc(0, nullptr);
-    }
-
-    void initffree(void *)
-    {
-        (void)(0);
     }
 } // namespace hls

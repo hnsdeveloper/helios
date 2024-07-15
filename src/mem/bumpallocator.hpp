@@ -37,6 +37,7 @@ namespace hls
         void *m_items_list;
         size_t m_items_count;
         size_t m_type_size;
+        size_t m_min_items_threshold;
 
       public:
         BumpAllocator(size_t typesize);

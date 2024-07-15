@@ -12,25 +12,27 @@ namespace hls
 
     void mapfdt(void *fdt)
     {
-        PageTable *kptp = get_kernel_pagetable();
         byte *aligned = reinterpret_cast<byte *>(align_back(fdt, PAGE_FRAME_ALIGNMENT));
-        kmmap(aligned, aligned, kptp, FrameOrder::FIRST_ORDER, READ | ACCESS | DIRTY, initfalloc);
+        VMMap::get_global_instance().map_memory(aligned, aligned, FrameOrder::FIRST_ORDER,
+                                                VM_READ_FLAG | VM_ACCESS_FLAG | VM_DIRTY_FLAG);
 
         size_t fdt_size = fdt_totalsize(fdt);
         size_t needed_size = reinterpret_cast<byte *>(fdt) - aligned + fdt_size;
         size_t needed_pages = needed_size / PAGE_FRAME_SIZE + (needed_size % PAGE_FRAME_SIZE ? 1 : 0);
 
-        kmunmap(aligned, kptp, initffree);
+        VMMap::get_global_instance().unmap_memory(aligned);
 
-        byte *addr = get_kernel_v_free_address();
+        // byte *addr = get_kernel_v_free_address();
+        byte *addr = nullptr;
         fdt_address = addr + (reinterpret_cast<byte *>(fdt) - aligned);
         for (size_t i = 0; i < needed_pages; ++i)
         {
-            kmmap(aligned, addr, kptp, FrameOrder::FIRST_ORDER, READ | ACCESS | DIRTY, initfalloc);
+            VMMap::get_global_instance().map_memory(aligned, addr, FrameOrder::FIRST_ORDER,
+                                                    VM_READ_FLAG | VM_ACCESS_FLAG | VM_DIRTY_FLAG);
             aligned += PAGE_FRAME_SIZE;
             addr += PAGE_FRAME_SIZE;
         }
-        set_kernel_v_free_address(addr);
+        // set_kernel_v_free_address(addr);
     }
 
     void *get_fdt()

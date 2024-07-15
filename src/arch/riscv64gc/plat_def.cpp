@@ -143,8 +143,25 @@ namespace hls
 
     uint64_t TableEntry::get_platform_flagmask() const
     {
+        uint64_t flags = 0;
         // TODO: Implement
-        return 0;
+        return flags;
+    }
+
+    uint64_t TableEntry::get_system_flagmask() const
+    {
+        uint64_t flags = 0;
+        if (data & READ)
+            flags = flags | VM_READ_FLAG;
+        if (data & WRITE)
+            flags = flags | VM_WRITE_FLAG;
+        if (data & EXECUTE)
+            flags = flags | VM_EXECUTE_FLAG;
+        if (data & ACCESS)
+            flags = flags | VM_ACCESS_FLAG;
+        if (data & DIRTY)
+            flags = flags | VM_DIRTY_FLAG;
+        return flags;
     }
 
     PageTable *TableEntry::as_table_pointer()
@@ -156,7 +173,9 @@ namespace hls
     {
         uintptr_t p = to_uintptr_t(vaddress);
         uintptr_t vpn_idx = static_cast<size_t>(order);
-        p = p | ((entry_idx & 0x1FF) << ((vpn_idx * 9) + 11));
+        p = p | ((entry_idx & 0x1FF) << ((vpn_idx * 9) + 12));
+        if (p & (1ull << 47))
+            p = p | 0xFFFF000000000000ULL;
         return to_ptr(p);
     }
 

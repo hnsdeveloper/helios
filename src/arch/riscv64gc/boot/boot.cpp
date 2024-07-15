@@ -145,7 +145,7 @@ LKERNELFUN void init_f_alloc()
 LKERNELFUN void *f_alloc()
 {
 
-    GranularPage *p = reinterpret_cast<GranularPage *>(INITIAL_FRAMES);
+    FrameKB *p = reinterpret_cast<FrameKB *>(INITIAL_FRAMES);
     if (s_used < BOOTPAGES)
         return p + s_used++;
 
