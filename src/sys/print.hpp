@@ -230,7 +230,7 @@ namespace hls
     kprintln(__VA_ARGS__)
 #else
 #define kspit(expr)
-#define kdebug(expr)
+#define kdebug(...)
 #endif
 
 } // namespace hls
