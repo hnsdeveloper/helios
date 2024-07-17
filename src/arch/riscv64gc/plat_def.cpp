@@ -224,8 +224,10 @@ namespace hls
             return FrameInfo<FrameOrder::SECOND_ORDER>::s_size;
         case FrameOrder::THIRD_ORDER:
             return FrameInfo<FrameOrder::THIRD_ORDER>::s_size;
+#ifdef SV48
         case FrameOrder::FOURTH_ORDER:
             return FrameInfo<FrameOrder::FOURTH_ORDER>::s_size;
+#endif
         default:
             return 0;
         }

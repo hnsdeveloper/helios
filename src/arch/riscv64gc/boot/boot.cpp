@@ -41,15 +41,28 @@ using namespace hls;
 LKERNELBSS alignas(PAGE_FRAME_SIZE) byte INITIAL_FRAMES[FrameKB::s_size * BOOTPAGES];
 LKERNELBSS alignas(PAGE_FRAME_SIZE) byte ARGCV[FrameKB::s_size * ARGPAGES];
 LKERNELDATA static size_t s_used = 0;
-LKERNELRODATA const char HERE[] = "HERE";
 LKERNELRODATA const char NEEDPAGES[] = "Not enough pages. Please, compile kernel with higher BOOTPAGES option.";
 LKERNELRODATA const char NEEDARGCV[] =
     "Not enough pages for arguments. Please, compile kernel with higher ARGPAGES option.";
 LKERNELDATA byte *kvaddress = reinterpret_cast<byte *>(uintptr_t(0) - uintptr_t(0x40000000));
 
-LKERNELFUN void bputc(char)
+LKERNELFUN void _sbi_call(uint64_t extension, uint64_t function_id, uint64_t arg0, uint64_t arg1, uint64_t arg2,
+                          uint64_t arg3, uint64_t arg4, uint64_t arg5)
 {
-    // TODO: implement
+    register uint64_t a0 asm("a0") = arg0;
+    register uint64_t a1 asm("a1") = arg1;
+    register uint64_t a2 asm("a2") = arg2;
+    register uint64_t a3 asm("a3") = arg3;
+    register uint64_t a4 asm("a4") = arg4;
+    register uint64_t a5 asm("a5") = arg5;
+    register uint64_t a6 asm("a6") = function_id;
+    register uint64_t a7 asm("a7") = extension;
+    asm volatile("ecall" : "+r"(a0), "+r"(a1) : "r"(a2), "r"(a3), "r"(a4), "r"(a5), "r"(a6), "r"(a7) : "memory");
+}
+
+LKERNELFUN void bputc(char c)
+{
+    _sbi_call(0x1u, 0x0, c, 0, 0, 0, 0, 0);
 }
 
 LKERNELFUN void bputstr(const char *str)
@@ -61,7 +74,7 @@ LKERNELFUN void bputstr(const char *str)
 LKERNELFUN void bputstrln(const char *str)
 {
     bputstr(str);
-    bputstr("\n");
+    bputc('\n');
 }
 
 LKERNELFUN void *bmemset(void *mem, byte data, size_t size)
@@ -287,16 +300,21 @@ LKERNELFUN PageTable *force_scratch_page(PageTable *kernel_table)
     return reinterpret_cast<PageTable *>(p);
 }
 
+LKERNELRODATA const char BOOTLOADER[] = "On bootloader!";
+LKERNELRODATA const char HERE[] = "HERE0";
+LKERNELRODATA const char HERE1[] = "HERE2";
+LKERNELRODATA const char HERE2[] = "HERE3";
+LKERNELRODATA const char HERE3[] = "HERE4";
+LKERNELRODATA const char HERE4[] = "HERE5";
+
 extern "C" LKERNELFUN void bootmain(int argc, const char **argv, bootinfo *info)
 {
     init_f_alloc();
     PageTable *kernel_table = reinterpret_cast<PageTable *>(f_alloc());
-
     auto *k_ph_end = map_high_kernel(kernel_table);
     auto scratch = force_scratch_page(kernel_table);
     identity_map(kernel_table);
     auto nargv = map_args(kernel_table, argc, argv);
-
     info->argc = argc;
     info->argv = nargv;
     info->used_bootpages = s_used;

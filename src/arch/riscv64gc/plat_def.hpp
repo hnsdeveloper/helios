@@ -31,7 +31,6 @@ SOFTWARE.
 
 namespace hls
 {
-
     constexpr uint64_t REGISTER_SIZE = 8;
     constexpr uint64_t PAGE_LEVELS = 4;
     constexpr uint64_t PAGE_FRAME_SIZE = 4096;
@@ -58,7 +57,11 @@ namespace hls
         SECOND_ORDER = 1,
         THIRD_ORDER = 2,
         FOURTH_ORDER = 3,
+#ifdef SV39
+        HIGHEST_ORDER = THIRD_ORDER,
+#elif SV48
         HIGHEST_ORDER = FOURTH_ORDER,
+#endif
         INVALID
     };
 
@@ -190,8 +193,11 @@ namespace hls
     static_assert(sizeof(FrameMB) == FrameInfo<FrameOrder::SECOND_ORDER>::s_size);
     using FrameGB = PageFrame<FrameOrder::THIRD_ORDER>;
     static_assert(sizeof(FrameGB) == FrameInfo<FrameOrder::THIRD_ORDER>::s_size);
+
+#ifdef SV48
     using FrameTB = PageFrame<FrameOrder::FOURTH_ORDER>;
     static_assert(sizeof(FrameTB) == FrameInfo<FrameOrder::FOURTH_ORDER>::s_size);
+#endif
 
     struct __attribute__((packed)) _reg_as_data
     {
