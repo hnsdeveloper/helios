@@ -7,10 +7,6 @@ ifndef BUILD_DIR
     BUILD_DIR := $(PROJECT_ROOT)build/
 endif
 
-ifndef CXXPREFIX
-    $(error CXXPREFIX is not set.)
-endif
-
 ifdef HELIOS_DEBUG
     ifeq ($(HELIOS_DEBUG), 1)
         EXTRAFLAGS := $(EXTRAFLAGS) -g
@@ -58,6 +54,11 @@ ifdef CXXPREFIX
     CXX := $(CXXPREFIX)g++
     AR  := $(CXXPREFIX)ar
     LD	:= $(CXXPREFIX)ld
+else
+    CC  := clang
+    CXX := clang++
+    AR  := llvm-ar
+    LD	:= lld
 endif
 
 export BUILD_DIR
