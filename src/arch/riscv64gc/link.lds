@@ -101,7 +101,5 @@ SECTIONS
   	PROVIDE(_stack_end = _stack_begin + 0x80000);
   	PROVIDE(_kernel_end = .);
 	PROVIDE(_kphysical_end = LOADADDR(.bss) + SIZEOF(.bss) + (4096 - SIZEOF(.bss) % 4096) + 0x80000);
-
-	
 }
 

@@ -14,7 +14,6 @@
 		99180E5C2C128EB400C05182 /* link.lds in Sources */ = {isa = PBXBuildFile; fileRef = 99180DFF2C128D1D00C05182 /* link.lds */; };
 		99180E5D2C128EB400C05182 /* plat_def.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E002C128D1D00C05182 /* plat_def.cpp */; };
 		99180E5E2C128EB400C05182 /* plat_def.hpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E012C128D1D00C05182 /* plat_def.hpp */; };
-		99180E5F2C128EB400C05182 /* driverframework.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E042C128D1D00C05182 /* driverframework.cpp */; };
 		99180E602C128EB400C05182 /* framemanager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E072C128D1D00C05182 /* framemanager.cpp */; };
 		99180E612C128EB400C05182 /* mmap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E092C128D1D00C05182 /* mmap.cpp */; };
 		99180E622C128EB400C05182 /* fdt_addresses.c in Sources */ = {isa = PBXBuildFile; fileRef = 99180E0E2C128D1D00C05182 /* fdt_addresses.c */; };
@@ -33,7 +32,6 @@
 		99180E6F2C128EB400C05182 /* devicetree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E2E2C128D1D00C05182 /* devicetree.cpp */; };
 		99180E712C128EB400C05182 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E322C128D1D00C05182 /* main.cpp */; };
 		99180E722C128EB400C05182 /* panic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E352C128D1D00C05182 /* panic.cpp */; };
-		99180E732C128EB400C05182 /* traphandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E3A2C128D1D00C05182 /* traphandler.cpp */; };
 		99180E782C13DDDB00C05182 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 99180E772C13DDDB00C05182 /* Makefile */; };
 		99180E7A2C14D95A00C05182 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 99180E792C14D95A00C05182 /* Makefile */; };
 		99180E7C2C14DEFF00C05182 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 99180E7B2C14DEFF00C05182 /* Makefile */; };
@@ -65,8 +63,6 @@
 		99180DFF2C128D1D00C05182 /* link.lds */ = {isa = PBXFileReference; lastKnownFileType = text; path = link.lds; sourceTree = "<group>"; };
 		99180E002C128D1D00C05182 /* plat_def.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = plat_def.cpp; sourceTree = "<group>"; };
 		99180E012C128D1D00C05182 /* plat_def.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = plat_def.hpp; sourceTree = "<group>"; };
-		99180E042C128D1D00C05182 /* driverframework.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = driverframework.cpp; sourceTree = "<group>"; };
-		99180E052C128D1D00C05182 /* driverframework.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = driverframework.hpp; sourceTree = "<group>"; };
 		99180E072C128D1D00C05182 /* framemanager.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = framemanager.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		99180E082C128D1D00C05182 /* framemanager.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = framemanager.hpp; sourceTree = "<group>"; };
 		99180E092C128D1D00C05182 /* mmap.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = mmap.cpp; sourceTree = "<group>"; };
@@ -107,8 +103,6 @@
 		99180E362C128D1D00C05182 /* panic.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = panic.hpp; sourceTree = "<group>"; };
 		99180E372C128D1D00C05182 /* print.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = print.hpp; sourceTree = "<group>"; };
 		99180E382C128D1D00C05182 /* string.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = string.hpp; sourceTree = "<group>"; };
-		99180E3A2C128D1D00C05182 /* traphandler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = traphandler.cpp; sourceTree = "<group>"; };
-		99180E3B2C128D1D00C05182 /* traphandler.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = traphandler.hpp; sourceTree = "<group>"; };
 		99180E3D2C128D1D00C05182 /* bit.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = bit.hpp; sourceTree = "<group>"; };
 		99180E3E2C128D1D00C05182 /* double_list.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = double_list.hpp; sourceTree = "<group>"; };
 		99180E3F2C128D1D00C05182 /* hash.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = hash.hpp; sourceTree = "<group>"; };
@@ -208,15 +202,6 @@
 			path = arch;
 			sourceTree = "<group>";
 		};
-		99180E062C128D1D00C05182 /* dev */ = {
-			isa = PBXGroup;
-			children = (
-				99180E042C128D1D00C05182 /* driverframework.cpp */,
-				99180E052C128D1D00C05182 /* driverframework.hpp */,
-			);
-			path = dev;
-			sourceTree = "<group>";
-		};
 		99180E0B2C128D1D00C05182 /* mem */ = {
 			isa = PBXGroup;
 			children = (
@@ -306,15 +291,6 @@
 			path = sys;
 			sourceTree = "<group>";
 		};
-		99180E3C2C128D1D00C05182 /* traphandler */ = {
-			isa = PBXGroup;
-			children = (
-				99180E3A2C128D1D00C05182 /* traphandler.cpp */,
-				99180E3B2C128D1D00C05182 /* traphandler.hpp */,
-			);
-			path = traphandler;
-			sourceTree = "<group>";
-		};
 		99180E482C128D1D00C05182 /* ulib */ = {
 			isa = PBXGroup;
 			children = (
@@ -339,11 +315,9 @@
 			isa = PBXGroup;
 			children = (
 				99180E032C128D1D00C05182 /* arch */,
-				99180E062C128D1D00C05182 /* dev */,
 				99180E0B2C128D1D00C05182 /* mem */,
 				99180E282C128D1D00C05182 /* misc */,
 				99180E392C128D1D00C05182 /* sys */,
-				99180E3C2C128D1D00C05182 /* traphandler */,
 				99180E482C128D1D00C05182 /* ulib */,
 			);
 			path = src;
@@ -444,7 +418,6 @@
 				99180E7E2C14E07F00C05182 /* Makefile in Sources */,
 				99180E5D2C128EB400C05182 /* plat_def.cpp in Sources */,
 				99180E5E2C128EB400C05182 /* plat_def.hpp in Sources */,
-				99180E5F2C128EB400C05182 /* driverframework.cpp in Sources */,
 				99180E602C128EB400C05182 /* framemanager.cpp in Sources */,
 				993F375C2C34AC2E00017F49 /* bumpallocator.cpp in Sources */,
 				99180E612C128EB400C05182 /* mmap.cpp in Sources */,
@@ -468,7 +441,6 @@
 				99180E712C128EB400C05182 /* main.cpp in Sources */,
 				99180E722C128EB400C05182 /* panic.cpp in Sources */,
 				99180E7C2C14DEFF00C05182 /* Makefile in Sources */,
-				99180E732C128EB400C05182 /* traphandler.cpp in Sources */,
 				993F37602C3DE1CF00017F49 /* string.cpp in Sources */,
 				99180E782C13DDDB00C05182 /* Makefile in Sources */,
 			);

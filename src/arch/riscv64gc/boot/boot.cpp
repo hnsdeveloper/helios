@@ -300,13 +300,6 @@ LKERNELFUN PageTable *force_scratch_page(PageTable *kernel_table)
     return reinterpret_cast<PageTable *>(p);
 }
 
-LKERNELRODATA const char BOOTLOADER[] = "On bootloader!";
-LKERNELRODATA const char HERE[] = "HERE0";
-LKERNELRODATA const char HERE1[] = "HERE2";
-LKERNELRODATA const char HERE2[] = "HERE3";
-LKERNELRODATA const char HERE3[] = "HERE4";
-LKERNELRODATA const char HERE4[] = "HERE5";
-
 extern "C" LKERNELFUN void bootmain(int argc, const char **argv, bootinfo *info)
 {
     init_f_alloc();
