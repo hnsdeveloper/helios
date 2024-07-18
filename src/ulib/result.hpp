@@ -29,9 +29,9 @@ SOFTWARE.
 #include "misc/macros.hpp"
 #include "misc/new.hpp"
 #include "misc/types.hpp"
-#include "misc/typetraits.hpp"
 #include "misc/utilities.hpp"
 #include "sys/panic.hpp"
+#include <type_traits>
 
 namespace hls
 {
@@ -44,7 +44,8 @@ namespace hls
         INVALID_INDEX,
         INVALID_PAGE_TABLE,
         INVALID_PAGE_ENTRY,
-        PAGE_ALREADY_MAPPED,
+        INVALID_VIRTUAL_ADDRESS,
+        MISALIGNED_MEMORY_ADDRESS,
         ADDRESS_ALREADY_MAPPED,
         NOT_ENOUGH_CONTIGUOUS_MEMORY,
         OUT_OF_MEMORY,
@@ -59,7 +60,7 @@ namespace hls
     };
 
     template <typename T>
-        requires(!is_reference_v<T>)
+        requires(!std::is_reference_v<T>)
     class Result
     {
 
@@ -80,7 +81,7 @@ namespace hls
 
         Result(value_type_rvalue_reference v)
         {
-            using type = remove_cvref_t<T>;
+            using type = std::remove_cvref_t<T>;
             new (reinterpret_cast<value_type *>(m_stored.value)) type(hls::move(v));
         }
 
@@ -164,20 +165,20 @@ namespace hls
 
         static auto error(error_type e)
         {
-            using type = remove_cvref_t<value_type>;
+            using type = std::remove_cvref_t<value_type>;
             return Result<type>(e);
         }
 
         static auto value(value_type_rvalue_reference v)
         {
-            using type = remove_cvref_t<value_type>;
+            using type = std::remove_cvref_t<value_type>;
 
             return Result<type>(hls::move(v));
         }
 
         static Result value(value_type_const_reference v)
         {
-            using type = remove_cvref_t<value_type>;
+            using type = std::remove_cvref_t<value_type>;
             return Result<type>(v);
         }
     };
@@ -187,7 +188,7 @@ namespace hls
 
     auto value(auto v)
     {
-        using type = remove_cvref_t<decltype(v)>;
+        using type = std::remove_cvref_t<decltype(v)>;
         return Result<type>::value(hls::forward<decltype(v)>(v));
     }
 

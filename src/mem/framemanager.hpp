@@ -111,19 +111,17 @@ namespace hls
         tree m_free_frames;
         size_t m_frame_count;
 
-        FrameManager(const Pair<void *, size_t> &mem_info);
+        FrameManager();
         FrameManager(const FrameManager &) = delete;
         FrameManager(FrameManager &&) = delete;
         friend class Singleton<FrameManager>;
 
       public:
+        void expand_memory(const Pair<void *, size_t> mem_info);
         FrameData *get_frames(size_t count, uint64_t flags);
         void release_frames(void *frame_pointer);
     };
 
     void initialize_frame_manager(void *fdt, bootinfo *b_info);
 
-    PageTable *init_initfalloc(size_t used, PageTable *tables);
-    void *initfalloc();
-    void initffree(void *);
 } // namespace hls

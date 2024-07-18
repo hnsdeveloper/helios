@@ -46,9 +46,23 @@ LKERNELRODATA const char NEEDARGCV[] =
     "Not enough pages for arguments. Please, compile kernel with higher ARGPAGES option.";
 LKERNELDATA byte *kvaddress = reinterpret_cast<byte *>(uintptr_t(0) - uintptr_t(0x40000000));
 
-LKERNELFUN void bputc(char)
+LKERNELFUN void _sbi_call(uint64_t extension, uint64_t function_id, uint64_t arg0, uint64_t arg1, uint64_t arg2,
+                          uint64_t arg3, uint64_t arg4, uint64_t arg5)
 {
-    // TODO: implement
+    register uint64_t a0 asm("a0") = arg0;
+    register uint64_t a1 asm("a1") = arg1;
+    register uint64_t a2 asm("a2") = arg2;
+    register uint64_t a3 asm("a3") = arg3;
+    register uint64_t a4 asm("a4") = arg4;
+    register uint64_t a5 asm("a5") = arg5;
+    register uint64_t a6 asm("a6") = function_id;
+    register uint64_t a7 asm("a7") = extension;
+    asm volatile("ecall" : "+r"(a0), "+r"(a1) : "r"(a2), "r"(a3), "r"(a4), "r"(a5), "r"(a6), "r"(a7) : "memory");
+}
+
+LKERNELFUN void bputc(char c)
+{
+    _sbi_call(0x1u, 0x0, c, 0, 0, 0, 0, 0);
 }
 
 LKERNELFUN void bputstr(const char *str)
@@ -60,7 +74,7 @@ LKERNELFUN void bputstr(const char *str)
 LKERNELFUN void bputstrln(const char *str)
 {
     bputstr(str);
-    bputstr("\n");
+    bputc('\n');
 }
 
 LKERNELFUN void *bmemset(void *mem, byte data, size_t size)
@@ -144,7 +158,7 @@ LKERNELFUN void init_f_alloc()
 LKERNELFUN void *f_alloc()
 {
 
-    GranularPage *p = reinterpret_cast<GranularPage *>(INITIAL_FRAMES);
+    FrameKB *p = reinterpret_cast<FrameKB *>(INITIAL_FRAMES);
     if (s_used < BOOTPAGES)
         return p + s_used++;
 
@@ -290,12 +304,10 @@ extern "C" LKERNELFUN void bootmain(int argc, const char **argv, bootinfo *info)
 {
     init_f_alloc();
     PageTable *kernel_table = reinterpret_cast<PageTable *>(f_alloc());
-
     auto *k_ph_end = map_high_kernel(kernel_table);
     auto scratch = force_scratch_page(kernel_table);
     identity_map(kernel_table);
     auto nargv = map_args(kernel_table, argc, argv);
-
     info->argc = argc;
     info->argv = nargv;
     info->used_bootpages = s_used;

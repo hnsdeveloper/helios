@@ -4,7 +4,7 @@ ENTRY( _start )
 
 MEMORY
 {
-  ram  (wxa) : ORIGIN = 0x84000000, LENGTH = 1024M
+  ram  (wxa) : ORIGIN = RISCV_MEM_ORIGIN, LENGTH = 1024M
 }
 
 /*
@@ -18,7 +18,7 @@ PHDRS
 
 SECTIONS
 {
-	PROVIDE(_load_address = 0x84000000);
+	PROVIDE(_load_address = RISCV_MEM_ORIGIN);
 
 	.text.low : {
 		. = ALIGN(4);
@@ -101,7 +101,5 @@ SECTIONS
   	PROVIDE(_stack_end = _stack_begin + 0x80000);
   	PROVIDE(_kernel_end = .);
 	PROVIDE(_kphysical_end = LOADADDR(.bss) + SIZEOF(.bss) + (4096 - SIZEOF(.bss) % 4096) + 0x80000);
-
-	
 }
 

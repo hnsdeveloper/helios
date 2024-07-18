@@ -216,9 +216,9 @@ namespace hls
     {                                                                                                                  \
         if constexpr (std::is_integral_v<decltype(expr)>)                                                              \
         {                                                                                                              \
-            const void *p = reinterpret_cast<const void *>(expr);                                                      \
-            auto p2 = expr;                                                                                            \
-            kprintln(#expr " : {} " #expr " hex: {}", p2, p);                                                          \
+            const void *__p = reinterpret_cast<const void *>(expr);                                                    \
+            auto __p2 = expr;                                                                                          \
+            kprintln(#expr " : {} " #expr " hex: {}", __p2, __p);                                                      \
         }                                                                                                              \
         else                                                                                                           \
         {                                                                                                              \
@@ -230,7 +230,7 @@ namespace hls
     kprintln(__VA_ARGS__)
 #else
 #define kspit(expr)
-#define kdebug(expr)
+#define kdebug(...)
 #endif
 
 } // namespace hls

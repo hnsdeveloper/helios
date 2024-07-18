@@ -3,7 +3,6 @@
 
 .section .data.low
 
- 
 .section .text.start
 
 .global _start
@@ -52,7 +51,7 @@ _start:
 	
 	# Now we manipulate the page table pointer
 	srli 		t0, t0, 12
-    li 			t1, 0x9000000000000000
+    li 			t1, RISCV_MEM_MODE_MASK
     or 			t0, t0, t1
 
 	# We also manipulate the sstatus register

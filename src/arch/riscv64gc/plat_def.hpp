@@ -31,23 +31,21 @@ SOFTWARE.
 
 namespace hls
 {
-
-#define REGISTER_SIZE 8;
-
-#define PAGE_LEVELS 4
-#define PAGE_FRAME_SIZE 4096
-#define PAGE_FRAME_ALIGNMENT PAGE_FRAME_SIZE
-#define PAGE_TABLE_SIZE PAGE_FRAME_SIZE
-#define PAGE_TABLE_ENTRY_SIZE 8
-#define ENTRIES_PER_TABLE PAGE_FRAME_SIZE / PAGE_TABLE_ENTRY_SIZE
-#define VALID uint64_t(1u) << 0
-#define READ uint64_t(1u) << 1
-#define WRITE uint64_t(1u) << 2
-#define EXECUTE uint64_t(1u) << 3
-#define USER uint64_t(1u) << 4
-#define G_WHAT uint64_t(1u) << 5
-#define ACCESS uint64_t(1u) << 6
-#define DIRTY uint64_t(1u) << 7
+    constexpr uint64_t REGISTER_SIZE = 8;
+    constexpr uint64_t PAGE_LEVELS = 4;
+    constexpr uint64_t PAGE_FRAME_SIZE = 4096;
+    constexpr uint64_t PAGE_FRAME_ALIGNMENT = PAGE_FRAME_SIZE;
+    constexpr uint64_t PAGE_TABLE_SIZE = PAGE_FRAME_SIZE;
+    constexpr uint64_t PAGE_TABLE_ENTRY_SIZE = 8;
+    constexpr uint64_t ENTRIES_PER_TABLE = PAGE_FRAME_SIZE / PAGE_TABLE_ENTRY_SIZE;
+    constexpr uint64_t VALID = uint64_t(1u) << 0;
+    constexpr uint64_t READ = uint64_t(1u) << 1;
+    constexpr uint64_t WRITE = uint64_t(1u) << 2;
+    constexpr uint64_t EXECUTE = uint64_t(1u) << 3;
+    constexpr uint64_t USER = uint64_t(1u) << 4;
+    constexpr uint64_t G_WHAT = uint64_t(1u) << 5;
+    constexpr uint64_t ACCESS = uint64_t(1u) << 6;
+    constexpr uint64_t DIRTY = uint64_t(1u) << 7;
 
     using uintreg_t = uint64_t;
     using max_align_t = void *;
@@ -59,7 +57,11 @@ namespace hls
         SECOND_ORDER = 1,
         THIRD_ORDER = 2,
         FOURTH_ORDER = 3,
+#ifdef SV39
+        HIGHEST_ORDER = THIRD_ORDER,
+#elif SV48
         HIGHEST_ORDER = FOURTH_ORDER,
+#endif
         INVALID
     };
 
@@ -140,9 +142,13 @@ namespace hls
 
         void point_to_frame(const void *frame);
 
-        void set_flags(uint64_t flags);
+        void set_system_flags(uint64_t flags);
 
-        void unset_flags(uint64_t flags);
+        void unset_system_flags(uint64_t flags);
+
+        uint64_t get_platform_flagmask() const;
+
+        uint64_t get_system_flagmask() const;
     };
 
     template <FrameOrder v>
@@ -175,6 +181,7 @@ namespace hls
         static constexpr size_t entries_on_table = ENTRIES_PER_TABLE;
         TableEntry *entries();
         TableEntry &get_entry(size_t entry_index);
+        void *compose_address_with_entry(void *vaddress, size_t entry_idx, FrameOrder order);
         void print_entries();
         bool is_empty();
     };
@@ -186,10 +193,11 @@ namespace hls
     static_assert(sizeof(FrameMB) == FrameInfo<FrameOrder::SECOND_ORDER>::s_size);
     using FrameGB = PageFrame<FrameOrder::THIRD_ORDER>;
     static_assert(sizeof(FrameGB) == FrameInfo<FrameOrder::THIRD_ORDER>::s_size);
+
+#ifdef SV48
     using FrameTB = PageFrame<FrameOrder::FOURTH_ORDER>;
     static_assert(sizeof(FrameTB) == FrameInfo<FrameOrder::FOURTH_ORDER>::s_size);
-
-    using GranularPage = FrameKB;
+#endif
 
     struct __attribute__((packed)) _reg_as_data
     {

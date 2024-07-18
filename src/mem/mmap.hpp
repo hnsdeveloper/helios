@@ -6,16 +6,23 @@
 #include "sys/bootdata.hpp"
 #include "sys/cpu.hpp"
 #include "ulib/rb_tree.hpp"
+#include "ulib/result.hpp"
 #include "ulib/singleton.hpp"
 
 namespace hls
 {
+    constexpr uint64_t VM_VALID_FLAG = 0x1;
+    constexpr uint64_t VM_READ_FLAG = 0x1 << 1;
+    constexpr uint64_t VM_WRITE_FLAG = 0x1 << 2;
+    constexpr uint64_t VM_EXECUTE_FLAG = 0x1 << 3;
+    constexpr uint64_t VM_ACCESS_FLAG = 0x1 << 4;
+    constexpr uint64_t VM_DIRTY_FLAG = 0x1 << 5;
 
     class MemMapInfo
     {
         FrameOrder m_order;
-        const void *m_paddress;
-        const void *m_vaddress;
+        void *m_paddress;
+        void *m_vaddress;
         uint64_t m_flags;
 
         bool inside_range(const void *a, size_t size, const void *b)
@@ -27,17 +34,17 @@ namespace hls
         }
 
       public:
-        MemMapInfo(FrameOrder f_order, const void *paddress, const void *vaddress, uint64_t flags)
+        MemMapInfo(FrameOrder f_order, void *paddress, void *vaddress, uint64_t flags)
             : m_order(f_order), m_paddress(paddress), m_vaddress(vaddress), m_flags(flags)
         {
         }
 
-        const void *get_vaddress() const
+        void *get_vaddress() const
         {
             return m_vaddress;
         }
 
-        const void *get_paddress() const
+        void *get_paddress() const
         {
             return m_paddress;
         }
@@ -64,67 +71,24 @@ namespace hls
         }
     };
 
-    template <>
-    class Hash<MemMapInfo>
-    {
-        SET_USING_CLASS(MemMapInfo, type);
-        SET_USING_CLASS(uintptr_t, hash_result);
-
-      public:
-        hash_result operator()(type_const_reference v) const
-        {
-            return to_uintptr_t(v.get_vaddress());
-        }
-    };
-
     class VMMap : public Singleton<VMMap>
     {
-        using tree = RedBlackTree<MemMapInfo, Hash, LessComparator, NodeAllocator>;
-        BumpAllocator m_bump_allocator;
-        tree m_memmap_info_tree;
-        PageTable *m_root_table;
-        void *m_min_alloc_address;
-        void *m_max_alloc_address;
+        PageTable *m_p_root_table;
+        PageTable *m_v_scratch_table;
 
-        bool is_valid_virtual_address(const void *addr);
-        void map_to_table(const void *p_address, const void *v_address);
-        void translate_to_page(const MemMapInfo &m_map);
+        PageTable *get_scratch_table();
+        FrameKB *physical_frame_to_scratch_frame(FrameKB *frame);
+        Pair<FrameOrder, PageTable *> table_walk(const void *vaddress, PageTable *table, FrameOrder order);
+        VMMap(PageTable *table, PageTable *scratch_table);
 
       public:
-        VMMap(PageTable *table, void *min_map_addr, void *max_map_addr);
+        Result<MemMapInfo> map_memory(void *paddress, void *vaddress, FrameOrder order, uint64_t flags);
+        Result<MemMapInfo> map_first_fit(void *paddress, FrameOrder order, uint64_t flags);
+        void unmap_memory(void *v_address);
+        Result<MemMapInfo> get_mapping_data(const void *vaddress) const;
+        bool is_address_mapped(const void *vaddress);
+        bool is_valid_virtual_address(const void *vaddress);
 
-        MemMapInfo *map_memory(const void *p_address, const void *v_address, FrameOrder order, uint64_t flags);
-        void unmap_memory(const void *v_address);
-
-        /*
-        MemMapInfo* map_memory_first_fit(const void* paddress, const void* vaddress, FrameOrder f_order, uint64_t
-        flags)
-        {
-            return nullptr;
-        }
-        */
+        friend class Singleton<VMMap>;
     };
-
-    void *v_to_p(const void *vaddress, PageTable *table);
-
-    bool kmmap(const void *paddress, const void *vaddress, PageTable *table, FrameOrder p_lvl, uint64_t flags,
-               frame_fn f_src);
-
-    void kmunmap(const void *vaddress, PageTable *start_table, frame_rls_fn rls_fn);
-
-    uintptr_t get_vaddress_offset(const void *vaddress);
-
-    void set_scratch_pagetable(PageTable *vpaddress);
-    PageTable *get_scratch_pagetable();
-
-    void set_kernel_pagetable(PageTable *paddress);
-    PageTable *get_kernel_pagetable();
-
-    void set_kernel_v_free_address(byte *vaddress);
-    byte *get_kernel_v_free_address();
-
-    void setup_kernel_memory_map(bootinfo *b_info);
-
-    void unmap_low_kernel(byte *begin, byte *end);
-
 } // namespace hls
