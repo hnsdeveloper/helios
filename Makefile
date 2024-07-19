@@ -54,7 +54,6 @@ ifdef CXXPREFIX
     CXX := $(CXXPREFIX)g++
     AR  := $(CXXPREFIX)ar
     LD	:= $(CXXPREFIX)ld
-endif
 else
     $(error CXXPREFIX is not set)
 endif
