@@ -42,7 +42,7 @@ endif
 
 MAKES := $(MAKES) $(shell find ./src -not \( -path ./src/arch -prune \) -name "Makefile" | xargs dirname )
 
-CPPFLAGS := $(CPPFLAGS) -c -fno-omit-frame-pointer -march=rv64gc -std=c++20  -ffreestanding -nostdlib -fno-exceptions \
+CPPFLAGS := $(CPPFLAGS) -c -fno-omit-frame-pointer -std=c++20  -ffreestanding -fno-exceptions \
 -fno-rtti -fno-asynchronous-unwind-tables -fno-use-cxa-atexit -Wall -Wextra -Werror
 
 EXTRAFLAGS := $(EXTRAFLAGS)
@@ -54,14 +54,9 @@ ifdef CXXPREFIX
     CXX := $(CXXPREFIX)g++
     AR  := $(CXXPREFIX)ar
     LD	:= $(CXXPREFIX)ld
+endif
 else
-    CC  := clang
-    CXX := clang++
-    AR  := llvm-ar
-    LD	:= lld
-    ifeq ($(ARCH), riscv64)
-        EXTRAFLAGS := $(EXTRAFLAGS) --target=riscv64-none-elf
-    endif
+    $(error CXXPREFIX is not set)
 endif
 
 export BUILD_DIR
