@@ -59,6 +59,9 @@ else
     CXX := clang++
     AR  := llvm-ar
     LD	:= lld
+    ifeq ($(ARCH), riscv64)
+        EXTRAFLAGS := $(EXTRAFLAGS) --target=riscv64-none-elf
+    endif
 endif
 
 export BUILD_DIR
