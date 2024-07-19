@@ -7,3 +7,6 @@ ENV CPLUS_INCLUDE_PATH=/usr/riscv64-linux-gnu/include/c++/12/riscv64-linux-gnu/:
 ENV C_INCLUDE_PATH=/usr/include
 ENV ARCH=riscv64
 ENV CXXPREFIX=riscv64-unknown-elf-
+
+COPY entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]

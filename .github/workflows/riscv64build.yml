@@ -1,0 +1,41 @@
+on:
+  push:
+    branches:
+      - master
+
+#TODO: Get artifacts (kernel binaries), also package .o files and resulting linker script.
+jobs:
+  riscv64_qemu_sv39:
+    runs-on: ubuntu-latest
+    name: Build helios for RISC-V 64 QEMU SV39 memory model.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build
+        id: build
+        uses: ./.github/actions/riscv64build
+        with:
+          target_system: 'qemu_sv39'
+  riscv64_qemu_sv48:
+    runs-on: ubuntu-latest
+    name: Build helios for RISC-V 64 QEMU SV48 memory model.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build
+        id: build
+        uses: ./.github/actions/riscv64build
+        with:
+          target_system: 'qemu_sv48'
+  riscv64_visionfive2:
+    runs-on: ubuntu-latest
+    name: Build helios for Starfive Visionfive 2
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Build
+      id: build
+      uses: ./.github/actions/riscv64build
+      with:
+        target_system: 'visionfive_2'
+

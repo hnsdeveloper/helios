@@ -1,6 +1,7 @@
 /target
 /gcm.cache
 /.vscode
+.vscode
 /build
 */xcuserdata/*
 *xcworkspace/xcuserdata/*
@@ -11,3 +12,4 @@ hdd.dsk
 u-boot-spl-dtb.bin
 u-boot.itb
 u-boot-dtb.bin
+

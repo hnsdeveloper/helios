@@ -1,0 +1,16 @@
+name: 'RISC-V 64 BUILD'
+description: 'Builds helios for the RISC-V architecture'
+inputs:
+  target_system:
+    description: 'System name, such as qemu_sv37, qemu_sv48, visionfive2...'
+    required: true
+    default: qemu_sv48
+outputs:
+  placeholder:
+    description: 'Placeholder output'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args: 
+    - ${{ inputs.target_system }}
+
