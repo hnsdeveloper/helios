@@ -22,26 +22,35 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
-#include "sys/cpu.hpp"
+
+#ifndef _BUMPALLOCATOR_HPP_
+#define _BUMPALLOCATOR_HPP_
+
+#include "misc/types.hpp"
 #include "plat_def.hpp"
+
 namespace hls
 {
-
-    size_t get_cpu_id()
+    class BumpAllocator
     {
-        // TODO: IMPLEMENT
-        return 0;
-    }
+        byte m_initialmemory[FrameKB::s_size];
+        void *m_items_list;
+        size_t m_items_count;
+        size_t m_type_size;
+        size_t m_min_items_threshold;
 
-    void flush_tlb()
-    {
-        _flush_tlb();
-    }
+      public:
+        BumpAllocator(size_t typesize);
+        BumpAllocator(const BumpAllocator &) = delete;
+        BumpAllocator(BumpAllocator &&) = delete;
 
-    void die()
-    {
-        while (true)
-            ;
-    }
+        void expand_from_frame(void *frame_address);
+        void *get_mem();
 
+        void release_mem(const void *ptr);
+
+        size_t available_count() const;
+    };
 } // namespace hls
+
+#endif /* bumpallocator_hpp */

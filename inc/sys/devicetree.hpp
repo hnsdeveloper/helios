@@ -22,26 +22,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
-#include "sys/cpu.hpp"
-#include "plat_def.hpp"
+
+#ifndef __DEVICETREE_HPP_
+#define __DEVICETREE_HPP_
+
+#include "libfdt.h"
+#include "misc/types.hpp"
+
 namespace hls
 {
-
-    size_t get_cpu_id()
+    struct reg_prop
     {
-        // TODO: IMPLEMENT
-        return 0;
-    }
+        void *mem_address;
+        size_t mem_size;
+    };
 
-    void flush_tlb()
-    {
-        _flush_tlb();
-    }
+    void mapfdt(void *fdt);
+    void *get_fdt();
 
-    void die()
-    {
-        while (true)
-            ;
-    }
+    reg_prop read_fdt_prop_reg_prop(void *fdt, int node, const fdt32_t *p_a_cells, const fdt32_t *p_s_cells);
 
 } // namespace hls
+
+#endif

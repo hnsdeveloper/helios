@@ -22,26 +22,64 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
-#include "sys/cpu.hpp"
+
+#ifndef _NODEALLOCATOR_HPP_
+#define _NODEALLOCATOR_HPP_
+
+#include "mem/bumpallocator.hpp"
+#include "misc/types.hpp"
+#include "misc/utilities.hpp"
 #include "plat_def.hpp"
+#include "sys/mem.hpp"
+
 namespace hls
 {
-
-    size_t get_cpu_id()
+    template <typename T>
+    class NodeAllocator
     {
-        // TODO: IMPLEMENT
-        return 0;
-    }
+        SET_USING_CLASS(T, type);
+        BumpAllocator *m_bump_allocator;
 
-    void flush_tlb()
-    {
-        _flush_tlb();
-    }
+      public:
+        NodeAllocator(BumpAllocator &allocator) : m_bump_allocator(&allocator)
+        {
+        }
 
-    void die()
-    {
-        while (true)
-            ;
-    }
+        template <typename... Args>
+        type_ptr create(Args... args)
+        {
+            type_ptr v = allocate();
+            if (v != nullptr)
+            {
+                new (v) type(hls::forward<Args>(args)...);
+            }
+            return v;
+        }
+
+        void destroy(type_const_ptr p)
+        {
+            if (p == nullptr)
+                return;
+
+            type_ptr p_nc = const_cast<type_ptr>(p);
+            (*p_nc).~type();
+            deallocate(p_nc);
+        }
+
+        type_ptr allocate()
+        {
+            void *p = m_bump_allocator->get_mem();
+            return reinterpret_cast<type_ptr>(p);
+        }
+
+        void deallocate(type_const_ptr p)
+        {
+            if (p == nullptr)
+                return;
+            m_bump_allocator->release_mem(p);
+        }
+    };
 
 } // namespace hls
+
+#endif
