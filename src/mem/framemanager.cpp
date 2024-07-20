@@ -24,8 +24,8 @@ SOFTWARE.
 ---------------------------------------------------------------------------------*/
 
 #include "mem/framemanager.hpp"
-#include "mem/mmap.hpp"
 #include "libfdt.h"
+#include "mem/mmap.hpp"
 #include "misc/new.hpp"
 #include "sys/devicetree.hpp"
 #include "sys/print.hpp"

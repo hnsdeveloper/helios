@@ -23,13 +23,13 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "plat_def.hpp"
+#include "leanmeanparser/optionparser.hpp"
 #include "mem/framemanager.hpp"
 #include "mem/mmap.hpp"
 #include "misc/githash.hpp"
-#include "leanmeanparser/optionparser.hpp"
 #include "misc/splash.hpp"
 #include "misc/symbols.hpp"
+#include "plat_def.hpp"
 #include "sys/bootdata.hpp"
 #include "sys/bootoptions.hpp"
 #include "sys/cpu.hpp"

@@ -11,15 +11,15 @@ LIB_DIR := $(PROJECT_ROOT)lib
 BUILD_DIR := $(PROJECT_ROOT)build
 
 # Source files
-SRC_FILES := $(shell find $(SRC_DIR) -type f \( -name "*.c" -o -name "*.cpp" -name "*.S" -name "*.s" \))
-ARCH_SRC_FILES := $(shell find $(ARCH_DIR) -type f \( -name "*.c" -o -name "*.cpp" -name "*.S" -name "*.s" \))
-LIBFDT_SRC_FILES := $(shell find $(LIBFDT_DIR) -type f \( -name "*.c" -o -name "*.cpp" -name "*.S" -name "*.s" \))
+SRC_FILES := $(shell find $(SRC_DIR) -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.S" -o -name "*.s" \))
+ARCH_SRC_FILES := $(shell find $(ARCH_DIR) -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.S" -o -name "*.s" \))
+LIBFDT_SRC_FILES := $(shell find $(LIBFDT_DIR) -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.S" -o -name "*.s" \))
 LINKER_SCRIPT := $(OBJ_DIR)/link.lds
 
 # Object files with directory structure
-OBJ_FILES := $(patsubst $(SRC_DIR)/%,$(OBJ_DIR)/%,$(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SRC_FILES))))
-ARCH_OBJ_FILES := $(patsubst $(ARCH_DIR)/%,$(OBJ_DIR)/%,$(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(ARCH_SRC_FILES))))
-LIBFDT_OBJ_FILES := $(patsubst $(LIBFDT_DIR)/%,$(OBJ_DIR)/%,$(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(LIBFDT_SRC_FILES))))
+OBJ_FILES := $(patsubst $(SRC_DIR)/%,$(OBJ_DIR)/%,$(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(patsubst %.S,%.o,$(SRC_FILES)))))
+ARCH_OBJ_FILES := $(patsubst $(ARCH_DIR)/%,$(OBJ_DIR)/%,$(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(patsubst %.S,%.o,$(ARCH_SRC_FILES)))))
+LIBFDT_OBJ_FILES := $(patsubst $(LIBFDT_DIR)/%,$(OBJ_DIR)/%,$(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(patsubst %.S,%.o,$(LIBFDT_SRC_FILES)))))
 DEP_FILES := $(OBJ_FILES:.o=.d) $(ARCH_OBJ_FILES:.o=.d) $(LIBFDT_OBJ_FILES:.o=.d)
 
 # Include architecture-specific settings
@@ -43,7 +43,10 @@ LINKER_SCRIPT := $(ARCH_DIR)/link.lds
 LIBFDT_LIB := $(LIB_DIR)/libfdt.a
 
 # ELF executable
-TARGET := $(BUILD_DIR)/my_program
+TARGET := $(BUILD_DIR)/helios
+
+# BINARY
+BINARY := $(BUILD_DIR)/helios.bin
 
 # Check for necessary variables
 ifndef ARCH
@@ -68,7 +71,7 @@ BOOTPAGES := 32
 MACROS += -DBOOTPAGES=$(BOOTPAGES)
 
 # Default target
-all: $(TARGET) libs
+all: $(BINARY) $(TARGET) libs
 
 # Compilation rules for source files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
@@ -81,6 +84,11 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@echo "Compiling C++ file $< to $@"
 	@$(CXX) $(CXXFLAGS) $(MACROS) $(patsubst %,-I%,$(INCLUDE_DIRS)) -c $< -o $@
 
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.S
+	@mkdir -p $(dir $@)
+	@echo "Compiling assembly file $< to $@"
+	@$(CXX) $(CXXFLAGS) $(MACROS) $(patsubst %,-I%,$(INCLUDE_DIRS)) -c $< -o $@
+
 $(OBJ_DIR)/%.o: $(ARCH_DIR)/%.c
 	@mkdir -p $(dir $@)
 	@echo "Compiling C file from ARCH $< to $@"
@@ -89,6 +97,11 @@ $(OBJ_DIR)/%.o: $(ARCH_DIR)/%.c
 $(OBJ_DIR)/%.o: $(ARCH_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	@echo "Compiling C++ file from ARCH $< to $@"
+	@$(CXX) $(CXXFLAGS) $(MACROS) $(patsubst %,-I%,$(INCLUDE_DIRS)) -c $< -o $@
+	
+$(OBJ_DIR)/%.o: $(ARCH_DIR)/%.S
+	@mkdir -p $(dir $@)
+	@echo "Compiling assembly file $< to $@"
 	@$(CXX) $(CXXFLAGS) $(MACROS) $(patsubst %,-I%,$(INCLUDE_DIRS)) -c $< -o $@
 
 $(OBJ_DIR)/%.o: $(LIBFDT_DIR)/%.c
@@ -108,10 +121,14 @@ $(OBJ_DIR)/link.lds: $(LINKER_SCRIPT)
 	@$(CPP) -E -xc $(MACROS) $< -o $@
 
 # Linking target
-$(TARGET): $(OBJ_FILES) $(ARCH_OBJ_FILES) $(LIBFDT_LIB) $(OBJ_DIR)/link.lds
+$(TARGET): $(OBJ_DIR)/link.lds $(OBJ_FILES) $(ARCH_OBJ_FILES) $(LIBFDT_LIB)
 	@mkdir -p $(BUILD_DIR)
 	@echo "Linking $@"
 	$(LD) $(OBJ_FILES) $(ARCH_OBJ_FILES) -L$(LIB_DIR) --gc-sections -nostdlib -lfdt -o $@ $(LDFLAGS)
+
+# Binary target
+$(BINARY) : $(TARGET)
+	@$(CXXPREFIX)objcopy -O binary $< $@
 
 # Libraries target
 libs: $(LIBFDT_LIB)
@@ -127,4 +144,4 @@ clean:
 
 -include $(DEP_FILES)
 
-.PHONY: all clean libs
+.PHONY: all helios clean libs

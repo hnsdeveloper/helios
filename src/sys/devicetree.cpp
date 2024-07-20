@@ -1,8 +1,8 @@
 #include "sys/devicetree.hpp"
-#include "plat_def.hpp"
 #include "mem/framemanager.hpp"
 #include "mem/mmap.hpp"
 #include "misc/types.hpp"
+#include "plat_def.hpp"
 #include "sys/mem.hpp"
 
 namespace hls

@@ -23,11 +23,11 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "plat_def.hpp"
 #include "mem/bumpallocator.hpp"
 #include "mem/nodeallocator.hpp"
 #include "misc/macros.hpp"
 #include "misc/types.hpp"
+#include "plat_def.hpp"
 #include "sys/bootdata.hpp"
 #include "ulib/pair.hpp"
 #include "ulib/rb_tree.hpp"

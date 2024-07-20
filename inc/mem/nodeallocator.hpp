@@ -26,10 +26,10 @@ SOFTWARE.
 #ifndef _NODEALLOCATOR_HPP_
 #define _NODEALLOCATOR_HPP_
 
-#include "plat_def.hpp"
 #include "mem/bumpallocator.hpp"
 #include "misc/types.hpp"
 #include "misc/utilities.hpp"
+#include "plat_def.hpp"
 #include "sys/mem.hpp"
 
 namespace hls
