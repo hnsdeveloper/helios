@@ -1,10 +1,14 @@
 PROJECT_ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 SRC_DIR := $(PROJECT_ROOT)src/
-INCLUDE_DIR := $(SRC_DIR)
+INCLUDE_DIR := $(PROJECT_ROOT)inc/
 SUBDIRS := $(wildcard */.)
 
-ifndef BUILD_DIR
-    BUILD_DIR := $(PROJECT_ROOT)build/
+ifndef OBJ_DIR
+    OBJ_DIR := $(PROJECT_ROOT)obj
+endif
+
+ifndef LIB_DIR
+    LIB_DIR := $(PROJECT_ROOT)lib/
 endif
 
 ifdef HELIOS_DEBUG
@@ -41,7 +45,7 @@ else
 endif
 
 
-MAKES := $(MAKES) $(shell find ./src -not \( -path ./src/arch -prune \) -name "Makefile" | xargs dirname )
+MAKES := $(MAKES) $(shell find ./src -not \( -path ./src/arch -prune \) -not \( -path ./dep -prune \) -name "Makefile" | xargs dirname )
 
 CPPFLAGS := $(CPPFLAGS) -c -fno-omit-frame-pointer -std=c++20  -ffreestanding -fno-exceptions \
 -fno-rtti -fno-asynchronous-unwind-tables -fno-use-cxa-atexit -Wall -Wextra -Werror
@@ -59,7 +63,7 @@ else
     $(error CXXPREFIX is not set)
 endif
 
-export BUILD_DIR
+export OBJ_DIR
 export INCLUDE_DIR
 export SRC_DIR
 export PROJECT_ROOT
@@ -74,41 +78,62 @@ export LD
 .PHONY: dep
 .PHONY: helios
 .PHONY: helios.bin
-
-helios : $(BUILD_DIR)helios
-helios.bin : $(BUILD_DIR)helios.bin
+.PHONY: helios.efi
 
 
-$(BUILD_DIR)helios : dep $(BUILD_DIR)link.lds
-	@echo "Linking object files."
-	@$(LD) $(BUILD_DIR)*.o -nostdlib --gc-sections -T$(BUILD_DIR)link.lds -o $(BUILD_DIR)helios
+%.o : %.c
+	@mkdir -p $(OBJ_DIR)
+	@$(CXX) -MM $(CPPFLAGS) $(EXTRAFLAGS) $(MACROS) -I$(INCLUDE_DIR) $*.c > $*.d
+	@$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) $(MACROS) -I$(INCLUDE_DIR) -o $@ $^
+
+%.o : %.cpp
+	@$(CXX) -MM $(CPPFLAGS) $(EXTRAFLAGS) $(MACROS) -I$(INCLUDE_DIR) $*.cpp > $*.d
+	@$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) $(MACROS) -I$(INCLUDE_DIR) -o $@ $^
+
+.PHONY: libs
+
+libs : libfdt
+
+.PHONY: libfdt
+
+LIBFDT_SOURCES := $(wildcard $(PROJECT_ROOT)dep/libfdt/*.c)
+LIBFDT_OBJECTS := $(patsubst $(PROJECT_ROOT)dep/libfdt/%.c,$(OBJ_DIR)/%.o,$(LIBFDT_SOURCES))
+
+libfdt : $(LIB_DIR)libfdt.a
+
+$(LIB_DIR)libfdt.a : $(LIBFDT_OBJECTS)
+	@mkdir -p $(LIB_DIR)
+	@$(AR) rcs -o $@ $<
 	
-$(BUILD_DIR)helios.bin : $(BUILD_DIR)helios
-	@echo "Generating kernel binary"
-	@$(CXXPREFIX)objcopy -O binary $(BUILD_DIR)helios $(BUILD_DIR)helios.bin
+$(LIBFDT_OBJECTS) : $(OBJ_DIR)/%.o : $(LIBFDT_SOURCES)
+	@mkdir -p $(OBJ_DIR)
+	@$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) $(MACROS) -I$(INCLUDE_DIR) $^
 
-dep :
-	@mkdir -p build
-	@for folder in $(MAKES); do $(MAKE) -C $$folder || exit; done
+#@$(CXX) -MM $(CPPFLAGS) $(EXTRAFLAGS) $(MACROS) -I$(INCLUDE_DIR) $@.cpp > $^.d
 
-$(BUILD_DIR)link.lds : $(ARCH_FOLDER)/link.lds
-	@$(CXXPREFIX)cpp $(MACROS) -xc -P -C $<  -o $@
+
+#helios : $(OBJ_DIR)helios
+#helios.bin : $(OBJ_DIR)helios.bin
+#helios.efi :
+
+#$(OBJ_DIR)helios : kernelmodules $(OBJ_DIR)link.lds
+#	@echo "Linking object files."
+#	@$(LD) $(OBJ_DIR)*.o -nostdlib --gc-sections -T$(OBJ_DIR)link.lds -o $(OBJ_DIR)helios
 	
-clean :
-	@$(RM) build/*.o
+#$(OBJ_DIR)helios.bin : $(OBJ_DIR)helios
+#	@echo "Generating kernel binary"
+#	@$(CXXPREFIX)objcopy -O binary $(OBJ_DIR)helios $(OBJ_DIR)helios.bin
+
+#kernelmodules :
+#	@mkdir -p $(OBJ_DIR)
+#	@for folder in $(MAKES); do $(MAKE) -C $$folder || exit; done
+
+#$(OBJ_DIR)link.lds : $(ARCH_FOLDER)/link.lds
+#	@$(CXXPREFIX)cpp $(MACROS) -xc -P -C $<  -o $@
+
+#clean :
+#	@$(RM) $(OBJ_DIR)/*.o
 
 fclean :
-	@$(RM) -rf build/
-
-
-
-  
-#driverframework.o: src/dev/driverframework.cpp \
-  src/dev/driverframework.hpp src/misc/macros.hpp src/misc/types.hpp \
-  src/sys/kmalloc.hpp src/misc/new.hpp src/misc/utilities.hpp \
-  src/misc/typetraits.hpp src/ulib/double_list.hpp src/ulib/node.hpp \
-  src/misc/symbols.hpp
-#traphandler.o: src/traphandler/traphandler.cpp \
-  src/arch/riscv64gc/plat_def.hpp src/misc/macros.hpp src/misc/types.hpp \
-  src/sys/print.hpp src/misc/limits.hpp src/misc/concepts.hpp \
-  src/misc/typetraits.hpp src/sys/mem.hpp src/sys/opensbi.hpp
+	@$(RM) -rf $(OBJ_DIR)
+	@$(RM) -rf $(LIB_DIR)

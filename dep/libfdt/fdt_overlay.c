@@ -4,12 +4,12 @@
  * Copyright (C) 2016 Free Electrons
  * Copyright (C) 2016 NextThing Co.
  */
-#include "misc/libfdt/libfdt_env.h"
+#include "libfdt_env.h"
 
-#include "misc/libfdt/fdt.h"
-#include "misc/libfdt/libfdt.h"
+#include "fdt.h"
+#include "libfdt.h"
 
-#include "misc/libfdt/libfdt_internal.h"
+#include "libfdt_internal.h"
 
 /**
  * overlay_get_target_phandle - retrieves the target phandle of a fragment

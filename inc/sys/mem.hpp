@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef _MEM_HPP_
 #define _MEM_HPP_
 
-#include "arch/riscv64gc/plat_def.hpp"
+#include "arch/riscv64/plat_def.hpp"
 #include "misc/types.hpp"
 
 namespace hls

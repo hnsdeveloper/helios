@@ -3,6 +3,7 @@
 /.vscode
 .vscode
 /build
+/obj
 */xcuserdata/*
 *xcworkspace/xcuserdata/*
 helios.xcodeproj/project.xcworkspace/xcuserdata
