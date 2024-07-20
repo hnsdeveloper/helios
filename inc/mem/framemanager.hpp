@@ -23,7 +23,7 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "arch/riscv64gc/plat_def.hpp"
+#include "plat_def.hpp"
 #include "mem/bumpallocator.hpp"
 #include "mem/nodeallocator.hpp"
 #include "misc/macros.hpp"

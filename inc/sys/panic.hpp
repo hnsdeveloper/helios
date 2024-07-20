@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef _PANIC_HPP_
 #define _PANIC_HPP_
 
-#include "arch/riscv64gc/plat_def.hpp"
+#include "plat_def.hpp"
 #include "sys/print.hpp"
 
 /**

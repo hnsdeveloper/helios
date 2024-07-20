@@ -1,5 +1,5 @@
 #include "sys/devicetree.hpp"
-#include "arch/riscv64gc/plat_def.hpp"
+#include "plat_def.hpp"
 #include "mem/framemanager.hpp"
 #include "mem/mmap.hpp"
 #include "misc/types.hpp"

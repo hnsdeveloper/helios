@@ -23,7 +23,7 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "arch/riscv64gc/plat_def.hpp"
+#include "plat_def.hpp"
 #include "misc/macros.hpp"
 #include "misc/symbols.hpp"
 #include "sys/bootdata.hpp"

@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef _BUMPALLOCATOR_HPP_
 #define _BUMPALLOCATOR_HPP_
 
-#include "arch/riscv64gc/plat_def.hpp"
+#include "plat_def.hpp"
 #include "misc/types.hpp"
 
 namespace hls

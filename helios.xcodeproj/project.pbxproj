@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 73;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -31,10 +31,6 @@
 		99180E6F2C128EB400C05182 /* devicetree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E2E2C128D1D00C05182 /* devicetree.cpp */; };
 		99180E712C128EB400C05182 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E322C128D1D00C05182 /* main.cpp */; };
 		99180E722C128EB400C05182 /* panic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99180E352C128D1D00C05182 /* panic.cpp */; };
-		99180E782C13DDDB00C05182 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 99180E772C13DDDB00C05182 /* Makefile */; };
-		99180E7A2C14D95A00C05182 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 99180E792C14D95A00C05182 /* Makefile */; };
-		99180E7C2C14DEFF00C05182 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 99180E7B2C14DEFF00C05182 /* Makefile */; };
-		99180E7E2C14E07F00C05182 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 99180E7D2C14E07F00C05182 /* Makefile */; };
 		993F375C2C34AC2E00017F49 /* bumpallocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 993F375B2C34AC2900017F49 /* bumpallocator.cpp */; };
 		993F375E2C3B9C3800017F49 /* mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 993F375D2C3B9C3400017F49 /* mem.cpp */; };
 		993F37602C3DE1CF00017F49 /* string.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 993F375F2C3DE1CC00017F49 /* string.cpp */; };
@@ -157,6 +153,7 @@
 		998564012C4C061500ED486E /* entry.c in Sources */ = {isa = PBXBuildFile; fileRef = 998563732C4C061500ED486E /* entry.c */; };
 		998564022C4C061500ED486E /* palproc.S in Sources */ = {isa = PBXBuildFile; fileRef = 9985634D2C4C061500ED486E /* palproc.S */; };
 		998564032C4C061500ED486E /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 998562AA2C4C061500ED486E /* Makefile */; };
+		9985641E2C4C4A0000ED486E /* plat_def.hpp in Sources */ = {isa = PBXBuildFile; fileRef = 9985641C2C4C4A0000ED486E /* plat_def.hpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -205,10 +202,6 @@
 		99180E502C128E6800C05182 /* dummy */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = dummy; sourceTree = BUILT_PRODUCTS_DIR; };
 		99180E742C12949900C05182 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		99180E762C12F67400C05182 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
-		99180E772C13DDDB00C05182 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
-		99180E792C14D95A00C05182 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
-		99180E7B2C14DEFF00C05182 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
-		99180E7D2C14E07F00C05182 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		993F375B2C34AC2900017F49 /* bumpallocator.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = bumpallocator.cpp; sourceTree = "<group>"; };
 		993F375D2C3B9C3400017F49 /* mem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = mem.cpp; sourceTree = "<group>"; };
 		993F375F2C3DE1CC00017F49 /* string.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = string.cpp; sourceTree = "<group>"; };
@@ -430,21 +423,13 @@
 		9985638A2C4C061500ED486E /* README.elilo */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.elilo; sourceTree = "<group>"; };
 		9985638B2C4C061500ED486E /* README.git */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.git; sourceTree = "<group>"; };
 		9985638C2C4C061500ED486E /* README.gnuefi */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.gnuefi; sourceTree = "<group>"; };
+		9985641B2C4C3CE100ED486E /* config.mk */ = {isa = PBXFileReference; lastKnownFileType = text; path = config.mk; sourceTree = "<group>"; };
+		9985641C2C4C4A0000ED486E /* plat_def.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = plat_def.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		998564072C4C0EE200ED486E /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = 99180E4C2C128E6800C05182 /* Sources */;
-			membershipExceptions = (
-				arch/riscv64/plat_def.hpp,
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		9985629A2C4B7E9B00ED486E /* boot */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = boot; sourceTree = "<group>"; };
-		998564042C4C0EA300ED486E /* inc */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (998564072C4C0EE200ED486E /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = inc; sourceTree = "<group>"; };
+		998564042C4C0EA300ED486E /* inc */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = inc; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -475,8 +460,9 @@
 		99180E022C128D1D00C05182 /* riscv64 */ = {
 			isa = PBXGroup;
 			children = (
+				9985641B2C4C3CE100ED486E /* config.mk */,
+				9985641C2C4C4A0000ED486E /* plat_def.hpp */,
 				99180DFF2C128D1D00C05182 /* link.lds */,
-				99180E7D2C14E07F00C05182 /* Makefile */,
 				99180E002C128D1D00C05182 /* plat_def.cpp */,
 				99180DF82C128D1D00C05182 /* asm.S */,
 				99180DF92C128D1D00C05182 /* boot.cpp */,
@@ -500,7 +486,6 @@
 				993F375B2C34AC2900017F49 /* bumpallocator.cpp */,
 				99180E072C128D1D00C05182 /* framemanager.cpp */,
 				99180E092C128D1D00C05182 /* mmap.cpp */,
-				99180E772C13DDDB00C05182 /* Makefile */,
 			);
 			path = mem;
 			sourceTree = "<group>";
@@ -538,7 +523,6 @@
 		99180E282C128D1D00C05182 /* misc */ = {
 			isa = PBXGroup;
 			children = (
-				99180E792C14D95A00C05182 /* Makefile */,
 				99180E212C128D1D00C05182 /* new.cpp */,
 			);
 			path = misc;
@@ -550,7 +534,6 @@
 				99180E2A2C128D1D00C05182 /* bootoptions.cpp */,
 				99180E2C2C128D1D00C05182 /* cpu.cpp */,
 				99180E2E2C128D1D00C05182 /* devicetree.cpp */,
-				99180E7B2C14DEFF00C05182 /* Makefile */,
 				99180E322C128D1D00C05182 /* main.cpp */,
 				993F375D2C3B9C3400017F49 /* mem.cpp */,
 				99180E352C128D1D00C05182 /* panic.cpp */,
@@ -1051,6 +1034,7 @@
 				};
 			};
 			buildConfigurationList = 99180D992C128C3200C05182 /* Build configuration list for PBXProject "helios" */;
+			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -1058,7 +1042,6 @@
 				Base,
 			);
 			mainGroup = 99180D952C128C3200C05182;
-			preferredProjectObjectVersion = 56;
 			productRefGroup = 99180E512C128E6800C05182 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -1074,7 +1057,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				99180E7A2C14D95A00C05182 /* Makefile in Sources */,
 				99180E582C128EB400C05182 /* asm.S in Sources */,
 				99180E592C128EB400C05182 /* boot.cpp in Sources */,
 				99180E5A2C128EB400C05182 /* panic.S in Sources */,
@@ -1132,6 +1114,7 @@
 				998563C22C4C061500ED486E /* ctors_test.c in Sources */,
 				998563C32C4C061500ED486E /* setjmp.S in Sources */,
 				998563C42C4C061500ED486E /* crt0-efi-arm.S in Sources */,
+				9985641E2C4C4A0000ED486E /* plat_def.hpp in Sources */,
 				998563C52C4C061500ED486E /* print.c in Sources */,
 				998563C62C4C061500ED486E /* t5.c in Sources */,
 				998563C72C4C061500ED486E /* t7.c in Sources */,
@@ -1197,7 +1180,6 @@
 				998564032C4C061500ED486E /* Makefile in Sources */,
 				99180E5B2C128EB400C05182 /* trap.s in Sources */,
 				99180E5C2C128EB400C05182 /* link.lds in Sources */,
-				99180E7E2C14E07F00C05182 /* Makefile in Sources */,
 				99180E5D2C128EB400C05182 /* plat_def.cpp in Sources */,
 				99180E602C128EB400C05182 /* framemanager.cpp in Sources */,
 				993F375C2C34AC2E00017F49 /* bumpallocator.cpp in Sources */,
@@ -1221,9 +1203,7 @@
 				99781E462C1F6BF8008F0888 /* kmalloc.cpp in Sources */,
 				99180E712C128EB400C05182 /* main.cpp in Sources */,
 				99180E722C128EB400C05182 /* panic.cpp in Sources */,
-				99180E7C2C14DEFF00C05182 /* Makefile in Sources */,
 				993F37602C3DE1CF00017F49 /* string.cpp in Sources */,
-				99180E782C13DDDB00C05182 /* Makefile in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

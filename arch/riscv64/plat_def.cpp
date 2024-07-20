@@ -23,7 +23,7 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "arch/riscv64gc/plat_def.hpp"
+#include "plat_def.hpp"
 #include "mem/mmap.hpp"
 #include "sys/mem.hpp"
 #include "sys/print.hpp"

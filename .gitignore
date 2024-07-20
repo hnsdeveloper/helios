@@ -4,6 +4,7 @@
 .vscode
 /build
 /obj
+/lib
 */xcuserdata/*
 *xcworkspace/xcuserdata/*
 helios.xcodeproj/project.xcworkspace/xcuserdata

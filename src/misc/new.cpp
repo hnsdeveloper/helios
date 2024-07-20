@@ -23,7 +23,7 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "new.hpp"
+#include "misc/new.hpp"
 
 extern "C" int __cxa_guard_acquire(__guard *g)
 {

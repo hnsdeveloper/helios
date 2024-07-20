@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef __DEVICETREE_HPP_
 #define __DEVICETREE_HPP_
 
-#include "misc/libfdt/libfdt.h"
+#include "libfdt.h"
 #include "misc/types.hpp"
 
 namespace hls
