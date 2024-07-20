@@ -18,6 +18,7 @@ ifndef ARCH
     $(error ARCH is not set)
 else
     ifeq ($(ARCH), riscv64)
+        MACROS := $(MACROS) -DARCH=riscv64
         CPPFLAGS := $(CPPFLAGS) -march=rv64gc -mabi=lp64d -mcmodel=medany
         SV39_MASK := 0x8000000000000000
         SV48_MASK := 0x9000000000000000
