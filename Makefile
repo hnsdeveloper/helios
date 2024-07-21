@@ -33,7 +33,7 @@ LD := $(CXXPREFIX)ld
 CPP := $(CXXPREFIX)cpp
 
 # Compiler flags
-CXXFLAGS += -c -fno-omit-frame-pointer -std=c++20 -ffreestanding -fno-exceptions -fno-rtti -fno-asynchronous-unwind-tables -fno-use-cxa-atexit -Wall -Wextra -Werror -MMD -MP $(EXTRAFLAGS)
+CXXFLAGS += -std=c++20 -c -fno-omit-frame-pointer -ffreestanding -fno-exceptions -fno-rtti -fno-asynchronous-unwind-tables -fno-use-cxa-atexit -Wall -Wextra -Werror -MMD -MP $(EXTRAFLAGS)
 LDFLAGS := -T $(LINKER_SCRIPT) $(EXTRAFLAGS)
 
 # Linker script
