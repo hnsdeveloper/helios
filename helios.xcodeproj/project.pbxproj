@@ -428,7 +428,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		9985629A2C4B7E9B00ED486E /* boot */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = boot; sourceTree = "<group>"; };
 		998564042C4C0EA300ED486E /* inc */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = inc; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -447,7 +446,6 @@
 			isa = PBXGroup;
 			children = (
 				99180E032C128D1D00C05182 /* arch */,
-				9985629A2C4B7E9B00ED486E /* boot */,
 				9985638E2C4C061500ED486E /* dep */,
 				998564042C4C0EA300ED486E /* inc */,
 				99180E492C128D1D00C05182 /* src */,

@@ -1,3 +1,0 @@
-[submodule "dep/gnu-efi"]
-	path = dep/gnu-efi
-	url = https://github.com/heliobatimarqui/gnu-efi.git
