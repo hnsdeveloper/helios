@@ -27,10 +27,12 @@ ARCH_CONFIG := $(ARCH_DIR)/config.mk
 -include $(ARCH_CONFIG)
 
 # Compiler
-CXX := $(CXXPREFIX)g++
-AR := $(CXXPREFIX)ar
-LD := $(CXXPREFIX)ld
-CPP := $(CXXPREFIX)cpp
+CXX := $(CXXPREFIX)$(CROSS_COMPILE)g++
+AR := $(CXXPREFIX)$(CROSS_COMPILE)ar
+OBJCOPY := $(CXXPREFIX)$(CROSS_COMPILE)objcopy
+LD := $(CXXPREFIX)$(CROSS_COMPILE)ld
+CPP := $(CXXPREFIX)$(CROSS_COMPILE)cpp
+
 
 # Compiler flags
 CXXFLAGS += -std=c++20 -c -fno-omit-frame-pointer -ffreestanding -fno-exceptions -fno-rtti -fno-asynchronous-unwind-tables -fno-use-cxa-atexit -Wall -Wextra -Werror -MMD -MP $(EXTRAFLAGS)
@@ -51,10 +53,6 @@ BINARY := $(BUILD_DIR)/helios.bin
 # Check for necessary variables
 ifndef ARCH
     $(error ARCH is not set)
-endif
-
-ifndef CXXPREFIX
-    $(error CXXPREFIX is not set)
 endif
 
 ifdef HELIOS_DEBUG
@@ -124,15 +122,14 @@ $(OBJ_DIR)/link.lds: $(LINKER_SCRIPT)
 $(TARGET): $(OBJ_DIR)/link.lds $(OBJ_FILES) $(ARCH_OBJ_FILES) $(LIBFDT_LIB)
 	@mkdir -p $(BUILD_DIR)
 	@echo "Linking $@"
-	$(LD) $(OBJ_FILES) $(ARCH_OBJ_FILES) -L$(LIB_DIR) --gc-sections -nostdlib -lfdt -o $@ $(LDFLAGS)
+	@$(LD) $(OBJ_FILES) $(ARCH_OBJ_FILES) -L$(LIB_DIR) --gc-sections -nostdlib -lfdt -o $@ $(LDFLAGS)
 
 # Binary target
 $(BINARY) : $(TARGET)
-	@$(CXXPREFIX)objcopy -O binary $< $@
+	@$(OBJCOPY) -O binary $< $@
 
 # Libraries target
 libs: $(LIBFDT_LIB)
-	@echo "All libraries are built."
 
 $(LIBFDT_LIB): $(LIBFDT_OBJ_FILES)
 	@mkdir -p $(LIB_DIR)
