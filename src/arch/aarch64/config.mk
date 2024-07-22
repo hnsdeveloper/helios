@@ -1,0 +1,1 @@
+EFIARCH := pei-aarch64-little

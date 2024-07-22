@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 kernel_image=./build/helios
+efi_image=./build/BOOTX64.efi
 hdd_image_name=hdd
 
 echo $kernel_image
@@ -16,8 +17,11 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     hdiutil create -size 1024m -fs fat32 -volname HeliOSQEMU $hdd_image_name
     hdiutil attach $hdd_image_name.dmg
     mkdir /Volumes/HELIOSQEMU/boot
+    mkdir /Volumes/HELIOSQEMU/efi
+    cp $efi_image              /Volumes/HELIOSQEMU/efi/BOOTX64.efi
     cp $kernel_image           /Volumes/HELIOSQEMU/boot/helios.elf
     cp $kernel_image.bin       /Volumes/HELIOSQEMU/boot/helios.bin
+    cp 
     hdiutil detach /Volumes/HELIOSQEMU
 else  
     exit

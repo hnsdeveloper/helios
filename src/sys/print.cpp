@@ -24,7 +24,7 @@ SOFTWARE.
 ---------------------------------------------------------------------------------*/
 
 #include "sys/print.hpp"
-#include "plat_def.hpp"
+#include "arch/riscv64/plat_def.hpp"
 #include "sys/mem.hpp"
 
 namespace hls

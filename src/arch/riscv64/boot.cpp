@@ -23,9 +23,9 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
+#include "arch/riscv64/plat_def.hpp"
 #include "misc/macros.hpp"
 #include "misc/symbols.hpp"
-#include "plat_def.hpp"
 #include "sys/bootdata.hpp"
 
 #ifndef BOOTPAGES

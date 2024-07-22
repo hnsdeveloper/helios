@@ -23,7 +23,7 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 #include "sys/cpu.hpp"
-#include "plat_def.hpp"
+#include "arch/riscv64/plat_def.hpp"
 namespace hls
 {
 
