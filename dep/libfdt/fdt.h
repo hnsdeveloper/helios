@@ -21,7 +21,7 @@ struct fdt_header
 
     /* version 2 fields below */
     fdt32_t boot_cpuid_phys; /* Which physical CPU id we're
-                                booting on */
+                    booting on */
     /* version 3 fields below */
     fdt32_t size_dt_strings; /* size of the strings block */
 
@@ -56,8 +56,10 @@ struct fdt_property
 
 #define FDT_BEGIN_NODE 0x1 /* Start node: full name */
 #define FDT_END_NODE 0x2   /* End node */
-#define FDT_PROP 0x3       /* Property: name off, size, content */
-#define FDT_NOP 0x4        /* nop */
+#define FDT_PROP                                                                                                       \
+    0x3             /* Property: name off,                                                                             \
+               size, content */
+#define FDT_NOP 0x4 /* nop */
 #define FDT_END 0x9
 
 #define FDT_V1_SIZE (7 * sizeof(fdt32_t))

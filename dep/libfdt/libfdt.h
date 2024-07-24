@@ -6,9 +6,8 @@
  * Copyright (C) 2006 David Gibson, IBM Corporation.
  */
 
-#include "libfdt_env.h"
-
-#include "fdt.h"
+#include <fdt.h>
+#include <libfdt_env.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -21,65 +20,65 @@ extern "C"
 
 /* Error codes: informative error codes */
 #define FDT_ERR_NOTFOUND 1
-/* FDT_ERR_NOTFOUND: The requested node or property does not exist */
+    /* FDT_ERR_NOTFOUND: The requested node or property does not exist */
 #define FDT_ERR_EXISTS 2
-/* FDT_ERR_EXISTS: Attempted to create a node or property which
- * already exists */
+    /* FDT_ERR_EXISTS: Attempted to create a node or property which
+     * already exists */
 #define FDT_ERR_NOSPACE 3
-/* FDT_ERR_NOSPACE: Operation needed to expand the device
- * tree, but its buffer did not have sufficient space to
- * contain the expanded tree. Use fdt_open_into() to move the
- * device tree to a buffer with more space. */
+    /* FDT_ERR_NOSPACE: Operation needed to expand the device
+     * tree, but its buffer did not have sufficient space to
+     * contain the expanded tree. Use fdt_open_into() to move the
+     * device tree to a buffer with more space. */
 
 /* Error codes: codes for bad parameters */
 #define FDT_ERR_BADOFFSET 4
-/* FDT_ERR_BADOFFSET: Function was passed a structure block
- * offset which is out-of-bounds, or which points to an
- * unsuitable part of the structure for the operation. */
+    /* FDT_ERR_BADOFFSET: Function was passed a structure block
+     * offset which is out-of-bounds, or which points to an
+     * unsuitable part of the structure for the operation. */
 #define FDT_ERR_BADPATH 5
-/* FDT_ERR_BADPATH: Function was passed a badly formatted path
- * (e.g. missing a leading / for a function which requires an
- * absolute path) */
+    /* FDT_ERR_BADPATH: Function was passed a badly formatted path
+     * (e.g. missing a leading / for a function which requires an
+     * absolute path) */
 #define FDT_ERR_BADPHANDLE 6
-/* FDT_ERR_BADPHANDLE: Function was passed an invalid phandle.
- * This can be caused either by an invalid phandle property
- * length, or the phandle value was either 0 or -1, which are
- * not permitted. */
+    /* FDT_ERR_BADPHANDLE: Function was passed an invalid phandle.
+     * This can be caused either by an invalid phandle property
+     * length, or the phandle value was either 0 or -1, which are
+     * not permitted. */
 #define FDT_ERR_BADSTATE 7
-/* FDT_ERR_BADSTATE: Function was passed an incomplete device
- * tree created by the sequential-write functions, which is
- * not sufficiently complete for the requested operation. */
+    /* FDT_ERR_BADSTATE: Function was passed an incomplete device
+     * tree created by the sequential-write functions, which is
+     * not sufficiently complete for the requested operation. */
 
 /* Error codes: codes for bad device tree blobs */
 #define FDT_ERR_TRUNCATED 8
-/* FDT_ERR_TRUNCATED: FDT or a sub-block is improperly
- * terminated (overflows, goes outside allowed bounds, or
- * isn't properly terminated).  */
+    /* FDT_ERR_TRUNCATED: FDT or a sub-block is improperly
+     * terminated (overflows, goes outside allowed bounds, or
+     * isn't properly terminated).  */
 #define FDT_ERR_BADMAGIC 9
-/* FDT_ERR_BADMAGIC: Given "device tree" appears not to be a
- * device tree at all - it is missing the flattened device
- * tree magic number. */
+    /* FDT_ERR_BADMAGIC: Given "device tree" appears not to be a
+     * device tree at all - it is missing the flattened device
+     * tree magic number. */
 #define FDT_ERR_BADVERSION 10
-/* FDT_ERR_BADVERSION: Given device tree has a version which
- * can't be handled by the requested operation.  For
- * read-write functions, this may mean that fdt_open_into() is
- * required to convert the tree to the expected version. */
+    /* FDT_ERR_BADVERSION: Given device tree has a version which
+     * can't be handled by the requested operation.  For
+     * read-write functions, this may mean that fdt_open_into() is
+     * required to convert the tree to the expected version. */
 #define FDT_ERR_BADSTRUCTURE 11
-/* FDT_ERR_BADSTRUCTURE: Given device tree has a corrupt
- * structure block or other serious error (e.g. misnested
- * nodes, or subnodes preceding properties). */
+    /* FDT_ERR_BADSTRUCTURE: Given device tree has a corrupt
+     * structure block or other serious error (e.g. misnested
+     * nodes, or subnodes preceding properties). */
 #define FDT_ERR_BADLAYOUT 12
-/* FDT_ERR_BADLAYOUT: For read-write functions, the given
- * device tree has it's sub-blocks in an order that the
- * function can't handle (memory reserve map, then structure,
- * then strings).  Use fdt_open_into() to reorganize the tree
- * into a form suitable for the read-write operations. */
+    /* FDT_ERR_BADLAYOUT: For read-write functions, the given
+     * device tree has it's sub-blocks in an order that the
+     * function can't handle (memory reserve map, then structure,
+     * then strings).  Use fdt_open_into() to reorganize the tree
+     * into a form suitable for the read-write operations. */
 
 /* "Can't happen" error indicating a bug in libfdt */
 #define FDT_ERR_INTERNAL 13
-/* FDT_ERR_INTERNAL: libfdt has failed an internal assertion.
- * Should never be returned, if it is, it indicates a bug in
- * libfdt itself. */
+    /* FDT_ERR_INTERNAL: libfdt has failed an internal assertion.
+     * Should never be returned, if it is, it indicates a bug in
+     * libfdt itself. */
 
 /* Errors in device tree content */
 #define FDT_ERR_BADNCELLS 14
@@ -513,10 +512,35 @@ extern "C"
      * level matching the given component, differentiated only by unit
      * address).
      *
+     * If the path is not absolute (i.e. does not begin with '/'), the
+     * first component is treated as an alias.  That is, the property by
+     * that name is looked up in the /aliases node, and the value of that
+     * property used in place of that first component.
+     *
+     * For example, for this small fragment
+     *
+     * / {
+     *     aliases {
+     *         i2c2 = &foo; // RHS compiles to "/soc@0/i2c@30a40000/eeprom@52"
+     *     };
+     *     soc@0 {
+     *         foo: i2c@30a40000 {
+     *             bar: eeprom@52 {
+     *             };
+     *         };
+     *     };
+     * };
+     *
+     * these would be equivalent:
+     *
+     *   /soc@0/i2c@30a40000/eeprom@52
+     *   i2c2/eeprom@52
+     *
      * returns:
      *	structure block offset of the node with the requested path (>=0), on
      *		success
-     *	-FDT_ERR_BADPATH, given path does not begin with '/' or is invalid
+     *	-FDT_ERR_BADPATH, given path does not begin with '/' and the first
+     *		component is not a valid alias
      *	-FDT_ERR_NOTFOUND, if the requested node does not exist
      *      -FDT_ERR_BADMAGIC,
      *	-FDT_ERR_BADVERSION,
@@ -837,6 +861,41 @@ extern "C"
      *	NULL, if the given alias or the /aliases node does not exist
      */
     const char *fdt_get_alias(const void *fdt, const char *name);
+
+/**
+ * fdt_get_symbol_namelen - get symbol based on substring
+ * @fdt: pointer to the device tree blob
+ * @name: name of the symbol to look up
+ * @namelen: number of characters of name to consider
+ *
+ * Identical to fdt_get_symbol(), but only examine the first @namelen
+ * characters of @name for matching the symbol name.
+ *
+ * Return: a pointer to the expansion of the symbol named @name, if it exists,
+ *	   NULL otherwise
+ */
+#ifndef SWIG /* Not available in Python */
+    const char *fdt_get_symbol_namelen(const void *fdt, const char *name, int namelen);
+#endif
+
+    /**
+     * fdt_get_symbol - retrieve the path referenced by a given symbol
+     * @fdt: pointer to the device tree blob
+     * @name: name of the symbol to look up
+     *
+     * fdt_get_symbol() retrieves the value of a given symbol.  That is,
+     * the value of the property named @name in the node
+     * /__symbols__. Such a node exists only for a device tree blob that
+     * has been compiled with the -@ dtc option. Each property corresponds
+     * to a label appearing in the device tree source, with the name of
+     * the property being the label and the value being the full path of
+     * the node it is attached to.
+     *
+     * returns:
+     *	a pointer to the expansion of the symbol named 'name', if it exists
+     *	NULL, if the given symbol or the /__symbols__ node does not exist
+     */
+    const char *fdt_get_symbol(const void *fdt, const char *name);
 
     /**
      * fdt_get_path - determine the full path of a node
@@ -1405,7 +1464,7 @@ extern "C"
      * fdt_create_with_flags() begins the process of creating a new fdt with
      * the sequential write interface.
      *
-     * fdt creation process must end with fdt_finished() to produce a valid fdt.
+     * fdt creation process must end with fdt_finish() to produce a valid fdt.
      *
      * returns:
      *	0, on success
@@ -1910,7 +1969,7 @@ extern "C"
      * address and size) to the value of the named property in the given
      * node, or creates a new property with that value if it does not
      * already exist.
-     * If "name" is not specified, a default "reg" is used.
+     *
      * Cell sizes are determined by parent's #address-cells and #size-cells.
      *
      * This function may insert data into the blob, and will therefore

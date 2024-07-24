@@ -15,7 +15,7 @@ ifndef (EFI_INCLUDE_PATH)
 	EFI_INCLUDE_PATH := /usr/local/include/efi /usr/local/include
 endif
 
-INCLUDE_DIRS += $(EFI_INCLUDE_PATH) $(PROJECT_ROOT)inc
+INCLUDE_DIRS += $(PROJECT_ROOT)inc $(LIBFDT_SRC_DIR) $(EFI_INCLUDE_PATH)
 # Artifacts directories
 OBJ_DIR := $(PROJECT_ROOT)obj
 LIB_DIR := $(PROJECT_ROOT)lib
@@ -53,8 +53,14 @@ CPP := $(CXXPREFIX)$(CROSS_COMPILE)cpp
 # Compiler flags
 CPPFLAGS += -std=c++20 -fno-exceptions -fno-rtti -fno-use-cxa-atexit
 CFLAGS += -std=c11
-EXTRAFLAGS := $(EXTRAFLAGS) -c -fno-omit-frame-pointer -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing -fshort-wchar -fno-lto -fno-asynchronous-unwind-tables -fPIE -Wall -Wextra -Werror -MMD -MP
+DISABLED_ERRORS := -Wno-error=unused-parameter
+EXTRAFLAGS := $(EXTRAFLAGS) -c -fno-omit-frame-pointer -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing -fshort-wchar -fno-lto -fno-asynchronous-unwind-tables -fPIE -Wall -Wextra -Werror -MMD -MP $(DISABLED_ERRORS)
 LDFLAGS := -nostdlib -pie -z text -z max-page-size=0x1000
+
+ifdef (VERBOSE_CC,)
+    EXTRAFLAGS := $(EXTRAFLAGS) --verbose
+endif
+
 
 # Kernel compiling settings
 BOOTPAGES := 32
@@ -102,6 +108,7 @@ $(OBJ_DIR)/%.o: $(LIBFDT_SRC_DIR)/%.c
 
 $(OBJ_DIR)/%.o: $(LIBFDT_SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
+	echo $(CPATH)
 	@echo "Compiling C++ file from libfdt $< to $@"
 	@$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) $(MACROS) $(patsubst %,-I%,$(INCLUDE_DIRS)) -c $< -o $@
 

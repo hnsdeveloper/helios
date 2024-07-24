@@ -5,8 +5,8 @@
  */
 #include "libfdt_env.h"
 
-#include "fdt.h"
-#include "libfdt.h"
+#include <fdt.h>
+#include <libfdt.h>
 
 #include "libfdt_internal.h"
 
@@ -23,7 +23,7 @@ int fdt_setprop_inplace_namelen_partial(void *fdt, int nodeoffset, const char *n
     if ((unsigned)proplen < (len + idx))
         return -FDT_ERR_NOSPACE;
 
-    hls::memcpy((char *)propval + idx, val, len);
+    memcpy((char *)propval + idx, val, len);
     return 0;
 }
 
@@ -39,14 +39,14 @@ int fdt_setprop_inplace(void *fdt, int nodeoffset, const char *name, const void 
     if (proplen != len)
         return -FDT_ERR_NOSPACE;
 
-    return fdt_setprop_inplace_namelen_partial(fdt, nodeoffset, name, hls::strlen(name), 0, val, len);
+    return fdt_setprop_inplace_namelen_partial(fdt, nodeoffset, name, strlen(name), 0, val, len);
 }
 
 static void fdt_nop_region_(void *start, int len)
 {
     fdt32_t *p;
 
-    for (p = reinterpret_cast<fdt32_t *>(start); (char *)p < ((char *)start + len); p++)
+    for (p = start; (char *)p < ((char *)start + len); p++)
         *p = cpu_to_fdt32(FDT_NOP);
 }
 

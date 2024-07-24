@@ -5,7 +5,7 @@
  * libfdt - Flat Device Tree manipulation
  * Copyright (C) 2006 David Gibson, IBM Corporation.
  */
-#include "fdt.h"
+#include <fdt.h>
 
 #define FDT_ALIGN(x, a) (((x) + (a) - 1) & ~((a) - 1))
 #define FDT_TAGALIGN(x) (FDT_ALIGN((x), FDT_TAGSIZE))
@@ -42,7 +42,7 @@ static inline const struct fdt_reserve_entry *fdt_mem_rsv_(const void *fdt, int 
 }
 static inline struct fdt_reserve_entry *fdt_mem_rsv_w_(void *fdt, int n)
 {
-    return (fdt_reserve_entry *)(uintptr_t)fdt_mem_rsv_(fdt, n);
+    return (void *)(uintptr_t)fdt_mem_rsv_(fdt, n);
 }
 
 /*

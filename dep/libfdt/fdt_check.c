@@ -5,8 +5,8 @@
  */
 #include "libfdt_env.h"
 
-#include "fdt.h"
-#include "libfdt.h"
+#include <fdt.h>
+#include <libfdt.h>
 
 #include "libfdt_internal.h"
 
@@ -59,7 +59,7 @@ int fdt_check_full(const void *fdt, size_t bufsize)
 
         case FDT_BEGIN_NODE:
             depth++;
-            if (depth > std::numeric_limits<int>::max())
+            if (depth > INT_MAX)
                 return -FDT_ERR_BADSTRUCTURE;
 
             /* The root node must have an empty name */

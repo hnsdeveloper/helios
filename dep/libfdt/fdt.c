@@ -5,8 +5,8 @@
  */
 #include "libfdt_env.h"
 
-#include "fdt.h"
-#include "libfdt.h"
+#include <fdt.h>
+#include <libfdt.h>
 
 #include "libfdt_internal.h"
 
@@ -47,7 +47,8 @@ int32_t fdt_ro_probe_(const void *fdt)
     {
         return -FDT_ERR_BADMAGIC;
     }
-    if (totalsize < std::numeric_limits<int32_t>::max())
+
+    if (totalsize < INT32_MAX)
         return totalsize;
     else
         return -FDT_ERR_TRUNCATED;
@@ -109,7 +110,7 @@ int fdt_check_header(const void *fdt)
     hdrsize = fdt_header_size(fdt);
     if (!can_assume(VALID_DTB))
     {
-        if ((fdt_totalsize(fdt) < hdrsize) || (fdt_totalsize(fdt) > std::numeric_limits<int32_t>::max()))
+        if ((fdt_totalsize(fdt) < hdrsize) || (fdt_totalsize(fdt) > INT_MAX))
             return -FDT_ERR_TRUNCATED;
 
         /* Bounds check memrsv block */
@@ -163,7 +164,7 @@ uint32_t fdt_next_tag(const void *fdt, int startoffset, int *nextoffset)
     const char *p;
 
     *nextoffset = -FDT_ERR_TRUNCATED;
-    tagp = reinterpret_cast<const fdt32_t *>(fdt_offset_ptr(fdt, offset, FDT_TAGSIZE));
+    tagp = fdt_offset_ptr(fdt, offset, FDT_TAGSIZE);
     if (!can_assume(VALID_DTB) && !tagp)
         return FDT_END; /* premature end */
     tag = fdt32_to_cpu(*tagp);
@@ -176,20 +177,20 @@ uint32_t fdt_next_tag(const void *fdt, int startoffset, int *nextoffset)
         /* skip name */
         do
         {
-            p = reinterpret_cast<const char *>(fdt_offset_ptr(fdt, offset++, 1));
+            p = fdt_offset_ptr(fdt, offset++, 1);
         } while (p && (*p != '\0'));
         if (!can_assume(VALID_DTB) && !p)
             return FDT_END; /* premature end */
         break;
 
     case FDT_PROP:
-        lenp = reinterpret_cast<const fdt32_t *>(fdt_offset_ptr(fdt, offset, sizeof(*lenp)));
+        lenp = fdt_offset_ptr(fdt, offset, sizeof(*lenp));
         if (!can_assume(VALID_DTB) && !lenp)
             return FDT_END; /* premature end */
 
         len = fdt32_to_cpu(*lenp);
         sum = len + offset;
-        if (!can_assume(VALID_DTB) && (std::numeric_limits<int32_t>::max() <= sum || sum < (uint32_t)offset))
+        if (!can_assume(VALID_DTB) && (INT_MAX <= sum || sum < (uint32_t)offset))
             return FDT_END; /* premature end */
 
         /* skip-name offset, length and value */
@@ -309,12 +310,12 @@ int fdt_next_subnode(const void *fdt, int offset)
 
 const char *fdt_find_string_(const char *strtab, int tabsize, const char *s)
 {
-    size_t len = hls::strlen(s) + 1;
+    int len = strlen(s) + 1;
     const char *last = strtab + tabsize - len;
     const char *p;
 
     for (p = strtab; p <= last; p++)
-        if (hls::memcmp(p, s, len) == 0)
+        if (memcmp(p, s, len) == 0)
             return p;
     return NULL;
 }
@@ -329,6 +330,6 @@ int fdt_move(const void *fdt, void *buf, int bufsize)
     if (fdt_totalsize(fdt) > (unsigned int)bufsize)
         return -FDT_ERR_NOSPACE;
 
-    hls::memmove(buf, fdt, fdt_totalsize(fdt));
+    memmove(buf, fdt, fdt_totalsize(fdt));
     return 0;
 }

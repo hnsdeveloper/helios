@@ -6,8 +6,8 @@
  */
 #include "libfdt_env.h"
 
-#include "fdt.h"
-#include "libfdt.h"
+#include <fdt.h>
+#include <libfdt.h>
 
 #include "libfdt_internal.h"
 
@@ -17,7 +17,7 @@ static int fdt_cells(const void *fdt, int nodeoffset, const char *name)
     uint32_t val;
     int len;
 
-    c = reinterpret_cast<const fdt32_t *>(fdt_getprop(fdt, nodeoffset, name, &len));
+    c = fdt_getprop(fdt, nodeoffset, name, &len);
     if (!c)
         return len;
 
@@ -73,8 +73,7 @@ int fdt_appendprop_addrrange(void *fdt, int parent, int nodeoffset, const char *
     prop = data;
     if (addr_cells == 1)
     {
-        if ((addr > std::numeric_limits<uint32_t>::max()) ||
-            (((uint64_t)std::numeric_limits<uint32_t>::max() + 1 - addr) < size))
+        if ((addr > UINT32_MAX) || (((uint64_t)UINT32_MAX + 1 - addr) < size))
             return -FDT_ERR_BADVALUE;
 
         fdt32_st(prop, (uint32_t)addr);
@@ -92,7 +91,7 @@ int fdt_appendprop_addrrange(void *fdt, int parent, int nodeoffset, const char *
     prop += addr_cells * sizeof(fdt32_t);
     if (size_cells == 1)
     {
-        if (size > std::numeric_limits<uint32_t>::max())
+        if (size > UINT32_MAX)
             return -FDT_ERR_BADVALUE;
 
         fdt32_st(prop, (uint32_t)size);

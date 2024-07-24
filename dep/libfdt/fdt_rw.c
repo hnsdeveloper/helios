@@ -5,8 +5,8 @@
  */
 #include "libfdt_env.h"
 
-#include "fdt.h"
-#include "libfdt.h"
+#include <fdt.h>
+#include <libfdt.h>
 
 #include "libfdt_internal.h"
 
@@ -48,7 +48,7 @@ static inline unsigned int fdt_data_size_(void *fdt)
 
 static int fdt_splice_(void *fdt, void *splicepoint, int oldlen, int newlen)
 {
-    char *p = reinterpret_cast<char *>(splicepoint);
+    char *p = splicepoint;
     unsigned int dsize = fdt_data_size_(fdt);
     size_t soff = p - (char *)fdt;
 
@@ -58,7 +58,7 @@ static int fdt_splice_(void *fdt, void *splicepoint, int oldlen, int newlen)
         return -FDT_ERR_BADOFFSET;
     if (dsize - oldlen + newlen > fdt_totalsize(fdt))
         return -FDT_ERR_NOSPACE;
-    hls::memmove(p + newlen, p + oldlen, ((char *)fdt + dsize) - (p + oldlen));
+    memmove(p + newlen, p + oldlen, ((char *)fdt + dsize) - (p + oldlen));
     return 0;
 }
 
@@ -90,7 +90,7 @@ static int fdt_splice_struct_(void *fdt, void *p, int oldlen, int newlen)
 /* Must only be used to roll back in case of error */
 static void fdt_del_last_string_(void *fdt, const char *s)
 {
-    int newlen = hls::strlen(s) + 1;
+    int newlen = strlen(s) + 1;
 
     fdt_set_size_dt_strings(fdt, fdt_size_dt_strings(fdt) - newlen);
 }
@@ -120,8 +120,8 @@ static int fdt_find_add_string_(void *fdt, const char *s, int *allocated)
 {
     char *strtab = (char *)fdt + fdt_off_dt_strings(fdt);
     const char *p;
-    char *new_str;
-    int len = hls::strlen(s) + 1;
+    char *new;
+    int len = strlen(s) + 1;
     int err;
 
     if (!can_assume(NO_ROLLBACK))
@@ -132,7 +132,7 @@ static int fdt_find_add_string_(void *fdt, const char *s, int *allocated)
         /* found it */
         return (p - strtab);
 
-    new_str = strtab + fdt_size_dt_strings(fdt);
+    new = strtab + fdt_size_dt_strings(fdt);
     err = fdt_splice_string_(fdt, len);
     if (err)
         return err;
@@ -140,8 +140,8 @@ static int fdt_find_add_string_(void *fdt, const char *s, int *allocated)
     if (!can_assume(NO_ROLLBACK))
         *allocated = 1;
 
-    hls::memcpy(new_str, s, len);
-    return (new_str - strtab);
+    memcpy(new, s, len);
+    return (new - strtab);
 }
 
 int fdt_add_mem_rsv(void *fdt, uint64_t address, uint64_t size)
@@ -204,7 +204,7 @@ static int fdt_add_property_(void *fdt, int nodeoffset, const char *name, int le
     if (namestroff < 0)
         return namestroff;
 
-    *prop = reinterpret_cast<struct fdt_property *>(fdt_offset_ptr_w_(fdt, nextoffset));
+    *prop = fdt_offset_ptr_w_(fdt, nextoffset);
     proplen = sizeof(**prop) + FDT_TAGALIGN(len);
 
     err = fdt_splice_struct_(fdt, *prop, 0, proplen);
@@ -234,13 +234,13 @@ int fdt_set_name(void *fdt, int nodeoffset, const char *name)
     if (!namep)
         return oldlen;
 
-    newlen = hls::strlen(name);
+    newlen = strlen(name);
 
     err = fdt_splice_struct_(fdt, namep, FDT_TAGALIGN(oldlen + 1), FDT_TAGALIGN(newlen + 1));
     if (err)
         return err;
 
-    hls::memcpy(namep, name, newlen + 1);
+    memcpy(namep, name, newlen + 1);
     return 0;
 }
 
@@ -271,7 +271,7 @@ int fdt_setprop(void *fdt, int nodeoffset, const char *name, const void *val, in
         return err;
 
     if (len)
-        hls::memcpy(prop_data, val, len);
+        memcpy(prop_data, val, len);
     return 0;
 }
 
@@ -290,14 +290,14 @@ int fdt_appendprop(void *fdt, int nodeoffset, const char *name, const void *val,
         if (err)
             return err;
         prop->len = cpu_to_fdt32(newlen);
-        hls::memcpy(prop->data + oldlen, val, len);
+        memcpy(prop->data + oldlen, val, len);
     }
     else
     {
         err = fdt_add_property_(fdt, nodeoffset, name, len, &prop);
         if (err)
             return err;
-        hls::memcpy(prop->data, val, len);
+        memcpy(prop->data, val, len);
     }
     return 0;
 }
@@ -345,7 +345,7 @@ int fdt_add_subnode_namelen(void *fdt, int parentoffset, const char *name, int n
         tag = fdt_next_tag(fdt, offset, &nextoffset);
     } while ((tag == FDT_PROP) || (tag == FDT_NOP));
 
-    nh = reinterpret_cast<fdt_node_header *>(fdt_offset_ptr_w_(fdt, offset));
+    nh = fdt_offset_ptr_w_(fdt, offset);
     nodelen = sizeof(*nh) + FDT_TAGALIGN(namelen + 1) + FDT_TAGSIZE;
 
     err = fdt_splice_struct_(fdt, nh, 0, nodelen);
@@ -353,8 +353,8 @@ int fdt_add_subnode_namelen(void *fdt, int parentoffset, const char *name, int n
         return err;
 
     nh->tag = cpu_to_fdt32(FDT_BEGIN_NODE);
-    hls::memset(nh->name, 0, FDT_TAGALIGN(namelen + 1));
-    hls::memcpy(nh->name, name, namelen);
+    memset(nh->name, 0, FDT_TAGALIGN(namelen + 1));
+    memcpy(nh->name, name, namelen);
     endtag = (fdt32_t *)((char *)nh + nodelen - FDT_TAGSIZE);
     *endtag = cpu_to_fdt32(FDT_END_NODE);
 
@@ -363,7 +363,7 @@ int fdt_add_subnode_namelen(void *fdt, int parentoffset, const char *name, int n
 
 int fdt_add_subnode(void *fdt, int parentoffset, const char *name)
 {
-    return fdt_add_subnode_namelen(fdt, parentoffset, name, hls::strlen(name));
+    return fdt_add_subnode_namelen(fdt, parentoffset, name, strlen(name));
 }
 
 int fdt_del_node(void *fdt, int nodeoffset)
@@ -379,7 +379,7 @@ int fdt_del_node(void *fdt, int nodeoffset)
     return fdt_splice_struct_(fdt, fdt_offset_ptr_w_(fdt, nodeoffset), endoffset - nodeoffset, 0);
 }
 
-static void fdt_packblocks_(const char *old, char *new_blk, int mem_rsv_size, int struct_size, int strings_size)
+static void fdt_packblocks_(const char *old, char *new, int mem_rsv_size, int struct_size, int strings_size)
 {
     int mem_rsv_off, struct_off, strings_off;
 
@@ -387,16 +387,16 @@ static void fdt_packblocks_(const char *old, char *new_blk, int mem_rsv_size, in
     struct_off = mem_rsv_off + mem_rsv_size;
     strings_off = struct_off + struct_size;
 
-    hls::memmove(new_blk + mem_rsv_off, old + fdt_off_mem_rsvmap(old), mem_rsv_size);
-    fdt_set_off_mem_rsvmap(new_blk, mem_rsv_off);
+    memmove(new + mem_rsv_off, old + fdt_off_mem_rsvmap(old), mem_rsv_size);
+    fdt_set_off_mem_rsvmap(new, mem_rsv_off);
 
-    hls::memmove(new_blk + struct_off, old + fdt_off_dt_struct(old), struct_size);
-    fdt_set_off_dt_struct(new_blk, struct_off);
-    fdt_set_size_dt_struct(new_blk, struct_size);
+    memmove(new + struct_off, old + fdt_off_dt_struct(old), struct_size);
+    fdt_set_off_dt_struct(new, struct_off);
+    fdt_set_size_dt_struct(new, struct_size);
 
-    hls::memmove(new_blk + strings_off, old + fdt_off_dt_strings(old), strings_size);
-    fdt_set_off_dt_strings(new_blk, strings_off);
-    fdt_set_size_dt_strings(new_blk, fdt_size_dt_strings(old));
+    memmove(new + strings_off, old + fdt_off_dt_strings(old), strings_size);
+    fdt_set_off_dt_strings(new, strings_off);
+    fdt_set_size_dt_strings(new, fdt_size_dt_strings(old));
 }
 
 int fdt_open_into(const void *fdt, void *buf, int bufsize)
@@ -404,7 +404,7 @@ int fdt_open_into(const void *fdt, void *buf, int bufsize)
     int err;
     int mem_rsv_size, struct_size;
     int newsize;
-    const char *fdtstart = reinterpret_cast<const char *>(fdt);
+    const char *fdtstart = fdt;
     const char *fdtend = fdtstart + fdt_totalsize(fdt);
     char *tmp;
 
@@ -448,7 +448,7 @@ int fdt_open_into(const void *fdt, void *buf, int bufsize)
         return -FDT_ERR_NOSPACE;
 
     /* First attempt to build converted tree at beginning of buffer */
-    tmp = reinterpret_cast<char *>(buf);
+    tmp = buf;
     /* But if that overlaps with the old tree... */
     if (((tmp + newsize) > fdtstart) && (tmp < fdtend))
     {
@@ -458,8 +458,8 @@ int fdt_open_into(const void *fdt, void *buf, int bufsize)
             return -FDT_ERR_NOSPACE;
     }
 
-    fdt_packblocks_(reinterpret_cast<const char *>(fdt), tmp, mem_rsv_size, struct_size, fdt_size_dt_strings(fdt));
-    hls::memmove(buf, tmp, newsize);
+    fdt_packblocks_(fdt, tmp, mem_rsv_size, struct_size, fdt_size_dt_strings(fdt));
+    memmove(buf, tmp, newsize);
 
     fdt_set_magic(buf, FDT_MAGIC);
     fdt_set_totalsize(buf, bufsize);
@@ -477,8 +477,7 @@ int fdt_pack(void *fdt)
     FDT_RW_PROBE(fdt);
 
     mem_rsv_size = (fdt_num_mem_rsv(fdt) + 1) * sizeof(struct fdt_reserve_entry);
-    fdt_packblocks_(reinterpret_cast<const char *>(fdt), reinterpret_cast<char *>(fdt), mem_rsv_size,
-                    fdt_size_dt_struct(fdt), fdt_size_dt_strings(fdt));
+    fdt_packblocks_(fdt, fdt, mem_rsv_size, fdt_size_dt_struct(fdt), fdt_size_dt_strings(fdt));
     fdt_set_totalsize(fdt, fdt_data_size_(fdt));
 
     return 0;
