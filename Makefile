@@ -16,6 +16,8 @@ ifndef (EFI_INCLUDE_PATH)
 endif
 
 INCLUDE_DIRS += $(PROJECT_ROOT)inc $(LIBFDT_SRC_DIR) $(EFI_INCLUDE_PATH)
+
+
 # Artifacts directories
 OBJ_DIR := $(PROJECT_ROOT)obj
 LIB_DIR := $(PROJECT_ROOT)lib
@@ -104,7 +106,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.S
 $(OBJ_DIR)/%.o: $(LIBFDT_SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	@echo "Compiling C file from libfdt $< to $@"
-	@$(CC) $(CFLAGS) $(EXTRAFLAGS) $(MACROS) $(patsubst %,-I%,$(INCLUDE_DIRS)) -c $< -o $@
+	$(CC) $(CFLAGS) $(EXTRAFLAGS) $(MACROS) $(patsubst %,-I%,$(INCLUDE_DIRS)) -c $< -o $@
 
 $(OBJ_DIR)/%.o: $(LIBFDT_SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)

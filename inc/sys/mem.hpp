@@ -31,50 +31,6 @@ SOFTWARE.
 
 namespace hls
 {
-
-    /**
-     * @brief memcpy. Copies **bytes** bytes from src to dest.
-     *
-     * @param dest Pointer to where data will be copied to
-     * @param src Source data pointer
-     * @param bytes Length of data to be copied
-     */
-    void *memcpy(void *dest, const void *src, size_t bytes);
-
-    /**
-     * @brief Copies **bytes** from src to dest, using a buffer in case regions
-     * overlap
-     *
-     * @param dest Pointer to where data will be copied to
-     * @param src Source data pointer
-     * @param bytes The size of the data to be moved
-     * @return void* pointer to dest
-     */
-    void *memmove(void *dest, const void *src, size_t bytes);
-
-    /**
-     * @brief Sets **n** bytes at **dest** to **c**
-     *
-     * @param dst Destination pointer.
-     * @param c The value memory will be set to
-     * @param size Length of memory to be set
-     */
-    void memset(void *dst, char c, size_t size);
-
-    /**
-     * @brief Compares **n** bytes at **ptr1** and **ptr2** and returns which is
-     * bigger
-     *
-     * @param ptr1 Pointer to memory region to be compared
-     * @param ptr2 Pointer to memory region to be compared
-     * @param num Length in bytes to compare
-     * @return int 0 if both regions have the same data, -1 if the data at ptr1 <
-     * ptr2, 1 if the data at ptr1 > ptr2
-     */
-    int memcmp(const void *ptr1, const void *ptr2, size_t num);
-
-    void *memchr(const void *ptr, byte ch, size_t count);
-
     /**
      * @brief Converts a pointer value to a unsingned integral
      *

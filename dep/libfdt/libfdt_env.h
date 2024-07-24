@@ -7,12 +7,12 @@
  * Copyright 2012 Kim Phillips, Freescale Semiconductor.
  */
 
+// #include <kstdlib.h>
+#include <klibc/kstring.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 
 #ifdef __CHECKER__
 #define FDT_FORCE __attribute__((force))
