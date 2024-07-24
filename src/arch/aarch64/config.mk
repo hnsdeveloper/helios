@@ -1,1 +1,2 @@
-EFIARCH := pei-aarch64-little
+  CPPFLAGS +=  -fno-jump-tables -mgeneral-regs-only
+  CFLAGS += -fno-jump-tables -mgeneral-regs-only
