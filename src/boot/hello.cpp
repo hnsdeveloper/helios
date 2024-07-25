@@ -1,5 +1,5 @@
 #include "ulib/singleton.hpp"
-#include <efi.h>
+#include "efi/efi.h"
 
 class EfiSystemTableWrapper : public hls::Singleton<EfiSystemTableWrapper>
 {

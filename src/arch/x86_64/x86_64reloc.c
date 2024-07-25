@@ -36,7 +36,7 @@
     SUCH DAMAGE.
 */
 
-#include <efi.h>
+#include "efi/efi.h"
 
 #include <elf.h>
 

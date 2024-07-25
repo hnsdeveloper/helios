@@ -5,15 +5,9 @@ PROJECT_ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 # Source directories
 SRC_DIR := $(PROJECT_ROOT)src
-LIBFDT_SRC_DIR := $(PROJECT_ROOT)dep/libfdt
 
 # Include directories
-
-ifndef (EFI_INCLUDE_PATH)
-	EFI_INCLUDE_PATH := /usr/local/include/efi /usr/local/include
-endif
-
-INCLUDE_DIRS += $(PROJECT_ROOT)inc $(LIBFDT_SRC_DIR) $(EFI_INCLUDE_PATH)
+INCLUDE_DIRS += $(PROJECT_ROOT)inc
 
 C_INCLUDE_PATH := 
 CPLUS_INCLUDE_PATH :=
