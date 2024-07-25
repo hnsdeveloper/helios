@@ -1,6 +1,6 @@
 #include "ulib/singleton.hpp"
 #include "efi/efi.h"
-
+/*
 class EfiSystemTableWrapper : public hls::Singleton<EfiSystemTableWrapper>
 {
     EFI_SYSTEM_TABLE *m_system_table;
@@ -19,13 +19,13 @@ void printstr(const wchar_t *str)
     EfiSystemTableWrapper::get_global_instance().console_out(reinterpret_cast<const CHAR16 *>(str));
 }
 
+*/
+
 extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
     (void)ImageHandle;
-    EfiSystemTableWrapper::initialize_global_instance(SystemTable);
-    printstr(L"Hello world\r\n");
-    // SystemTable->ConOut->OutputString(SystemTable->ConOut, (CHAR16*)(L"Hello world\r\n"));
-
-    for (;;)
-        ;
+    // EfiSystemTableWrapper::initialize_global_instance(SystemTable);
+    // printstr(L"Hello world\r\n");
+    SystemTable->ConOut->OutputString(SystemTable->ConOut, (CHAR16 *)(L"Hello world\r\n"));
+    return EFI_SUCCESS;
 }

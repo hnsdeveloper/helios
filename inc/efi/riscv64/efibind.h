@@ -19,13 +19,13 @@
 #ifndef RISCV64_EFI_BIND
 #define RISCV64_EFI_BIND
 
-#include <klibc/kstdint.h>
+#include "klibc/kstdint.h"
 
 //
 // Basic EFI types of various widths
 //
 
-#include <klibc/kstddef.h>
+#include "klibc/kstddef.h"
 
 typedef uint64_t UINT64;
 typedef int64_t INT64;

@@ -13,7 +13,7 @@
 #include "klibc/kstdint.h"
 #include "klibc/kstring.h"
 
-#include "klibc/limits.h"
+#include "klibc/klimits.h"
 
 #ifdef __CHECKER__
 #define FDT_FORCE __attribute__((force))

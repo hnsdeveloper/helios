@@ -34,5 +34,8 @@ typedef uint8_t byte;
 typedef long unsigned size_t;
 typedef int64_t ptrdiff_t;
 typedef uint64_t uintptr_t;
+#ifndef __cplusplus
+typedef uint16_t wchar_t;
+#endif
 
 #endif

@@ -37,7 +37,7 @@
 
 #include "efi/efi.h"
 
-#include <elf.h>
+#include "elf/elf.h"
 
 EFI_STATUS __relocate(long ldbase, Elf64_Dyn *dyn)
 {

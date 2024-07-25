@@ -22,3 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
+
+#define INT32_MIN -2147483648
+#define INT32_MAX 2147483647
+#define INT_MIN -2147483648
+#define INT_MAX 2147483647
+
+#define UINT32_MAX 0xFFFFFFFFU

@@ -18,13 +18,13 @@
 #ifndef AARCH64_EFI_BIND
 #define AARCH64_EFI_BIND
 
-#include <klibc/kstdint.h>
+#include "klibc/kstdint.h"
 
 //
 // Basic EFI types of various widths
 //
 
-#include <klibc/kstddef.h>
+#include "klibc/kstddef.h"
 
 typedef wchar_t CHAR16;
 #define WCHAR CHAR16
