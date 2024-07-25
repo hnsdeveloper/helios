@@ -23,85 +23,99 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
+#ifndef _KCTYPE_H_
+#define _KCTYPE_H_
+
 #include <klibc/kstdbool.h>
 
-/**
- * @brief Checks if character is same as ' ' (ASCII 32).
- *
- * @param c Character to be checked.
- * @return true **c** is in range.
- * @return false **c** is not in range.
- */
-bool isspace(char c);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-/**
- * @brief Checks if character **c** is within range 'a' - 'z' inclusive or 'A' -
- * 'Z' inclusive.
- *
- * @param c Character to be checked.
- * @return true **c** is in range.
- * @return false **c** is not in range.
- */
-bool isalpha(char c);
+    /**
+     * @brief Checks if character is same as ' ' (ASCII 32).
+     *
+     * @param c Character to be checked.
+     * @return true **c** is in range.
+     * @return false **c** is not in range.
+     */
+    bool isspace(char c);
 
-/**
- * @brief Same as is_alpha(c) || is_dec_digit(c);
- *
- * @param c Character to be checked.
- * @return true **c** is in range.
- * @return false **c** is not in range.
- */
-bool isalnum(char c);
+    /**
+     * @brief Checks if character **c** is within range 'a' - 'z' inclusive or 'A' -
+     * 'Z' inclusive.
+     *
+     * @param c Character to be checked.
+     * @return true **c** is in range.
+     * @return false **c** is not in range.
+     */
+    bool isalpha(char c);
 
-/**
- * @brief Checks if character **c** is within range '0' - '9' inclusive.
- *
- * @param c Character to be checked.
- * @return true **c** is in range.
- * @return false **c** is not in range.
- */
-bool isdigit(char c);
+    /**
+     * @brief Same as is_alpha(c) || is_dec_digit(c);
+     *
+     * @param c Character to be checked.
+     * @return true **c** is in range.
+     * @return false **c** is not in range.
+     */
+    bool isalnum(char c);
 
-/**
- * @brief Checks if character **c** is within range '0' - '9' inclusive or 'a' -
- * 'f' inclusive.
- *
- * @param c Character to be checked.
- * @return true **c** is in range.
- * @return false **c** is not in range.
- */
-bool isxdigit(char c);
+    /**
+     * @brief Checks if character **c** is within range '0' - '9' inclusive.
+     *
+     * @param c Character to be checked.
+     * @return true **c** is in range.
+     * @return false **c** is not in range.
+     */
+    bool isdigit(char c);
 
-/**
- * @brief Checks if character is within range 'A' - 'Z' inclusive.
- *
- * @param c Character to be checked.
- * @return true **c** is in range.
- * @return false **c** is not in range.
- */
-bool isupper(char c);
+    /**
+     * @brief Checks if character **c** is within range '0' - '9' inclusive or 'a' -
+     * 'f' inclusive.
+     *
+     * @param c Character to be checked.
+     * @return true **c** is in range.
+     * @return false **c** is not in range.
+     */
+    bool isxdigit(char c);
 
-/**
- * @brief Checks if character is within range 'a' - 'z' inclusive.
- *
- * @param c Character to be checked.
- * @return true **c** is in range.
- * @return false **c** is not in range.
- */
-bool islower(char c);
+    /**
+     * @brief Checks if character is within range 'A' - 'Z' inclusive.
+     *
+     * @param c Character to be checked.
+     * @return true **c** is in range.
+     * @return false **c** is not in range.
+     */
+    bool isupper(char c);
 
-/**
- * @brief Transforms lowercase character into uppercase character.
- *
- * @param c Character to be transformed.
- * @return char Uppercase **c** if **c** is a character, otherwise **c** itself.
- */
-char toupper(char c);
+    /**
+     * @brief Checks if character is within range 'a' - 'z' inclusive.
+     *
+     * @param c Character to be checked.
+     * @return true **c** is in range.
+     * @return false **c** is not in range.
+     */
+    bool islower(char c);
 
-/**
- * @brief Transforms uppercase character into lowercase character.
- *
- * @param c Character to be transformed.
- * @return char Lowercase **c** if **c** is a character, otherwise **c** itself.
- */
-char tolower(char c);
+    /**
+     * @brief Transforms lowercase character into uppercase character.
+     *
+     * @param c Character to be transformed.
+     * @return char Uppercase **c** if **c** is a character, otherwise **c** itself.
+     */
+    char toupper(char c);
+
+    /**
+     * @brief Transforms uppercase character into lowercase character.
+     *
+     * @param c Character to be transformed.
+     * @return char Lowercase **c** if **c** is a character, otherwise **c** itself.
+     */
+    char tolower(char c);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

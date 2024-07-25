@@ -23,8 +23,13 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
+#ifndef _KSTDBOOL_H_
+#define _KSTDBOOL_H_
+
 #ifndef __cplusplus
 #define bool _Bool
 #define true 1
 #define false 0
+#endif
+
 #endif

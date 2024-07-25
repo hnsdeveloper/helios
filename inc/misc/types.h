@@ -26,12 +26,10 @@ SOFTWARE.
 #ifndef _TYPES_HPP_
 #define _TYPES_HPP_
 
-#include <cstddef>
-#include <cstdint>
+#include <stddef.h>
+#include <stdint.h>
+#include <uchar.h>
 
-using byte = uint8_t;
-
-using frame_fn = void *(*)();
-using frame_rls_fn = void (*)(void *);
+typedef uint8_t byte;
 
 #endif
