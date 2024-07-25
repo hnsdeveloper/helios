@@ -23,30 +23,47 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "sys/string.hpp"
+#include <kstdbool.h>
 
-namespace hls
-{
+/**
+ * @brief Checks if character is same as ' ' (ASCII 32).
+ *
+ * @param c Character to be checked.
+ * @return true **c** is in range.
+ * @return false **c** is not in range.
+ */
+bool isspace(char c);
 
-    bool isdec(char c)
-    {
-        return c >= '0' && c <= '9';
-    }
+/**
+ * @brief Checks if character is within range 'A' - 'Z' inclusive.
+ *
+ * @param c Character to be checked.
+ * @return true **c** is in range.
+ * @return false **c** is not in range.
+ */
+bool isupper(char c);
 
-    bool isoct(char c)
-    {
-        return c >= '0' && c <= '7';
-    }
+/**
+ * @brief Checks if character is within range 'a' - 'z' inclusive.
+ *
+ * @param c Character to be checked.
+ * @return true **c** is in range.
+ * @return false **c** is not in range.
+ */
+bool islower(char c);
 
-    bool ishex(char c)
-    {
-        c = tolower(c);
-        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
-    }
+/**
+ * @brief Transforms lowercase character into uppercase character.
+ *
+ * @param c Character to be transformed.
+ * @return char Uppercase **c** if **c** is a character, otherwise **c** itself.
+ */
+char toupper(char c);
 
-    bool isalphanumeric(char c)
-    {
-        return isdec(c) || isalpha(c);
-    }
-
-} // namespace hls
+/**
+ * @brief Transforms uppercase character into lowercase character.
+ *
+ * @param c Character to be transformed.
+ * @return char Lowercase **c** if **c** is a character, otherwise **c** itself.
+ */
+char tolower(char c);

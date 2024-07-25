@@ -23,30 +23,8 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include "sys/string.hpp"
-
-namespace hls
-{
-
-    bool isdec(char c)
-    {
-        return c >= '0' && c <= '9';
-    }
-
-    bool isoct(char c)
-    {
-        return c >= '0' && c <= '7';
-    }
-
-    bool ishex(char c)
-    {
-        c = tolower(c);
-        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
-    }
-
-    bool isalphanumeric(char c)
-    {
-        return isdec(c) || isalpha(c);
-    }
-
-} // namespace hls
+#ifndef __cplusplus
+#define bool _Bool
+#define true 1
+#define false 0
+#endif

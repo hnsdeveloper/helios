@@ -22,31 +22,38 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
+#include <klibc/kctype.h>
 
-#include "sys/string.hpp"
-
-namespace hls
+bool isspace(char c)
 {
+    return c == ' ';
+}
 
-    bool isdec(char c)
-    {
-        return c >= '0' && c <= '9';
-    }
+bool isupper(char c)
+{
+    return c >= 'A' && c <= 'Z';
+}
 
-    bool isoct(char c)
-    {
-        return c >= '0' && c <= '7';
-    }
+bool islower(char c)
+{
+    return c >= 'a' && c <= 'z';
+}
 
-    bool ishex(char c)
-    {
-        c = tolower(c);
-        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
-    }
+bool toupper(char c)
+{
+    if (islower(c))
+        return c - 'a' + 'A';
+    return c;
+}
 
-    bool isalphanumeric(char c)
-    {
-        return isdec(c) || isalpha(c);
-    }
+char tolower(char c)
+{
+    if (isupper(c))
+        return c - 'A' + 'a';
+    return c;
+}
 
-} // namespace hls
+bool isalpha(char c)
+{
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}

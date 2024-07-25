@@ -29,7 +29,7 @@
  *
  */
 
-#include "kstring.h"
+#include <klibc/kstring.h>
 
 void *memcpy(void *dst, const void *src, size_t n)
 {
@@ -234,15 +234,6 @@ int strncmp(const char *s1, const char *s2, size_t n)
         return *s1 - *s2;
     }
     return 0;
-}
-
-char *strdup(const char *s)
-{
-    size_t i = (strlen(s) + 1) * sizeof(char);
-    char *s2 = (char *)malloc(i);
-    if (s2 != NULL)
-        memcpy(s2, (const void *)s, i);
-    return s2;
 }
 
 const char *strchr(const char *s, int c)
