@@ -29,8 +29,8 @@
  *
  */
 
-#include <klibc/kctype.h>
-#include <klibc/kstring.h>
+#include "klibc/kstring.h"
+#include "klibc/kctype.h"
 
 void *memcpy(void *dst, const void *src, size_t n)
 {

@@ -26,8 +26,9 @@ SOFTWARE.
 #ifndef _NODE_HPP_
 #define _NODE_HPP_
 
+#include "klibc/kstddef.h"
+#include "klibc/kstdint.h"
 #include "misc/macros.hpp"
-#include "misc/types.hpp"
 #include "misc/utilities.hpp"
 
 namespace hls

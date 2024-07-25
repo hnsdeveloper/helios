@@ -24,10 +24,11 @@ SOFTWARE.
 ---------------------------------------------------------------------------------*/
 
 #include "arch/riscv64/plat_def.hpp"
+#include "klibc/kstddef.h"
+#include "klibc/kstdint.h"
 #include "mem/bumpallocator.hpp"
 #include "mem/nodeallocator.hpp"
 #include "misc/macros.hpp"
-#include "misc/types.hpp"
 #include "sys/bootdata.hpp"
 #include "ulib/pair.hpp"
 #include "ulib/rb_tree.hpp"

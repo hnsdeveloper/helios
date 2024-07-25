@@ -25,7 +25,8 @@ SOFTWARE.
 #ifndef _BOOTDATA__HPP_
 #define _BOOTDATA__HPP_
 
-#include "misc/types.hpp"
+#include "klibc/kstddef.h"
+#include "klibc/kstdint.h"
 
 namespace hls
 {

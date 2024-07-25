@@ -23,13 +23,16 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef _TYPES_HPP_
-#define _TYPES_HPP_
+#ifndef _KSTDDEF_H_
+#define _KSTDDEF_H_
 
-#include <stddef.h>
-#include <stdint.h>
-#include <uchar.h>
+#include "klibc/kstdint.h"
+
+#define NULL (void *)(0)
 
 typedef uint8_t byte;
+typedef long unsigned size_t;
+typedef int64_t ptrdiff_t;
+typedef uint64_t uintptr_t;
 
 #endif

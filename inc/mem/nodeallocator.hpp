@@ -27,8 +27,9 @@ SOFTWARE.
 #define _NODEALLOCATOR_HPP_
 
 #include "arch/riscv64/plat_def.hpp"
+#include "klibc/kstddef.h"
+#include "klibc/kstdint.h"
 #include "mem/bumpallocator.hpp"
-#include "misc/types.hpp"
 #include "misc/utilities.hpp"
 #include "sys/mem.hpp"
 

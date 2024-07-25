@@ -26,8 +26,9 @@ SOFTWARE.
 #ifndef _PLAT_DEF_H_
 #define _PLAT_DEF_H_
 
+#include "klibc/kstddef.h"
+#include "klibc/kstdint.h"
 #include "misc/macros.hpp"
-#include "misc/types.hpp"
 
 namespace hls
 {

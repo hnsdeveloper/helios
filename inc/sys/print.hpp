@@ -25,7 +25,8 @@ SOFTWARE.
 #ifndef _PRINT_HPP_
 #define _PRINT_HPP_
 
-#include "misc/types.hpp"
+#include "klibc/kstddef.h"
+#include "klibc/kstdint.h"
 #include "misc/utilities.hpp"
 #include <limits>
 #include <type_traits>

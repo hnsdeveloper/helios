@@ -26,7 +26,8 @@ SOFTWARE.
 #ifndef __SYMBOLS_HPP_
 #define __SYMBOLS_HPP_
 
-#include "misc/types.hpp"
+#include "klibc/kstddef.h"
+#include "klibc/kstdint.h"
 
 extern "C" byte _load_address;
 extern "C" byte _imap;

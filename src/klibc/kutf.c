@@ -23,8 +23,8 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
+#include "klibc/kutf.h"
 #include "klibc/kstring.h"
-#include "klibc/utf.h"
 
 bool is_ascii_utf16_convertible(const char *str)
 {
@@ -70,25 +70,26 @@ char16_t *ascii_to_utf16(const char *src, void *buffer, size_t buffer_size)
     size_t i = 0;
     while (src[i] != 0 && i < (buffer_size / 2) - 1)
     {
-        _buffer[i] = *((unsigned char *)(src)[i]);
+        _buffer[i] = ((unsigned char *)(src))[i];
         ++i;
     }
     _buffer[i] = 0;
     return _buffer;
 }
 
-char *utf16_to_ascii(const char16_t *src, char *buffer, size_t buffer_size)
+char *utf16_to_ascii(const char16_t *src, void *buffer, size_t buffer_size)
 {
     if (!src || !buffer || buffer_size == 0 || !is_utf16_ascii_convertible(src))
         return NULL;
 
+    char *_buffer = buffer;
     size_t i = 0;
     while (src[i] != 0 && i < (buffer_size - 1))
     {
-        unsigned char *p = (unsigned char *)(buffer + i);
+        unsigned char *p = (unsigned char *)(_buffer + i);
         *p = (src[i] & 0xFF80) ^ 0xFF80;
         ++i;
     }
-    buffer[i] = 0;
-    return buffer;
+    _buffer[i] = 0;
+    return _buffer;
 }

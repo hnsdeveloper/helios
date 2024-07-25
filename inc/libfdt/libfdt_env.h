@@ -8,11 +8,12 @@
  */
 
 // #include <kstdlib.h>
-#include <klibc/kstdbool.h>
-#include <klibc/kstring.h>
-#include <limits.h>
-#include <stddef.h>
-#include <stdint.h>
+#include "klibc/kstdbool.h"
+#include "klibc/kstddef.h"
+#include "klibc/kstdint.h"
+#include "klibc/kstring.h"
+
+#include "klibc/limits.h"
 
 #ifdef __CHECKER__
 #define FDT_FORCE __attribute__((force))

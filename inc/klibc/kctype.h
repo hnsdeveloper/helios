@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef _KCTYPE_H_
 #define _KCTYPE_H_
 
-#include <klibc/kstdbool.h>
+#include "klibc/kstdbool.h"
 
 #ifdef __cplusplus
 extern "C"

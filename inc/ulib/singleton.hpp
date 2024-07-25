@@ -26,9 +26,10 @@ SOFTWARE.
 #ifndef _SINGLETON_HPP_
 #define _SINGLETON_HPP_
 
+#include "klibc/kstddef.h"
+#include "klibc/kstdint.h"
 #include "misc/macros.hpp"
 #include "misc/new.hpp"
-#include "misc/types.hpp"
 #include "misc/utilities.hpp"
 #include "sys/mem.hpp"
 #include "sys/panic.hpp"

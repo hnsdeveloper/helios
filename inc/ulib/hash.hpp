@@ -26,9 +26,9 @@ SOFTWARE.
 #ifndef _HASH_HPP_
 #define _HASH_HPP_
 
+#include "klibc/kstddef.h"
+#include "klibc/kstdint.h"
 #include "misc/macros.hpp"
-#include "misc/types.hpp"
-
 namespace hls
 {
 

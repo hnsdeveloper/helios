@@ -15,6 +15,9 @@ endif
 
 INCLUDE_DIRS += $(PROJECT_ROOT)inc $(LIBFDT_SRC_DIR) $(EFI_INCLUDE_PATH)
 
+C_INCLUDE_PATH := 
+CPLUS_INCLUDE_PATH :=
+CPATH :=
 
 # Artifacts directories
 OBJ_DIR := $(PROJECT_ROOT)obj
@@ -30,7 +33,7 @@ MEM_MODULE_SRC_FILES := $(shell find $(SRC_DIR)/mem -type f \( -name "*.c" -o -n
 EXTRA_MODULE_SRC_FILES := $(shell find $(SRC_DIR)/misc -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.S" -o -name "*.s" \))
 SYS_MODULE_SRC_FILES := $(shell find $(SRC_DIR)/sys -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.S" -o -name "*.s" \))
 ULIB_MODULE_SRC_FILES := $(shell find $(SRC_DIR)/ulib -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.S" -o -name "*.s" \))
-LIBFDT_SRC_FILES := $(shell find $(LIBFDT_SRC_DIR) -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.S" -o -name "*.s" \))
+LIBFDT_SRC_FILES := $(shell find $(SRC_DIR)/libfdt -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.S" -o -name "*.s" \))
 
 # Object files with directory structure
 BOOT_ARCH_OBJ_FILES := $(patsubst $(SRC_DIR)/%,$(OBJ_DIR)/%,$(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(patsubst %.S,%.o,$(BOOT_ARCH_FILES)))))
@@ -41,7 +44,7 @@ MEM_MODULE_OBJ_FILES := $(patsubst $(SRC_DIR)/%,$(OBJ_DIR)/%,$(patsubst %.c,%.o,
 EXTRA_MODULE_OBJ_FILES := $(patsubst $(SRC_DIR)/%,$(OBJ_DIR)/%,$(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(patsubst %.S,%.o,$(EXTRA_MODULE_SRC_FILES)))))
 SYS_MODULE_OBJ_FILES := $(patsubst $(SRC_DIR)/%,$(OBJ_DIR)/%,$(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(patsubst %.S,%.o,$(SYS_MODULE_SRC_FILES)))))
 ULIB_MODULE_OBJ_FILES := $(patsubst $(SRC_DIR)/%,$(OBJ_DIR)/%,$(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(patsubst %.S,%.o,$(ULIB_MODULE_SRC_FILES)))))
-LIBFDT_OBJ_FILES := $(patsubst $(LIBFDT_SRC_DIR)/%,$(OBJ_DIR)/%,$(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(patsubst %.S,%.o,$(LIBFDT_SRC_FILES)))))
+LIBFDT_OBJ_FILES := $(patsubst $(SRC_DIR)/%,$(OBJ_DIR)/%,$(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(patsubst %.S,%.o,$(LIBFDT_SRC_FILES)))))
 
 # Objects needed by each target
 BOOTLOADER_OBJ_FILES := $(BOOT_ARCH_OBJ_FILES) $(BOOT_OBJ_FILES) $(KLIBC_OBJ_FILES)
@@ -80,6 +83,7 @@ BOOTPAGES := 32
 KERNEL_LINKER_SCRIPT := $(SRC_DIR)/arch/$(ARCH)/kernel.lds
 
 # Target library
+KLIBC := $(LIB_DIR)/libc.a
 LIBFDT := $(LIB_DIR)/libfdt.a
 
 # Kernel ELF executable
@@ -95,7 +99,7 @@ MACROS += -DBOOTPAGES=$(BOOTPAGES)
 all: $(BINARY) $(TARGET) libs
 
 
-# Compilation rules for bootloader source files
+# Compilation rules for source files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	@echo "Compiling C file from $< to $@"
@@ -109,18 +113,6 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.S
 	@mkdir -p $(dir $@)
 	@echo "Compiling assembly file from $< to $@"
-	@$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) $(MACROS) $(patsubst %,-I%,$(INCLUDE_DIRS)) -c $< -o $@
-
-# Compilation rules for Libfdt source files
-$(OBJ_DIR)/%.o: $(LIBFDT_SRC_DIR)/%.c
-	@mkdir -p $(dir $@)
-	@echo "Compiling C file from libfdt $< to $@"
-	@$(CC) $(CFLAGS) $(EXTRAFLAGS) $(MACROS) $(patsubst %,-I%,$(INCLUDE_DIRS)) -c $< -o $@
-
-$(OBJ_DIR)/%.o: $(LIBFDT_SRC_DIR)/%.cpp
-	@mkdir -p $(dir $@)
-	echo $(CPATH)
-	@echo "Compiling C++ file from libfdt $< to $@"
 	@$(CXX) $(CPPFLAGS) $(EXTRAFLAGS) $(MACROS) $(patsubst %,-I%,$(INCLUDE_DIRS)) -c $< -o $@
 
 # Preprocess and copy linker script
@@ -147,20 +139,26 @@ $(BUILD_DIR)/BOOTX64.efi: $(BUILD_DIR)/bootloader
 	@$(OBJCOPY) -O binary $< $@
 	@dd if=/dev/zero of=$@ bs=4096 count=0 seek=$$(( ($$(wc -c < $@) + 4095) / 4096 ))
 
-$(BUILD_DIR)/bootloader: $(BOOT_OBJ_FILES) $(BOOT_ARCH_OBJ_FILES) $(KLIBC_OBJ_FILES) $(LIBFDT) $(SRC_DIR)/arch/$(ARCH)/$(ARCH)bootloader.lds
+$(BUILD_DIR)/bootloader: $(BOOT_OBJ_FILES) $(BOOT_ARCH_OBJ_FILES) $(KLIBC) $(LIBFDT) $(SRC_DIR)/arch/$(ARCH)/$(ARCH)bootloader.lds
 	@mkdir -p $(BUILD_DIR)
-	@$(LD) $(BOOT_ARCH_OBJ_FILES) $(BOOT_OBJ_FILES) $(LDFLAGS) -nostdlib -pie -z text -z max-page-size=0x1000 $(patsubst %, -L%, $(LIB_DIR)) -lfdt -T$(SRC_DIR)/arch/$(ARCH)/$(ARCH)bootloader.lds  -o $@
+	@$(LD) $(BOOT_ARCH_OBJ_FILES) $(BOOT_OBJ_FILES) $(LDFLAGS) -nostdlib -pie -z text -z max-page-size=0x1000 $(patsubst %, -L%, $(LIB_DIR)) -lfdt -lc -T$(SRC_DIR)/arch/$(ARCH)/$(ARCH)bootloader.lds  -o $@
 
 # Libraries target
-libs: libfdt
+libs: libfdt klibc
 
 libfdt: $(LIBFDT)
+klibc : $(KLIBC)
 
 $(LIBFDT): $(LIBFDT_OBJ_FILES)
 	@mkdir -p $(LIB_DIR)
 	@echo "Archiving $@"
 	@$(AR) rcs $@ $^
 
+$(KLIBC) : $(KLIBC_OBJ_FILES)
+	@mkdir -p $(LIB_DIR)
+	@echo "Archiving $@"
+	@$(AR) rcs $@ $^
+	
 show :
 	@echo $(KERNEL_OBJ_FILES)
 	@echo $(ARCH_OBJ_FILES)
@@ -174,4 +172,4 @@ clean:
 
 -include $(DEP_FILES)
 
-.PHONY: all helios clean libs libfdt bootloader show
+.PHONY: all helios clean libs libfdt klibc bootloader show

@@ -1,8 +1,9 @@
 #include "sys/devicetree.hpp"
 #include "arch/riscv64/plat_def.hpp"
+#include "klibc/kstddef.h"
+#include "klibc/kstdint.h"
 #include "mem/framemanager.hpp"
 #include "mem/mmap.hpp"
-#include "misc/types.hpp"
 #include "sys/mem.hpp"
 
 namespace hls

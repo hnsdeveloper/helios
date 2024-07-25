@@ -26,8 +26,9 @@ SOFTWARE.
 #ifndef _KSTRING_H_
 #define _KSTRING_H_
 
-#include <stddef.h>
-#include <stdint.h>
+#include "klibc/kstddef.h"
+#include "klibc/kstdint.h"
+#include "klibc/kuchar.h"
 
 #ifdef __cplusplus
 extern "C"

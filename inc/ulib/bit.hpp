@@ -26,7 +26,8 @@ SOFTWARE.
 #ifndef _BIT_HPP_
 #define _BIT_HPP_
 
-#include "misc/types.hpp"
+#include "klibc/kstddef.h"
+#include "klibc/kstdint.h"
 #include "misc/typetraits.hpp"
 #include "sys/mem.hpp"
 #include "ulib/result.hpp"

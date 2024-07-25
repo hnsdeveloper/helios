@@ -26,9 +26,10 @@ SOFTWARE.
 #ifndef _EXPECTED_HPP_
 #define _EXPECTED_HPP_
 
+#include "klibc/kstddef.h"
+#include "klibc/kstdint.h"
 #include "misc/macros.hpp"
 #include "misc/new.hpp"
-#include "misc/types.hpp"
 #include "misc/utilities.hpp"
 #include "sys/panic.hpp"
 #include <type_traits>

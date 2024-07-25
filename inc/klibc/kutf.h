@@ -26,8 +26,9 @@ SOFTWARE.
 #ifndef _LOCALE_H_
 #define _LOCALE_H_
 
-#include "misc/types.h"
-#include <klibc/kstdbool.h>
+#include "klibc/kstdbool.h"
+#include "klibc/kstddef.h"
+#include "klibc/kuchar.h"
 
 #ifdef __cplusplus
 extern "C"

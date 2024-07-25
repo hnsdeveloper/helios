@@ -23,32 +23,16 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#ifndef _KMALLOC_HPP_
-#define _KMALLOC_HPP_
+#ifndef _KSTDINT_H_
+#define _KSTDINT_H_
 
-#include "klibc/kstddef.h"
-#include "klibc/kstdint.h"
+typedef char int8_t;
+typedef short int int16_t;
+typedef int int32_t;
+typedef long long int int64_t;
+typedef unsigned char uint8_t;
+typedef unsigned short int uint16_t;
+typedef unsigned int uint32_t;
+typedef unsigned long long uint64_t;
 
-namespace hls
-{
-
-    void initialize_kmalloc();
-
-    /**
-     * @brief Allocates **bytes** bytes of memory. Note that alignment is at maximum 8 bytes.
-     *
-     * @param bytes How many bytes we wan to allocate.
-     * @return nullptr in case of failure or memory address in case of success.
-     */
-    void *kmalloc(size_t bytes);
-
-    /**
-     * @brief Releases memory allocated with kmalloc.
-     *
-     * @param ptr Pointer to be released.
-     */
-    void kfree(void *ptr);
-
-} // namespace hls
-
-#endif /* kmalloc_hpp */
+#endif
