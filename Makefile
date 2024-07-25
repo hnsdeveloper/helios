@@ -22,7 +22,7 @@ LIB_DIR := $(PROJECT_ROOT)lib
 BUILD_DIR := $(PROJECT_ROOT)build
 
 # Source files
-BOOT_ARCH_FILES := $(shell find $(SRC_DIR)/arch/$(ARCH) -type f \( -name "$(ARCH)reloc.c" -o -name "$(ARCH)crt0.S" \))
+BOOT_ARCH_FILES := $(shell find $(SRC_DIR)/arch/$(ARCH) -type f \( -name "$(ARCH)reloc.c" -o -name "$(ARCH)crt0.S" \)) 
 BOOT_SRC_FILES := $(shell find $(SRC_DIR)/boot -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.S" -o -name "*.s" \))
 ARCH_SRC_FILES := $(shell find $(SRC_DIR)/arch/$(ARCH) -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.S" -o -name "*.s" \) $(foreach file, $(BOOT_ARCH_FILES), ! -name $(notdir $(file))))
 KLIBC_SRC_FILES := $(shell find $(SRC_DIR)/klibc -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.S" -o -name "*.s" \))
@@ -115,7 +115,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.S
 $(OBJ_DIR)/%.o: $(LIBFDT_SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	@echo "Compiling C file from libfdt $< to $@"
-	$(CC) $(CFLAGS) $(EXTRAFLAGS) $(MACROS) $(patsubst %,-I%,$(INCLUDE_DIRS)) -c $< -o $@
+	@$(CC) $(CFLAGS) $(EXTRAFLAGS) $(MACROS) $(patsubst %,-I%,$(INCLUDE_DIRS)) -c $< -o $@
 
 $(OBJ_DIR)/%.o: $(LIBFDT_SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
@@ -133,7 +133,7 @@ $(OBJ_DIR)/kernel.lds: $(KERNEL_LINKER_SCRIPT)
 $(TARGET): $(OBJ_DIR)/kernel.lds $(KERNEL_OBJ_FILES) $(LIBFDT)
 	@mkdir -p $(BUILD_DIR)
 	@echo "Linking $@"
-	@$(LD) $(KERNEL_OBJ_FILES) $(ARCH_OBJ_FILES) $(patsubst %, -L%, $(LIB_DIRS)) --gc-sections -nostdlib -lfdt -T$(OBJ_DIR)/kernel.lds $(LDFLAGS) -o $@ 
+	@$(LD) $(KERNEL_OBJ_FILES) $(ARCH_OBJ_FILES) $(patsubst %, -L%, $(LIB_DIR)) --gc-sections -nostdlib -pie -lfdt -T$(OBJ_DIR)/kernel.lds $(LDFLAGS) -o $@ 
 
 # Binary target
 $(BINARY): $(TARGET)
@@ -147,9 +147,9 @@ $(BUILD_DIR)/BOOTX64.efi: $(BUILD_DIR)/bootloader
 	@$(OBJCOPY) -O binary $< $@
 	@dd if=/dev/zero of=$@ bs=4096 count=0 seek=$$(( ($$(wc -c < $@) + 4095) / 4096 ))
 
-$(BUILD_DIR)/bootloader: $(BOOT_OBJ_FILES) $(BOOT_ARCH_OBJ_FILES) $(KLIBC_OBJ_FILES) $(ARCH_SRC_DIR)/$(ARCH)bootloader.lds
+$(BUILD_DIR)/bootloader: $(BOOT_OBJ_FILES) $(BOOT_ARCH_OBJ_FILES) $(KLIBC_OBJ_FILES) $(LIBFDT) $(SRC_DIR)/arch/$(ARCH)/$(ARCH)bootloader.lds
 	@mkdir -p $(BUILD_DIR)
-	@$(LD) $(BOOT_ARCH_OBJ_FILES) $(BOOT_OBJ_FILES) $(LDFLAGS) $(patsubst %, -L%, $(LIB_DIRS)) -T$(ARCH_SRC_DIR)/$(ARCH)bootloader.lds -nostdlib -pie -z text -z max-page-size=0x1000 -o $@
+	@$(LD) $(BOOT_ARCH_OBJ_FILES) $(BOOT_OBJ_FILES) $(LDFLAGS) -nostdlib -pie -z text -z max-page-size=0x1000 $(patsubst %, -L%, $(LIB_DIR)) -lfdt -T$(SRC_DIR)/arch/$(ARCH)/$(ARCH)bootloader.lds  -o $@
 
 # Libraries target
 libs: libfdt

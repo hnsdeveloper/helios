@@ -10,7 +10,7 @@
 // #include <kstdlib.h>
 #include <klibc/kstring.h>
 #include <limits.h>
-#include <stdbool.h>
+#include <klibc/kstdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 

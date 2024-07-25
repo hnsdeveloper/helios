@@ -39,7 +39,7 @@ bool islower(char c)
     return c >= 'a' && c <= 'z';
 }
 
-bool toupper(char c)
+char toupper(char c)
 {
     if (islower(c))
         return c - 'a' + 'A';
@@ -56,4 +56,20 @@ char tolower(char c)
 bool isalpha(char c)
 {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
+
+bool isdigit(char c)
+{
+    return c >= '0' && c <= '9';
+}
+
+bool isxdigit(char c)
+{
+    c = tolower(c);
+    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
+}
+
+bool isalnum(char c)
+{
+    return isdigit(c) || isalpha(c);
 }

@@ -23,7 +23,7 @@ SOFTWARE.
 
 ---------------------------------------------------------------------------------*/
 
-#include <kstdbool.h>
+#include <klibc/kstdbool.h>
 
 /**
  * @brief Checks if character is same as ' ' (ASCII 32).
@@ -33,6 +33,44 @@ SOFTWARE.
  * @return false **c** is not in range.
  */
 bool isspace(char c);
+
+/**
+ * @brief Checks if character **c** is within range 'a' - 'z' inclusive or 'A' -
+ * 'Z' inclusive.
+ *
+ * @param c Character to be checked.
+ * @return true **c** is in range.
+ * @return false **c** is not in range.
+ */
+bool isalpha(char c);
+
+/**
+ * @brief Same as is_alpha(c) || is_dec_digit(c);
+ *
+ * @param c Character to be checked.
+ * @return true **c** is in range.
+ * @return false **c** is not in range.
+ */
+bool isalnum(char c);
+
+/**
+ * @brief Checks if character **c** is within range '0' - '9' inclusive.
+ *
+ * @param c Character to be checked.
+ * @return true **c** is in range.
+ * @return false **c** is not in range.
+ */
+bool isdigit(char c);
+
+/**
+ * @brief Checks if character **c** is within range '0' - '9' inclusive or 'a' -
+ * 'f' inclusive.
+ *
+ * @param c Character to be checked.
+ * @return true **c** is in range.
+ * @return false **c** is not in range.
+ */
+bool isxdigit(char c);
 
 /**
  * @brief Checks if character is within range 'A' - 'Z' inclusive.

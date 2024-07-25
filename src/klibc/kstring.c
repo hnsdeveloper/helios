@@ -29,6 +29,7 @@
  *
  */
 
+#include <klibc/kctype.h>
 #include <klibc/kstring.h>
 
 void *memcpy(void *dst, const void *src, size_t n)
@@ -382,7 +383,7 @@ unsigned long strtoul(const char *nptr, char **endptr, int base)
     cutlim = ULONG_MAX % (unsigned long)base;
     for (acc = 0, any = 0;; c = (unsigned char)*s++)
     {
-        if (isdec(c))
+        if (isdigit(c))
             c -= '0';
         else if (isalpha(c))
             c -= isupper(c) ? 'A' - 10 : 'a' - 10;
